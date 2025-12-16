@@ -8,10 +8,6 @@
 
 typedef enum {
 	ESuccess,
-	// Unrecoverable Errors
-	CEAllocFailed,
-	CEAlreadyFreed,
-	CEIndexOutOfBounds,
 	// Recoverable Errors
 	EFailedToReadFile,
 	ELexerEOF,
