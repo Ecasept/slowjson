@@ -1,5 +1,6 @@
 #include "../json/lexer.h"
 #include <stdio.h>
+#include "../frontend/test.h"
 
 static unsigned lcg(unsigned *s) {
 	*s = (*s) * 1103515245u + 12345u;
@@ -44,4 +45,5 @@ int main() {
 	string_free(&str);
 
 	printf("It works!\n");
+	printer_test();
 }
