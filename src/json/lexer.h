@@ -13,9 +13,7 @@
 #define DECLARE_TOKEN_STRING(token) #token,
 
 typedef enum { FOREACH_TOKEN(DEFINE_TOKEN_ENUM) } JSONTokenType;
-
-static const char *JSONTokenTypeStrings[] = {
-	FOREACH_TOKEN(DECLARE_TOKEN_STRING)};
+extern const char *JSONTokenTypeStrings[];
 
 char *tk_as_str(JSONTokenType type);
 

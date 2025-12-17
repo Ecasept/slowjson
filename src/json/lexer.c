@@ -7,6 +7,8 @@
 // https://datatracker.ietf.org/doc/html/rfc8259
 // https://ecma-international.org/publications-and-standards/standards/ecma-404/
 
+const char *JSONTokenTypeStrings[] = {FOREACH_TOKEN(DECLARE_TOKEN_STRING)};
+
 void lexer_init(Lexer *lexer, const string *source) {
 	lexer->source = source;
 	lexer->position = 0;
