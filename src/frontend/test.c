@@ -1,24 +1,32 @@
 #include <stdio.h>
-#include <wchar.h>
-#include <stddef.h>
+
+
+// Eingabe von Umlaute als zwei normale char
 
 void printer_test()
 {
-        printf("TEST!!");
-        printf("\n Test für commit und pullüäö");
-        printf("\nEin weiterer Test\n");
-       
 
     	printf("%s", "╠ ╡ ╢ ╣ ╤");
 	printf("ÄÖÜäöüß\n>>>");
-	wchar_t c;
-        scanf("%lc", &c);
-        while(1) {
-                if (getchar() == '\n') {
-                        break;
-                }
-        }
-	printf("\nHallo: %Lc\n", c);
-        return 0;
+	printf("%s", "╠ ╡ ╢ ╣ ╤ ╭");
+	printf("ÄÖÜäöüß\n>>>");
+	
+	char v[20];
+	char c = '\0';
+	int i = 0;
 
+	while((c = getchar()) != '\n') {
+		v[i] = c;
+		++i;
+	}
+	v[i] = '\0';
+	
+        for (int a = 0; a < i; ++a) {
+                putchar(v[a]);
+        }
+       printf("\n\nAusgabe: %s\n", v);
+
+
+       
+       
 }
