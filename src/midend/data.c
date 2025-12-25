@@ -21,7 +21,7 @@ enum State {
     Bestanden,
     NichtBestanden, 
     Ausstehend
-};
+};    
 #define State enum State
 
 struct Veranstaltung {
