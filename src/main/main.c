@@ -48,4 +48,5 @@ int main() {
 
 
 	print_welcomescreen();
+	printer_test();
 }
