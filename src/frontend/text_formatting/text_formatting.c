@@ -144,12 +144,9 @@ void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver)
                         last_time = ver[i].semester.jahr;
                 }
 
-                // Veranstaltungsnamen ausgeben
+                // Veranstaltungsnamen ausgeben   
                 printf("%s", ver[i].name);
-                int counter = 0;
-                while (ver[i].name[counter] != '\0') {
-                        ++counter;
-                }
+                int counter = strlen(ver[i].name); 
                 counter = 90 - counter;
                 for (int a = 0; a < counter; ++a) {
                         printf(" ");

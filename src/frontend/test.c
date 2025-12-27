@@ -33,7 +33,7 @@ struct Veranstaltung *get_test_ver()
 	struct Veranstaltung *p = malloc(SIZE_VER * sizeof(struct Veranstaltung));
 
 
-	p[i].name = "Mathematik für Informatiker";
+	p[i].name = "Mathematik für Informatiker 1";
 	p[i].note = 3;
 	p[i].lp = 8;
 	p[i].modulgruppenindex = 2;
