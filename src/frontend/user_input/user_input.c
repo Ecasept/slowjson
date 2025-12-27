@@ -2,38 +2,39 @@
 #include <stdio.h>
 #include "user_input.h"
 #include "../text_formatting/text_formatting.h"
+#include <wchar.h>
 
 
 
 
 void input_test()
 {
-        printf("%s", "╠ ╡ ╢ ╣ ╤");
-	printf("ÄÖÜäöüß\n>>>");
-	printf("%s", "╠ ╡ ╢ ╣ ╤ ╭");
-	printf("ÄÖÜäöüß\n>>>");
+        wprintf(L"%ls", "╠ ╡ ╢ ╣ ╤");
+	wprintf(L"ÄÖÜäöüß\n>>>");
+	wprintf(L"%ls", "╠ ╡ ╢ ╣ ╤ ╭");
+	wprintf(L"ÄÖÜäöüß\n>>>");
 	
-	char v[20];
-	char c = '\0';
+	wchar_t v[20];
+	wchar_t c = '\0';
 	int i = 0;
 
-	while((c = getchar()) != '\n') {
+	while((c = getwchar()) != '\n') {
 		v[i] = c;
 		++i;
 	}
 	v[i] = '\0';
 	
         for (int a = 0; a < i; ++a) {
-                putchar(v[a]);
+                putwchar(v[a]);
         }
-       printf("\n\nAusgabe: %s\n", v);
+       wprintf(L"\n\nAusgabe: %ls\n", v);
 
 }
 
 
 
 
-int read_command(char valid_input[], size_t size)
+int read_command(wchar_t valid_input[], size_t size)
 {
         int counter = LIMIT_INPUT_ATTEMPTS;
         int single_character = 1;
@@ -43,10 +44,10 @@ int read_command(char valid_input[], size_t size)
                 if (size == 0) {
                         return INVALID_FUNCTION_INPUT;
                 }
-                char first_c = '\0';
-                char second_c = '\0';
+                wchar_t first_c = '\0';
+                wchar_t second_c = '\0';
 
-                first_c = getchar();
+                first_c = getwchar();
 
                 if (first_c == EOF) {
                         return BUFFER_ERROR;
@@ -54,7 +55,7 @@ int read_command(char valid_input[], size_t size)
 
                 // Prüfung ob nur einzelnes Zeichen eingegeben
                 // Falls mehere Zeichen eingegeben -> counter dekrementieren
-                second_c = getchar();
+                second_c = getwchar();
                 if (second_c == EOF) {
                         return BUFFER_ERROR;
                 } else if (second_c != '\n') {
@@ -79,7 +80,7 @@ int read_command(char valid_input[], size_t size)
                 if (counter == 0) {
                         return INVALID_USER_INPUT;
                 }
-                printf("\n%s Bitte geben Sie nur einen einzigen Buchstaben ein!%s\n", TXT_RED, END_STYLE);
+                wprintf(L"\n%ls Bitte geben Sie nur einen einzigen Buchstaben ein!%ls\n", TXT_RED, END_STYLE);
         }
 }
 
@@ -87,13 +88,13 @@ int read_command(char valid_input[], size_t size)
 
 int flush()
 {
-        char c = '\0';
+        wchar_t c = L'\0';
         while(1) {
-                c = getchar();
+                c = getwchar();
                 if (c == EOF) {
                         return BUFFER_ERROR;
                 }
-                if (c == '\n') {
+                if (c == L'\n') {
                         return FLUSH_COMPLETE;
                 }
         }

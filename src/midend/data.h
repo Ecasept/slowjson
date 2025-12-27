@@ -1,8 +1,10 @@
 #ifndef DATA_HEADER
 #define DATA_HEADER
 
+#include <wchar.h>
+
 struct Modulgruppe {
-    char *name;
+    wchar_t *name;
     int lp_todo;
     int modulgruppenindex;
 };
@@ -30,7 +32,7 @@ enum State {
 
 
 struct Veranstaltung {
-    char *name;
+    wchar_t *name;
     double note;
     int lp;
     int modulgruppenindex;

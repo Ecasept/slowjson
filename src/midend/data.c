@@ -1,5 +1,8 @@
+#include <wchar.h>
+
+
 struct Modulgruppe {
-    char *name;
+    wchar_t *name;
     int lp_todo;
 };
 #define Modulgruppe struct Modulgruppe
@@ -25,7 +28,7 @@ enum State {
 #define State enum State
 
 struct Veranstaltung {
-    char *name;
+    wchar_t *name;
     double note;
     int lp;
     int modulindex;

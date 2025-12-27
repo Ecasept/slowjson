@@ -1,24 +1,24 @@
 #include "text_formatting.h"
 #include "../../midend/data.h"
 #include <stdio.h>
-#include <string.h>
+#include <wchar.h>
 
 
 void print_welcomescreen()
 {
-        printf("┌───────────────────────────────────────────────────────┐\n");
-        printf("│                                                       │\n");
-        printf("│%s     |  |  |  |    |/  /\\  |\\/|  |\\/|  |=  |\\ |  │     %s│\n", TXT_GREEN, END_STYLE);
-        printf("│%s     |/\\|  |  |__  |\\  \\/  |  |  |  |  |=  | \\|  .     %s│\n", TXT_GREEN, END_STYLE);
-        printf("│                                                       │\n");
-        printf("│       %sDies ist ihr persönlicher Studienplaner%s         │\n", "\033[31;44m", "\033[0m");
-        printf("│                                                       │\n");
-        printf("└───────────────────────────────────────────────────────┘\n");
-        printf("  %sOptionen%s                        %sTaste%s                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
-        printf("  Veranstaltungsübersicht           [v]                    \n");
-        printf("  Hilfe                             [h]                    \n");
-        printf("  Programm beenden                  [q]                    \n");
-        printf("\n%s>>>%s ", TXT_INVERSE, END_STYLE);
+        wprintf(L"┌───────────────────────────────────────────────────────┐\n");
+        wprintf(L"│                                                       │\n");
+        wprintf(L"│%ls     |  |  |  |    |/  /\\  |\\/|  |\\/|  |=  |\\ |  │     %ls│\n", TXT_GREEN, END_STYLE);
+        wprintf(L"│%ls     |/\\|  |  |__  |\\  \\/  |  |  |  |  |=  | \\|  .     %ls│\n", TXT_GREEN, END_STYLE);
+        wprintf(L"│                                                       │\n");
+        wprintf(L"│       %lsDies ist ihr persönlicher Studienplaner%ls         │\n", TXT_INVERSE, END_STYLE);
+        wprintf(L"│                                                       │\n");
+        wprintf(L"└───────────────────────────────────────────────────────┘\n");
+        wprintf(L"  %lsOptionen%ls                        %lsTaste%ls                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
+        wprintf(L"  Veranstaltungsübersicht           [v]                    \n");
+        wprintf(L"  Hilfe                             [h]                    \n");
+        wprintf(L"  Programm beenden                  [q]                    \n");
+        wprintf(L"\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
         
 }
 
@@ -30,26 +30,28 @@ int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modu
 
         clear_display();
         
-        printf("%sVeranstaltungsübersicht%s\n\n", TXT_INVERSE, END_STYLE);
+        wprintf(L"%lsVeranstaltungsübersicht%ls\n\n", TXT_INVERSE, END_STYLE);
+        
 
         // Übersicht nach Semester geordnet ausgeben
         if (view_type == 1) {
                 print_overview_by_time(ver, size_ver);
+        } else if (view_type == 2) {
+                print_overview_by_mod(ver, size_ver, mod, size_mod);
         }
         
 
         
 
 
-        printf("%s%s\n\n\nÜbersicht%s\n\n", TXT_INVERSE, TXT_RED, END_STYLE);
-        printf("  %sOptionen%s                        %sTaste%s                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
-        printf("  Ansicht ändern                    [a]                    Veranstaltung hinzufügen          [n]\n");
-        printf("  (Sortierung nach Modulgruppen)                           Modulgruppe hinzufügen            [m]\n");
-        printf("  Notendurchschnitt anzeigen        [d]                    Veranstaltung bearbeiten          [b]\n");
-        printf("\n");
-        printf("  Hilfe                             [h]                    \n");
-        printf("  Programm beenden                  [q]                    \n");
-        printf("\n%s>>>%s ", TXT_INVERSE, END_STYLE);
+        wprintf(L"\n\n\n  %lsOptionen%ls                        %lsTaste%ls                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
+        wprintf(L"  Ansicht ändern                    [a]                    Veranstaltung hinzufügen          [n]\n");
+        wprintf(L"  (Sortierung nach Modulgruppen)                           Modulgruppe hinzufügen            [m]\n");
+        wprintf(L"  Notendurchschnitt anzeigen        [d]                    Veranstaltung bearbeiten          [b]\n");
+        wprintf(L"\n");
+        wprintf(L"  Hilfe                             [h]                    \n");
+        wprintf(L"  Programm beenden                  [q]                    \n");
+        wprintf(L"\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
         
         return 0;
 }
@@ -61,13 +63,13 @@ void print_helpscreen()
 {
         clear_display();
 
-        printf("\n%s%sDas hier ist die Hilfeseite%s\n", TXT_RED, TXT_INVERSE, END_STYLE);
-        printf("  %sOptionen%s                        %sTaste%s                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
-        printf("  Veranstaltungsübersicht           [v]\n");
-        printf("  Notendurchschnitt anzeigen        [d]\n");
-        printf("\n");
-        printf("  Programm beenden                  [q]                    \n");
-        printf("\n%s>>>%s ", TXT_INVERSE, END_STYLE);
+        wprintf(L"\n%ls%lsDas hier ist die Hilfeseite%ls\n", TXT_RED, TXT_INVERSE, END_STYLE);
+        wprintf(L"  %lsOptionen%ls                        %lsTaste%ls                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
+        wprintf(L"  Veranstaltungsübersicht           [v]\n");
+        wprintf(L"  Notendurchschnitt anzeigen        [d]\n");
+        wprintf(L"\n");
+        wprintf(L"  Programm beenden                  [q]                    \n");
+        wprintf(L"\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
 }
 
 
@@ -76,7 +78,7 @@ void print_endscreen()
 {
         clear_display();
         
-        printf("Vielen Dank, dass Sie unser Programm benutzt haben.\nAuf Wiedersehen :-)\n");
+        wprintf(L"Vielen Dank, dass Sie unser Programm benutzt haben.\nAuf Wiedersehen :-)\n");
 }
 
 
@@ -87,15 +89,15 @@ int print_averagescreen()
         clear_display();       
 
 
-        printf("\n%s%sHier sieht man den Notendurchschnitt%s\n", TXT_RED, TXT_INVERSE, END_STYLE);
-        printf("  %sOptionen%s                        %sTaste%s                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
-        printf("  Veranstaltungsübersicht           [v]                    Veranstaltung hinzufügen          [n]\n");
-        printf("                                                           Modulgruppe hinzufügen            [m]\n");
-        printf("                                                           Veranstaltung bearbeiten          [b]\n");
-        printf("\n");
-        printf("  Hilfe                             [h]                    \n");
-        printf("  Programm beenden                  [q]                    \n");
-        printf("\n%s>>>%s ", TXT_INVERSE, END_STYLE);
+        wprintf(L"\n%ls%lsHier sieht man den Notendurchschnitt%ls\n", TXT_RED, TXT_INVERSE, END_STYLE);
+        wprintf(L"  %lsOptionen%ls                        %lsTaste%ls                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
+        wprintf(L"  Veranstaltungsübersicht           [v]                    Veranstaltung hinzufügen          [n]\n");
+        wprintf(L"                                                           Modulgruppe hinzufügen            [m]\n");
+        wprintf(L"                                                           Veranstaltung bearbeiten          [b]\n");
+        wprintf(L"\n");
+        wprintf(L"  Hilfe                             [h]                    \n");
+        wprintf(L"  Programm beenden                  [q]                    \n");
+        wprintf(L"\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
         return 0;
 }
 
@@ -104,14 +106,14 @@ int print_averagescreen()
 
 void clear_display()
 {
-        printf("\033[0;0H");
+        wprintf(L"\033[0;0H");
         for (int i = 0; i < 50; ++i) {
                 for (int a = 0; a < 400; ++a) {
-                        printf(" ");
+                        wprintf(L" ");
                 }
-                printf("\n");
+                wprintf(L"\n");
         }
-        printf("\033[0;0H");
+        wprintf(L"\033[0;0H");
 
 }
 
@@ -120,11 +122,10 @@ void clear_display()
 
 void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver)
 {
-        int last_index = -1;
         int last_time = -1;
-        char v[] = "bestanden";
-        char x[] = "nicht bestanden";
-        char y[] = "ausstehend";
+        wchar_t v[] = L"bestanden";
+        wchar_t x[] = L"nicht bestanden";
+        wchar_t y[] = L"ausstehend";
 
 
 
@@ -135,34 +136,100 @@ void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver)
                 // AUFRUF FUNKTION ZUR ALPHABETISCHEN SORTIERUNG DER VERANSTALTUNGEN => Adrian
                 if (ver[i].semester.jahr != last_time) {
                         if (ver[i].semester.jahreszeit == Winter) {
-                                printf("\n\n%sWS %i/%i%s\n", TXT_UNDERLINED, ver[i].semester.jahr, ver[i].semester.jahr + 1, END_STYLE);
-                                printf("────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n\n");
+                                wprintf(L"\n\n%lsWS %i/%i%ls\n", TXT_UNDERLINED, ver[i].semester.jahr, ver[i].semester.jahr + 1, END_STYLE);
+                                wprintf(L"────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n\n");
                         } else {
-                                printf("\n\n%sSS %i%s\n", TXT_UNDERLINED, ver[i].semester.jahr, END_STYLE);
-                                printf("────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n\n");
+                                wprintf(L"\n\n%lsSS %i%ls\n", TXT_UNDERLINED, ver[i].semester.jahr, END_STYLE);
+                                wprintf(L"────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n\n");
                         }
                         last_time = ver[i].semester.jahr;
                 }
 
                 // Veranstaltungsnamen ausgeben   
-                printf("%s", ver[i].name);
-                int counter = strlen(ver[i].name); 
+                wprintf(L"%ls", ver[i].name);
+                int counter = 0;
+                while(ver[i].name[counter] != L'\0') {
+                        ++counter;
+                }
                 counter = 90 - counter;
                 for (int a = 0; a < counter; ++a) {
-                        printf(" ");
+                        wprintf(L" ");
                 }
 
                 // Restliche Daten der Veranstaltung ausgeben
                 switch(ver[i].state) {
                         case Bestanden:
-                                printf("        %15s     %i    %.1f\n", v, ver[i].lp, ver[i].note);
+                                wprintf(L"        %ls%15ls%ls     %i    %.1f\n", TXT_GREEN, v, END_STYLE, ver[i].lp, ver[i].note);
                                 break;
                         case NichtBestanden:
-                                printf("        %s%15s%s     %i    %s%.1f%s\n", TXT_RED, x, END_STYLE, ver[i].lp, TXT_RED, ver[i].note, END_STYLE);
+                                wprintf(L"        %ls%15ls%ls     %i    %ls%.1f%ls\n", TXT_RED, x, END_STYLE, ver[i].lp, TXT_RED, ver[i].note, END_STYLE);
                                 break;
                         case Ausstehend:
-                                printf("        %s%15s%s     %i    %s/%s\n", TXT_YELLOW, y, END_STYLE, ver[i].lp, TXT_YELLOW, END_STYLE);
+                                wprintf(L"        %ls%15ls%ls     %i    %ls/%ls\n", TXT_YELLOW, y, END_STYLE, ver[i].lp, TXT_YELLOW, END_STYLE);
                                 break;
                 }
         }
+}
+
+
+
+
+
+void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod)
+{
+        int last_index = -1;
+        wchar_t v[] = L"bestanden";
+        wchar_t x[] = L"nicht bestanden";
+        wchar_t y[] = L"ausstehend";
+
+        
+
+
+
+        for (size_t i = 0; i < size_ver; ++i) {
+
+                // AUFRUF FUNKTION ZUR SORTIERUNG DER VERANSTALTUNGEN NACH MODULGRUPPE => Adrian
+                // UND
+                // AUFRUF FUNKTION ZUR ALPHABETISCHEN SORTIERUNG DER VERANSTALTUNGEN => Adrian
+                if (ver[i].modulgruppenindex != last_index) {
+                        size_t a = 0;
+                        while (a < size_mod) {
+                                if (ver[i].modulgruppenindex == mod[a].modulgruppenindex) {
+                                        break;
+                                }
+                                ++a;
+                        }
+                        wprintf(L"\n\n%ls%ls%ls\n", TXT_UNDERLINED, mod[a].name, END_STYLE);
+                        wprintf(L"───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n\n");
+                        
+                        last_index = ver[i].modulgruppenindex;
+                }
+
+                // Veranstaltungsnamen ausgeben   
+                wprintf(L"%ls", ver[i].name);
+                int counter = 0;
+                while(ver[i].name[counter] != L'\0') {
+                        ++counter;
+                }
+                counter = 90 - counter;
+                for (int a = 0; a < counter; ++a) {
+                        wprintf(L" ");
+                }
+
+                // Restliche Daten der Veranstaltung ausgeben
+                switch(ver[i].state) {
+                        case Bestanden:
+                                wprintf(L"        %ls%15ls%ls     %i    %.1f\n", TXT_GREEN, v, END_STYLE, ver[i].lp, ver[i].note);
+                                break;
+                        case NichtBestanden:
+                                wprintf(L"        %ls%15ls%ls     %i    %ls%.1f%ls\n", TXT_RED, x, END_STYLE, ver[i].lp, TXT_RED, ver[i].note, END_STYLE);
+                                break;
+                        case Ausstehend:
+                                wprintf(L"        %ls%15ls%ls     %i    %ls/%ls\n", TXT_YELLOW, y, END_STYLE, ver[i].lp, TXT_YELLOW, END_STYLE);
+                                break;
+                }
+        }
+
+
+
 }
