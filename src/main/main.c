@@ -56,6 +56,14 @@ int main() {
 	string_free(&str);
 	
 
+	
+
+	
+
+
+
+
+	
 	// Standardvariablen
 	int status = 0;
 	int current_page = -1;
@@ -154,9 +162,5 @@ int main() {
 		}
 
 	}
-
-
-
-	
 	
 }
