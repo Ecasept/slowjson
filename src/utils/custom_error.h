@@ -12,7 +12,11 @@ typedef enum {
 	EFailedToReadFile,
 	ELexerEOF,
 	ELexerSyntaxError,
-	ESubstrOutOfRange
+	ESubstrOutOfRange,
+	ENotImplemented,
+	EIndexOutOfBounds,
+	EUnicodeError,
+	EUnicodeUnexpectedEndOfString,
 } ErrorType;
 
 typedef struct {

@@ -1,5 +1,6 @@
 #include "../utils/custom_error.h"
 #include "../utils/dstring.h"
+#include "../utils/unicode/unicode_types.h"
 
 // Apply `macro` to each JSONTokenType
 #define FOREACH_TOKEN(macro)                                                   \
@@ -13,9 +14,7 @@
 #define DECLARE_TOKEN_STRING(token) #token,
 
 typedef enum { FOREACH_TOKEN(DEFINE_TOKEN_ENUM) } JSONTokenType;
-
-static const char *JSONTokenTypeStrings[] = {
-	FOREACH_TOKEN(DECLARE_TOKEN_STRING)};
+extern const char *JSONTokenTypeStrings[];
 
 char *tk_as_str(JSONTokenType type);
 
@@ -37,8 +36,8 @@ void lexer_init(Lexer *lexer, const string *source);
 Result lexer_next_token(Lexer *lexer, JSONToken *token);
 void lexer_free_token(JSONToken *token);
 
-Result lexer_peek(const Lexer *lexer, char *out);
-Result lexer_consume(Lexer *lexer, char *out);
+Result lexer_peek(const Lexer *lexer, UCP *out);
+Result lexer_consume(Lexer *lexer, UCP *out);
 
 Result lexer_lex_structural(Lexer *lexer, JSONToken *token);
 Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token);
