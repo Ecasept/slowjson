@@ -1,38 +1,45 @@
-#include <wchar.h>
+#ifndef DATA_HEADER
+#define DATA_HEADER
 
+#include <wchar.h>
 
 struct Modulgruppe {
     wchar_t *name;
     int lp_todo;
+    int modulgruppenindex;
 };
-#define Modulgruppe struct Modulgruppe
+
+
 
 enum Jahreszeit {
     Winter,
     Sommer
 };
-#define Jahreszeit enum Jahreszeit
+
 
 // WS 25/26 = 2025 Winter
 struct Semester {
     int jahr;
-    Jahreszeit jahreszeit;
+    enum Jahreszeit jahreszeit;
 };
-#define Semester struct Semester
+
 
 enum State {
     Bestanden,
     NichtBestanden, 
     Ausstehend
 };    
-#define State enum State
+
 
 struct Veranstaltung {
     wchar_t *name;
     double note;
     int lp;
-    int modulindex;
-    Semester semester;
-    State state;
+    int modulgruppenindex;
+    struct Semester semester;
+    enum State state;
 };
-#define Veranstaltung struct Veranstaltung
+
+
+
+#endif
