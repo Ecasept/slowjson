@@ -12,12 +12,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct {
+struct TYPED_NAME(list) {
 	TYPE *data;
 	size_t length;
 	size_t capacity;
 	bool freed;
-} TYPED_NAME(list);
+};
+
+typedef struct TYPED_NAME(list) TYPED_NAME(list);
 
 // ===== Forward declarations =====
 void TYPED_NAME(list_init)(TYPED_NAME(list) * arr, size_t cap);
@@ -26,6 +28,8 @@ void TYPED_NAME(list_ensure_resize)(TYPED_NAME(list) * arr, size_t capacity);
 void TYPED_NAME(list_push)(TYPED_NAME(list) * arr, TYPE element);
 void TYPED_NAME(list_get)(const TYPED_NAME(list) * arr, size_t index,
 						  TYPE *element);
+Result TYPED_NAME(list_get_err)(const TYPED_NAME(list) * arr, size_t index,
+								TYPE *element);
 void TYPED_NAME(list_ensure_index)(const TYPED_NAME(list) * arr, size_t index);
 void TYPED_NAME(list_get_ref)(const TYPED_NAME(list) * arr, size_t index,
 
@@ -37,7 +41,17 @@ void TYPED_NAME(list_free)(TYPED_NAME(list) * arr);
 
 void TYPED_NAME(list_ensure_not_freed)(const TYPED_NAME(list) * arr);
 
+/**
+ * @brief Returns whether `index` points to a valid location in `arr`
+ */
+static inline bool TYPED_NAME(list_check_index)(const TYPED_NAME(list) * arr,
+												size_t index) {
+	return index < arr->length;
+}
+
 #ifdef LIST_IMPLEMENTATION
+
+const size_t INITIAL_LIST_SIZE = 8;
 
 /** @brief Panics if the passed list is freed */
 void TYPED_NAME(list_ensure_not_freed)(const TYPED_NAME(list) * arr) {
@@ -50,12 +64,12 @@ void TYPED_NAME(list_ensure_not_freed)(const TYPED_NAME(list) * arr) {
  * @brief Initializes a new array at the given location
  *
  * @param arr Pointer to the array that should be initialized
- * @param cap The initial capacity of the array. Defaults to `8` if `0` is
- * passed.
+ * @param cap The initial capacity of the array. Defaults to `INITIAL_LIST_SIZE`
+ * if `0` is passed.
  */
 void TYPED_NAME(list_init)(TYPED_NAME(list) * arr, size_t cap) {
 	if (cap == 0) {
-		cap = 8;
+		cap = INITIAL_LIST_SIZE;
 	}
 	arr->data = (TYPE *)malloc(sizeof(TYPE) * cap);
 	if (arr->data == NULL) {
@@ -124,10 +138,26 @@ void TYPED_NAME(list_get)(const TYPED_NAME(list) * arr, size_t index,
 }
 
 /**
+ * @brief Writes a copy of the element at `index` to the location of `element`.
+ * Returns an `EIndexOutOfBounds` exception if the index is not covered by the
+ * array instead of panicking.
+ */
+Result TYPED_NAME(list_get_err)(const TYPED_NAME(list) * arr, size_t index,
+								TYPE *element) {
+	TYPED_NAME(list_ensure_not_freed)(arr);
+	if (!TYPED_NAME(list_check_index)(arr, index)) {
+		return new_errorf("Index %ld out of bounds for array of length %ld",
+						  EIndexOutOfBounds, index, arr->length);
+	}
+	*element = arr->data[index];
+	return new_success();
+}
+
+/**
  * @brief Returns an error if the index lies outside the length of the array
  */
 void TYPED_NAME(list_ensure_index)(const TYPED_NAME(list) * arr, size_t index) {
-	if (index >= arr->length) {
+	if (!TYPED_NAME(list_check_index)(arr, index)) {
 		panicf("Tried to access array with length %ld at index %ld",
 			   arr->length, index);
 	}

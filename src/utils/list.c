@@ -1,5 +1,7 @@
-#define TYPE char
-#define TYPED_NAME(x) char_##x
+#include "unicode/unicode_types.h"
+
+#define TYPE uchar
+#define TYPED_NAME(x) uchar_##x
 #define LIST_IMPLEMENTATION
 #include "list.h"
 

@@ -3,27 +3,56 @@
 #include <stdio.h>
 #include <string.h>
 
-void string_free(string *str) { char_list_free(&str->arr); }
+void string_free(string *str) { uchar_list_free(&str->arr); }
+
 void string_new(string *str, const char *source) {
 	size_t len = strlen(source);
-	char_list_init(&str->arr, len);
+	uchar_list_init(&str->arr, len);
 
 	memcpy(str->arr.data, source, len);
 	str->arr.length = len;
 }
 
+/**
+ * @brief Appends another string to this string.
+ *
+ * @param str The string to append to
+ * @param other The string to append. It is not modified or freed.
+ */
 void string_append(string *str, const string *other) {
-	char_list_extend(&str->arr, &other->arr);
+	uchar_list_extend(&str->arr, &other->arr);
 }
-void string_append_char(string *str, char other) {
-	char_list_push(&str->arr, other);
+
+/**
+ * @brief Appends a single uchar to this string.
+ * @warning If your string is utf-8 encoded, manually appending individual bytes
+ * may lead to ill-formed sequences.
+ *
+ * @param str The string to append to
+ * @param other The uchar to append
+ */
+void string_append_uchar(string *str, uchar other) {
+	uchar_list_push(&str->arr, other);
 }
+/**
+ * @brief Appends a C string to this string.
+ * @warning If your string is utf-8 encoded, appending arbitrary C strings
+ * may lead to ill-formed sequences. Special care should be taken when U+0000
+ * bytes are involved.
+ */
 void string_append_cstr(string *str, const char *cstr) {
 	size_t len = strlen(cstr);
-	char_list_ensure_resize(&str->arr, str->arr.length + len);
+	uchar_list_ensure_resize(&str->arr, str->arr.length + len);
 	memcpy(&str->arr.data[str->arr.length], cstr, len);
 	str->arr.length += len;
 }
+/**
+ * @brief Compares two strings for equality.
+ * @note This is a bytewise comparison and does not take encoding into account.
+ * This function does not test for canonical equivalence. In other words,
+ * different code point sequences mapping to the same abstract character will be
+ * considered unequal.
+ */
 void string_eq(const string *str, const string *other, bool *res) {
 	if (str->arr.length != other->arr.length) {
 		*res = false;
@@ -36,7 +65,7 @@ Result string_substr(const string *str, string *out, size_t start,
 	if (start + length > str->arr.length) {
 		return new_error("Substring out of range", ESubstrOutOfRange);
 	}
-	char_list_init(&out->arr, length);
+	uchar_list_init(&out->arr, length);
 	memcpy(out->arr.data, &str->arr.data[start], length);
 	out->arr.length = length;
 	return new_success();
@@ -51,6 +80,10 @@ void string_to_cstr(const string *str, char **cstr) {
 	(*cstr)[str->arr.length] = '\0';
 }
 
-void string_at(const string *str, size_t index, char *out) {
-	char_list_get(&str->arr, index, out);
+void string_at(const string *str, size_t index, uchar *out) {
+	uchar_list_get(&str->arr, index, out);
+}
+
+Result string_at_err(const string *str, size_t index, uchar *out) {
+	return uchar_list_get_err(&str->arr, index, out);
 }

@@ -1,11 +1,21 @@
 
 #include "lexer.h"
+#include "../utils/unicode/utf8.h"
 #include <ctype.h>
 
-// JSON Specification:
+// ==== Relevant Specifications ====
+// JSON Website (with syntax diagram):
 // https://www.json.org/json-en.html
+// RFC JSON Specification:
 // https://datatracker.ietf.org/doc/html/rfc8259
+// ECMA JSON Standard:
 // https://ecma-international.org/publications-and-standards/standards/ecma-404/
+// UTF-8 Website with resources:
+// https://www.utf8.com/
+// Unicode Standard:
+// https://www.unicode.org/versions/Unicode17.0.0/UnicodeStandard-17.0.pdf
+// UTF-8 Standard:
+// https://www.ietf.org/rfc/rfc3629.txt
 
 const char *JSONTokenTypeStrings[] = {FOREACH_TOKEN(DECLARE_TOKEN_STRING)};
 
@@ -16,20 +26,25 @@ void lexer_init(Lexer *lexer, const string *source) {
 	lexer->column = 0;
 }
 
-Result lexer_peek(const Lexer *lexer, char *out) {
-	if (lexer->position >= lexer->source->arr.length) {
+Result lexer_peek(const Lexer *lexer, UCP *out) {
+	size_t pos_copy =
+		lexer->position; // Don't pass the actual position. We are just peeking
+	Result r = utf8_get_next_codepoint(lexer->source, &pos_copy, out);
+	if (r.type == EUnicodeUnexpectedEndOfString) {
 		return new_error("Reached end of file", ELexerEOF);
+	} else if (!r.success) {
+		return r;
 	}
-	string_at(lexer->source, lexer->position, out);
 	return new_success();
 }
 
-Result lexer_consume(Lexer *lexer, char *out) {
-	if (lexer->position >= lexer->source->arr.length) {
+Result lexer_consume(Lexer *lexer, UCP *out) {
+	Result r = utf8_get_next_codepoint(lexer->source, &lexer->position, out);
+	if (r.type == EUnicodeUnexpectedEndOfString) {
 		return new_error("Reached end of file", ELexerEOF);
+	} else if (!r.success) {
+		return r;
 	}
-	string_at(lexer->source, lexer->position, out);
-	lexer->position++;
 	lexer->column++;
 	return new_success();
 }
@@ -41,7 +56,7 @@ Result lexer_next_token(Lexer *lexer, JSONToken *token) {
 
 	Result r;
 
-	char current_char;
+	UCP current_char;
 	r = lexer_peek(lexer, &current_char);
 	if (r.type == ELexerEOF) {
 		token->type = JSONTok_EOF;
@@ -90,7 +105,7 @@ Result lexer_next_token(Lexer *lexer, JSONToken *token) {
 
 Result lexer_lex_structural(Lexer *lexer, JSONToken *token) {
 	// Implementation for lexing structural characters
-	char current_char;
+	UCP current_char;
 	Result r;
 	try(lexer_consume(lexer, &current_char));
 
@@ -119,12 +134,12 @@ Result lexer_lex_structural(Lexer *lexer, JSONToken *token) {
 	}
 
 	string_new(&token->value, "");
-	string_append_char(&token->value, current_char);
+	string_append_uchar(&token->value, current_char);
 	return new_success();
 }
 
 Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token) {
-	char current_char;
+	UCP current_char;
 
 	string whitespace;
 	string_new(&whitespace, "");
@@ -156,7 +171,7 @@ Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token) {
 			}
 
 			// Append whitespace character to current whitespace
-			string_append_char(&whitespace, current_char);
+			string_append_uchar(&whitespace, current_char);
 			break;
 		default:
 			// Found non-whitespace character, which means we finished parsing
@@ -238,8 +253,151 @@ Result lexer_lex_literal(Lexer *lexer, JSONToken *token) {
 	return new_errorf("Unexpected literal", ELexerSyntaxError);
 }
 
+Result lexer_lex_4_hex(Lexer *lexer, UCP *out) {
+	UCP vals[4];
+	Result r;
+	for (int i = 0; i < 4; i++) {
+		UCP c;
+		try(lexer_consume(lexer, &c));
+		if (c >= 'A' && c <= 'F') {
+			vals[i] = c - 'A' + 10;
+		} else if (c >= 'a' && c <= 'f') {
+			vals[i] = c - 'a' + 10;
+		} else if (c >= '0' && c <= '9') {
+			vals[i] = c - '0';
+		} else {
+			return new_errorf("Invalid hex digit \"%c\"", ELexerSyntaxError, c);
+		}
+	}
+	*out = (vals[0] << 12) | (vals[1] << 8) | (vals[2] << 4) | vals[3];
+	return new_success();
+}
+Result lexer_lex_unicode_literal(Lexer *lexer, UCP *out) {
+	UCP cp;
+	Result r;
+	try(lexer_lex_4_hex(lexer, &cp));
+	if (is_high_surrogate(cp)) {
+		UCP backslash;
+		UCP u;
+		Result r1 = lexer_consume(lexer, &backslash);
+		Result r2 = lexer_consume(lexer, &u);
+		if (r1.type == ELexerEOF || r2.type == ELexerEOF) {
+			return new_error(
+				"Unexpected end of file after high surrogate in unicode escape",
+				ELexerSyntaxError);
+		} else if (!r1.success) {
+			return r1;
+		} else if (!r2.success) {
+			return r2;
+		}
+		if (backslash != '\\' || u != 'u') {
+			return new_errorf("Expected \\u after high surrogate, got \"%c%c\"",
+							  ELexerSyntaxError, backslash, u);
+		}
+		UCP low_surrogate;
+		try(lexer_lex_4_hex(lexer, &low_surrogate));
+		if (!is_low_surrogate(low_surrogate)) {
+			return new_errorf(
+				"Expected low surrogate after high surrogate, got U+%04X",
+				ELexerSyntaxError, low_surrogate);
+		}
+		cp = decode_surrogate_pair(cp, low_surrogate);
+	} else if (is_low_surrogate(cp)) {
+		return new_errorf(
+			"Unexpected low surrogate U+%04X without preceding high surrogate",
+			ELexerSyntaxError, cp);
+	}
+	*out = cp;
+	return new_success();
+}
+
 Result lexer_lex_string(Lexer *lexer, JSONToken *token) {
-	return new_errorf("String lexing not implemented", ELexerSyntaxError);
+	UCP chr;
+	Result r;
+	try(lexer_consume(lexer, &chr));
+	if (chr != '"') {
+		panicf("String called but character was %c", chr);
+	}
+
+	string value;
+	string_new(&value, "");
+
+	bool is_escaped = false;
+
+	while (1) {
+		r = lexer_consume(lexer, &chr);
+		if (!r.success) {
+			string_free(&value);
+			return r;
+		}
+
+		if (chr <= 0x1F) {
+			return new_errorf(
+				"Encountered control character with value %d in string",
+				ELexerSyntaxError, chr);
+		}
+
+		if (is_escaped) {
+			switch (chr) {
+			case '"':
+				string_append_uchar(&value, '"');
+				break;
+			case '\\':
+				string_append_uchar(&value, '\\');
+				break;
+			case '/':
+				string_append_uchar(&value, '/');
+				break;
+			case 'b':
+				// backspace
+				string_append_uchar(&value, '\b');
+				break;
+			case 'f':
+				// form feed
+				string_append_uchar(&value, '\f');
+				break;
+			case 'n':
+				// line feed
+				string_append_uchar(&value, '\n');
+				break;
+			case 'r':
+				// carriage return
+				string_append_uchar(&value, '\r');
+				break;
+			case 't':
+				// tab
+				string_append_uchar(&value, '\t');
+				break;
+			case 'u':
+				// unicode escape sequence
+				r = lexer_lex_unicode_literal(lexer, &chr);
+				if (!r.success) {
+					string_free(&value);
+					return r;
+				}
+				r = utf8_append_encoded_codepoint(chr, &value);
+				if (!r.success) {
+					string_free(&value);
+					return r;
+				}
+				break;
+			}
+			is_escaped = false;
+		} else {
+			switch (chr) {
+			case '\\':
+				is_escaped = true;
+				break;
+			case '"':
+				token->type = JSONTok_String;
+				token->value = value;
+				return new_success();
+			default:
+				string_append_uchar(&value, chr);
+				break;
+			}
+		}
+	}
 }
 
 Result lexer_lex_number(Lexer *lexer, JSONToken *token) {
