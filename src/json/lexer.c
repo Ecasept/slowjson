@@ -401,7 +401,35 @@ Result lexer_lex_string(Lexer *lexer, JSONToken *token) {
 }
 
 Result lexer_lex_number(Lexer *lexer, JSONToken *token) {
-	return new_errorf("Number lexing not implemented", ELexerSyntaxError);
+	string value;
+	string_new(&value, "");
+	UCP chr;
+	Result r;
+	while (1) {
+		r = lexer_peek(lexer, &chr);
+		if (r.type == ELexerEOF) {
+			// Reached end of file, return what we have
+			token->type = JSONTok_Number;
+			token->value = value;
+			error_free(r);
+			return new_success();
+		} else if (!r.success) {
+			string_free(&value);
+			return r;
+		}
+
+		if (chr == '-' || chr == '+' || chr == 'e' || chr == 'E' ||
+			chr == '.' || (chr >= '0' && chr <= '9')) {
+			try(lexer_consume(lexer, &chr));
+			string_append_uchar(&value, chr);
+		} else {
+			// Found non-number character, which means we finished parsing
+			// the number
+			token->type = JSONTok_Number;
+			token->value = value;
+			return new_success();
+		}
+	}
 }
 
 void lexer_free_token(JSONToken *token) { string_free(&token->value); }
