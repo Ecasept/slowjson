@@ -1,8 +1,5 @@
-#include "../json/jsontest.h"
-#include <stdio.h>
 #include "../frontend/test.h"
 #include "../frontend/text_formatting/text_formatting.h"
-#include "../midend/data.h"
 #include "../frontend/user_input/user_input.h"
 #include "../frontend/edit_events/edit_events.h"
 #include <string.h>
@@ -19,48 +16,8 @@
   
   
 int main() {
-	setlocale(LC_ALL, "");	
-	
-	string str;
-	string_new(&str,
-			   "{ \"name\": \"John Doe\", \"age\": 30, \"is_student\": false, "
-			   "\"courses\": [\"Math\", \"Science\", \"History\"], "
-			   "\"address\": { \"street\": \"123 Main St\", \"city\": "
-			   "\"Anytown\" } }");
+	setlocale(LC_ALL, "");
 
-	Lexer lexer;
-	lexer_init(&lexer, &str);
-
-	JSONToken token;
-	Result r;
-	while (1) {
-		r = lexer_next_token(&lexer, &token);
-		if (!r.success) {
-			print_error(r);
-			error_free(r);
-			break;
-		}
-		if (token.type == JSONTok_EOF) {
-			lexer_free_token(&token);
-			error_free(r);
-			break;
-		}
-		char *value;
-		string_to_cstr(&token.value, &value);
-		wprintf(L"Token: %s \"%s\" (line %zu, column %zu)\n",
-			   tk_as_str(token.type), value ? value : "(null)", token.line,
-			   token.column);
-		free(value);
-
-		lexer_free_token(&token);
-	}
-
-	string_free(&str);
-	
-		
-
-	jsontest();
-	
 	// Standardvariablen
 	int status = 0;
 	int current_page = -1;
