@@ -51,6 +51,10 @@
 #define NO_NEW_ENTRY 0
 
 
+// PO für Notendurchschnitt
+#define PO_2018 L"FPO Bachelor Informatik 2018"
+
+
 void print_welcomescreen();
 int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod, int view_type, int new_entry);
 void print_helpscreen();

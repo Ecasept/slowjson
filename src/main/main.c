@@ -12,12 +12,14 @@
 
 
 
+
  
 
   
   
 int main() {
 	setlocale(LC_ALL, "");	
+	
 	string str;
 	string_new(&str,
 			   "{ \"name\": \"John Doe\", \"age\": 30, \"is_student\": false, "
@@ -53,25 +55,26 @@ int main() {
 	}
 
 	string_free(&str);
-
+	
 		
 
 	jsontest();
 	
+	
 	// Standardvariablen
 	int status = 0;
 	int current_page = -1;
-	int view_type = -1;
+	int view_type = OV_BY_TIME;
 
 
 	
 	// Daten aus der Datei lesen -> Speicherung in 2 dynamischen Arrays (je eines für Veranstaltungen und Modulgruppen)
 	struct Veranstaltung *ver = NULL;
 	size_t size_ver = 0;
-	struct Modulgruppe *mod= NULL;
+	struct Modulgruppe *mod = NULL;
 	size_t size_mod = 0;
 	get_test_data(&ver, &size_ver, &mod, &size_mod);
-	
+
 
 
 

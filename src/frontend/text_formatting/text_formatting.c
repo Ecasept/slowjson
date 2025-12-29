@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <wchar.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
 
 
 void print_welcomescreen()
@@ -42,13 +44,15 @@ int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modu
         }
 
 
-        wprintf(L"%lsVeranstaltungsübersicht%ls\n\n", TXT_INVERSE, END_STYLE);
+        wprintf(L"%ls  Veranstaltungsübersicht  %ls\n", TXT_INVERSE, END_STYLE);
         
 
         // Übersicht nach Semester geordnet ausgeben
-        if (view_type == 1) {
+        if (view_type == OV_BY_TIME) {
+                wprintf(L"\nSortierung: Semester, aufsteigend\n");
                 print_overview_by_time(ver, size_ver);
-        } else if (view_type == 2) {
+        } else if (view_type == OV_BY_MOD) {
+                wprintf(L"\nSortierung: Modulgruppe\n");
                 print_overview_by_mod(ver, size_ver, mod, size_mod);
         }
 
@@ -120,7 +124,15 @@ int print_averagescreen(int new_entry)
                 print_inputcompletescreen();      
         }
 
-        wprintf(L"\n%ls%lsHier sieht man den Notendurchschnitt%ls\n", TXT_RED, TXT_INVERSE, END_STYLE);
+        // FUNKTION ZUR BERECHNUNG DES AKTUELLEN NOTENDURSCHNITTS -> Adrian
+        double test_notendurchschnitt = 2.3;
+
+        wprintf(L"\n%lsNotendurchschnitt%ls\n\n", TXT_INVERSE, END_STYLE);
+        wprintf(L"Berechnung nach PO: %ls\n\n", PO_2018);
+        wprintf(L"   ┌───────────────────────────────────────────────────────┐\n");
+        wprintf(L"   │         %lsAktueller Notendurchschnitt:%ls %ls%.1f%ls              │\n", TXT_GREEN, END_STYLE, TXT_UNDERLINED, test_notendurchschnitt, END_STYLE);
+        wprintf(L"   └───────────────────────────────────────────────────────┘\n\n\n");
+
         wprintf(L"  %lsOptionen%ls                        %lsTaste%ls                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
         wprintf(L"  Veranstaltungsübersicht           [v]                    Veranstaltung hinzufügen          [n]\n");
         wprintf(L"                                                           Modulgruppe hinzufügen            [m]\n");
@@ -177,12 +189,20 @@ void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver)
                 // UND
                 // AUFRUF FUNKTION ZUR ALPHABETISCHEN SORTIERUNG DER VERANSTALTUNGEN => Adrian
                 if (ver[i].semester.jahr != last_time.jahr || ver[i].semester.jahreszeit != last_time.jahreszeit) {
+                        struct winsize w;
+    	                        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
+        	                        perror("ioctl");
+    	                        }
                         if (ver[i].semester.jahreszeit == Winter) {
                                 wprintf(L"\n\n%lsWS %i/%i%ls\n", TXT_UNDERLINED, ver[i].semester.jahr, ver[i].semester.jahr + 1, END_STYLE);
-                                wprintf(L"────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n\n");
+                                                                for (int a = 0; a < w.ws_col; ++a) {
+                                        wprintf(L"─");
+                                }
                         } else {
                                 wprintf(L"\n\n%lsSS %i%ls\n", TXT_UNDERLINED, ver[i].semester.jahr, END_STYLE);
-                                wprintf(L"────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n\n");
+                                for (int a = 0; a < w.ws_col; ++a) {
+                                        wprintf(L"─");
+                                }                        
                         }
                         last_time.jahr = ver[i].semester.jahr;
                         last_time.jahreszeit = ver[i].semester.jahreszeit;
@@ -224,6 +244,10 @@ void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Mo
         wchar_t v[] = L"bestanden";
         wchar_t x[] = L"nicht bestanden";
         wchar_t y[] = L"ausstehend";
+        struct winsize w;
+        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
+                perror("ioctl");
+        }
 
         
 
@@ -243,8 +267,9 @@ void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Mo
                                 ++a;
                         }
                         wprintf(L"\n\n%ls%ls%ls\n", TXT_UNDERLINED, mod[a].name, END_STYLE);
-                        wprintf(L"───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n\n");
-                        
+                        for (int a = 0; a < w.ws_col; ++a) {
+                                        wprintf(L"─");
+                        }                        
                         last_index = ver[i].modulgruppenindex;
                 }
 
@@ -343,11 +368,11 @@ int print_addverscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modu
 
         wprintf(L"\n\nZu bestehender Modulgruppe hinzufügen: [h]\nZu neuer Modulgruppe hinzufügen [n]\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
         status = read_command(ADD_TO_OLD_OR_NEW_MOD, SIZE_ADD_TO_OLD_OR_NEW_MOD);
+        int stat_1 = 1;
         switch (status) {
                 case L'h':
                         wprintf(L"\nNummer der Modulgruppe:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
                         int zahl = -1;
-                        int stat_1 = 1;
                         stat_1 = read_number_in_bound(0, (int) ((*size_mod) - 1), &zahl);
                         switch (stat_1) {
                                 case VALID_USER_INPUT:
@@ -363,11 +388,9 @@ int print_addverscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modu
                                         return INVALID_FUNCTION_INPUT;
                                 }
                         break;
-
                 case L'n':
-                        int stat_2 = 1;
-                        stat_2 = print_addmodscreen(mod, size_mod);
-                        switch (stat_2) {
+                        stat_1 = print_addmodscreen(mod, size_mod);
+                        switch (stat_1) {
                                 case VALID_USER_INPUT:
                                         wprintf(L"\nDie Veranstaltung wurde zu folgender Modulgruppe hinzugefügt:\n");
                                         wprintf(L"%ls", (*mod)[(*size_mod) - 1].name);
