@@ -39,14 +39,29 @@
 #define SORT_MODUL 2
 
 
+// Codes für verschiedene Bildschirme
+#define CURR_PAGE_OV_SCR 1
+#define CURR_PAGE_AV_SCR 2
+#define CURR_PAGE_HELP_SCR 3
+
+#define OV_BY_TIME 1
+#define OV_BY_MOD 2
+
+#define NEW_ENTRY 1
+#define NO_NEW_ENTRY 0
+
+
 void print_welcomescreen();
-int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod, int view_type);
+int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod, int view_type, int new_entry);
 void print_helpscreen();
 void print_endscreen();
-int print_averagescreen();
+int print_averagescreen(int new_entry);
 void clear_display();
 void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver);
 void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod);
+int print_addverscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modulgruppe **mod, size_t *size_mod);
+void print_inputcompletescreen();
+int print_addmodscreen(struct Modulgruppe **mod, size_t *size_mod);
 
 
 
