@@ -17,6 +17,7 @@ typedef enum {
 	EIndexOutOfBounds,
 	EUnicodeError,
 	EUnicodeUnexpectedEndOfString,
+	EHashmapKeyNotFound
 } ErrorType;
 
 typedef struct {

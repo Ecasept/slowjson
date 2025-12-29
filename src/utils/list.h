@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef LIST_DECLARATION
+
 struct TYPED_NAME(list) {
 	TYPE *data;
 	size_t length;
@@ -49,9 +51,11 @@ static inline bool TYPED_NAME(list_check_index)(const TYPED_NAME(list) * arr,
 	return index < arr->length;
 }
 
+#endif
+
 #ifdef LIST_IMPLEMENTATION
 
-const size_t INITIAL_LIST_SIZE = 8;
+const size_t TYPED_NAME(INITIAL_LIST_SIZE) = 8;
 
 /** @brief Panics if the passed list is freed */
 void TYPED_NAME(list_ensure_not_freed)(const TYPED_NAME(list) * arr) {
@@ -69,7 +73,7 @@ void TYPED_NAME(list_ensure_not_freed)(const TYPED_NAME(list) * arr) {
  */
 void TYPED_NAME(list_init)(TYPED_NAME(list) * arr, size_t cap) {
 	if (cap == 0) {
-		cap = INITIAL_LIST_SIZE;
+		cap = TYPED_NAME(INITIAL_LIST_SIZE);
 	}
 	arr->data = (TYPE *)malloc(sizeof(TYPE) * cap);
 	if (arr->data == NULL) {

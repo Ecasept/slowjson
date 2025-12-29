@@ -1,18 +1,15 @@
 #pragma once
-#define TYPE unsigned char
-#define TYPED_NAME(x) uchar_##x
-#ifdef VSCODE_EXT
-#define LIST_IMPLEMENTATION
-#endif
-#include "list.h"
-#ifdef VSCODE_EXT
-#undef LIST_IMPLEMENTATION
-#endif
-#undef TYPE
-#undef TYPED_NAME
 
 #include "custom_error.h"
 #include "unicode/unicode_types.h"
+
+#define TYPE uchar
+#define TYPED_NAME(name) uchar_##name
+#define LIST_DECLARATION
+#include "list.h"
+#undef LIST_DECLARATION
+#undef TYPE
+#undef TYPED_NAME
 
 struct string {
 	uchar_list arr;
