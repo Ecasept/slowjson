@@ -1,4 +1,4 @@
-#include "../json/lexer.h"
+#include "../json/jsontest.h"
 #include <stdio.h>
 #include "../frontend/test.h"
 #include "../frontend/text_formatting/text_formatting.h"
@@ -14,13 +14,8 @@
 
  
 
-
-static unsigned lcg(unsigned *s) {
-	*s = (*s) * 1103515245u + 12345u;
-	return *s;
-}
-	
-
+  
+  
 int main() {
 	setlocale(LC_ALL, "");	
 	string str;
@@ -61,6 +56,7 @@ int main() {
 
 		
 
+	jsontest();
 	
 	// Standardvariablen
 	int status = 0;
