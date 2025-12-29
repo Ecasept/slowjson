@@ -7,21 +7,55 @@
 #include <string.h>
 #include <wchar.h>
 #include <locale.h>
+#include <math.h>
 
 
 
 
-#define CURR_PAGE_OV_SCR 1
-#define CURR_PAGE_AV_SCR 2
-#define CURR_PAGE_HELP_SCR 3
-
-#define OV_BY_TIME 1
-#define OV_BY_MOD 2
+ 
 
   
   
 int main() {
 	setlocale(LC_ALL, "");	
+	string str;
+	string_new(&str,
+			   "{ \"name\": \"John Doe\", \"age\": 30, \"is_student\": false, "
+			   "\"courses\": [\"Math\", \"Science\", \"History\"], "
+			   "\"address\": { \"street\": \"123 Main St\", \"city\": "
+			   "\"Anytown\" } }");
+
+	Lexer lexer;
+	lexer_init(&lexer, &str);
+
+	JSONToken token;
+	Result r;
+	while (1) {
+		r = lexer_next_token(&lexer, &token);
+		if (!r.success) {
+			print_error(r);
+			error_free(r);
+			break;
+		}
+		if (token.type == JSONTok_EOF) {
+			lexer_free_token(&token);
+			error_free(r);
+			break;
+		}
+		char *value;
+		string_to_cstr(&token.value, &value);
+		wprintf(L"Token: %s \"%s\" (line %zu, column %zu)\n",
+			   tk_as_str(token.type), value ? value : "(null)", token.line,
+			   token.column);
+		free(value);
+
+		lexer_free_token(&token);
+	}
+
+	string_free(&str);
+
+		
+
 	jsontest();
 	
 	// Standardvariablen
@@ -60,7 +94,7 @@ int main() {
 	switch (status) {
 		case L'v':
 			view_type = OV_BY_TIME;
-			print_overviewscreen(ver, size_ver, mod, size_mod, view_type);
+			print_overviewscreen(ver, size_ver, mod, size_mod, view_type, NO_NEW_ENTRY);
 			current_page = CURR_PAGE_OV_SCR;
 			break;
 		case L'h':
@@ -91,7 +125,7 @@ int main() {
 	
 
 	
-		// Fehlerbehandlung bei Fehlern oder falscher Eingabe
+		// Fehlerbehandlung bei Programmfehlern oder falscher Eingabe
 		if (status == BUFFER_ERROR) {
 			wprintf(L"%ls BUFFER ERROR %ls", TXT_RED, END_STYLE);
 			return 0;
@@ -107,8 +141,7 @@ int main() {
 		// Je nach Eingabe die verschiedenen Screens aufrufen
 		switch (status) {
 			case L'v':
-				view_type = OV_BY_TIME;
-				print_overviewscreen(ver, size_ver, mod, size_mod, view_type);
+				print_overviewscreen(ver, size_ver, mod, size_mod, view_type, NO_NEW_ENTRY);
 				current_page = CURR_PAGE_OV_SCR;
 				break;
 			case L'a':
@@ -117,12 +150,62 @@ int main() {
 				} else {
 					view_type = OV_BY_TIME;
 				}
-				print_overviewscreen(ver, size_ver, mod, size_mod, view_type);
+				print_overviewscreen(ver, size_ver, mod, size_mod, view_type, NO_NEW_ENTRY);
 				current_page = CURR_PAGE_OV_SCR;
+				break;
+			case L'n':
+				status = print_addverscreen(&ver, &size_ver, &mod, &size_mod);
+				if (status == BUFFER_ERROR) {
+					wprintf(L"%ls BUFFER ERROR %ls", TXT_RED, END_STYLE);
+					return 0;
+				} else if (status == MEM_ALLOC_ERROR) {
+					wprintf(L"%ls MEMORY ALLCOCATION ERROR %ls", TXT_RED, END_STYLE);
+					return 0;
+				} else if (status == INVALID_FUNCTION_INPUT) {
+					wprintf(L"%ls INVALID FUNCTION INPUT %ls", TXT_RED, END_STYLE);
+					return 0;
+				} else if (status == INVALID_USER_INPUT) {
+					current_page = CURR_PAGE_HELP_SCR;
+					print_helpscreen();
+				} else if (status == VALID_USER_INPUT) {
+					switch (current_page) {
+						case CURR_PAGE_OV_SCR:
+							print_overviewscreen(ver, size_ver, mod, size_mod, view_type, NEW_ENTRY);
+							break;
+						case CURR_PAGE_AV_SCR:
+							print_averagescreen(NEW_ENTRY);
+							break;
+					}
+				}
+				break;
+			case L'm':
+				status = print_addmodscreen(&mod, &size_mod);
+				if (status == BUFFER_ERROR) {
+					wprintf(L"%ls BUFFER ERROR %ls", TXT_RED, END_STYLE);
+					return 0;
+				} else if (status == MEM_ALLOC_ERROR) {
+					wprintf(L"%ls MEMORY ALLCOCATION ERROR %ls", TXT_RED, END_STYLE);
+					return 0;
+				} else if (status == INVALID_FUNCTION_INPUT) {
+					wprintf(L"%ls INVALID FUNCTION INPUT %ls", TXT_RED, END_STYLE);
+					return 0;
+				} else if (status == INVALID_USER_INPUT) {
+					current_page = CURR_PAGE_HELP_SCR;
+					print_helpscreen();
+				} else if (status == VALID_USER_INPUT) {
+					switch (current_page) {
+						case CURR_PAGE_OV_SCR:
+							print_overviewscreen(ver, size_ver, mod, size_mod, view_type, NEW_ENTRY);
+							break;
+						case CURR_PAGE_AV_SCR:
+							print_averagescreen(NEW_ENTRY);
+							break;
+					}					
+				}
 				break;
 
 			case L'd':
-				print_averagescreen();
+				print_averagescreen(NO_NEW_ENTRY);
 				current_page = CURR_PAGE_AV_SCR;
 				break;
 			case L'h':
