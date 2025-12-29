@@ -2,7 +2,6 @@
 #include "../../utils/dstring.h"
 #include "unicode_types.h"
 #include <stdint.h>
-#include <uchar.h>
 
 /**
  * @brief Shorthand for checking if a character is in a specified range
