@@ -24,5 +24,8 @@ typedef struct json_value_hashmap json_value_hashmap;
 Result json_value_hashmap_get(const json_value_hashmap *map, const string *key,
 							  JSONValue *out);
 
+void json_value_hashmap_set(json_value_hashmap *map, string *key,
+							JSONValue value);
+
 void json_value_hashmap_init(json_value_hashmap *map);
 void json_value_hashmap_free(json_value_hashmap *map);

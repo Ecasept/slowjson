@@ -19,7 +19,7 @@ Result json_value_hashmap_node_get(json_value_hashmap_node *node,
 	}
 }
 
-void json_value_hashmap_node_set(json_value_hashmap_node *node, string *key,
+bool json_value_hashmap_node_set(json_value_hashmap_node *node, string *key,
 								 JSONValue value) {
 	bool eq;
 	string_eq(node->key, key, &eq);
@@ -27,6 +27,7 @@ void json_value_hashmap_node_set(json_value_hashmap_node *node, string *key,
 		// Overwrite existing value
 		json_value_free(&node->value);
 		node->value = value;
+		return false;
 	} else {
 		if (node->next == NULL) {
 			// End reached
@@ -34,9 +35,9 @@ void json_value_hashmap_node_set(json_value_hashmap_node *node, string *key,
 			node.key = key;
 			node.value = value;
 			node.next = NULL;
-
+			return true;
 		} else {
-			json_value_hashmap_node_set(node->next, key, value);
+			return json_value_hashmap_node_set(node->next, key, value);
 		}
 	}
 }
