@@ -13,6 +13,7 @@
 #define BUFFER_ERROR -2
 #define INVALID_FUNCTION_INPUT -3
 #define MEM_ALLOC_ERROR -4
+#define CHANGES_SAVED -5
 #define FLUSH_COMPLETE 1
 
 // Eingabeoptionen auf verschiedenen Bildschirmen
@@ -39,9 +40,28 @@
 #define ADD_TO_OLD_OR_NEW_MOD L"hn"
 #define SIZE_ADD_TO_OLD_OR_NEW_MOD 2
 
+#define INPUT_EDIT_VER L"lnmvch"
+#define SIZE_INPUT_EDIT_VER 6
+
+#define INPUT_BACK_TO_OV L"z"
+#define SIZE_INPUT_BACK_TO_OV 1
+
+#define INPUT_NOTE_OR_AUSSTEHEND L"nab"
+#define SIZE_INPUT_NOTE_OR_AUSSTEHEND 3
 
 
-void input_test();
+#define INPUT_MOD_OR_CANCEL L"nb"
+#define SIZE_INPUT_MOD_OR_CANCEL 2
+
+
+// Fehlerbehandlung
+// Weiterleitung der vier Fehlerfälle 1. BUFFER_ERROR 2. INVALID_FUNCTION_INPUT 3. MEM_ALLOC_ERROR 4. INVALID_USER_INPUT an die aufrufende Funktion
+#define STANDARD_ERROR_HANDLING(a) {switch (a) {case BUFFER_ERROR: return BUFFER_ERROR; case INVALID_FUNCTION_INPUT: return INVALID_FUNCTION_INPUT; case INVALID_USER_INPUT: return INVALID_USER_INPUT; case MEM_ALLOC_ERROR: return MEM_ALLOC_ERROR; }}
+
+
+
+
+
 int read_command(wchar_t valid_input[], size_t size);
 int read_string(wchar_t **s);
 int read_note(double *s);

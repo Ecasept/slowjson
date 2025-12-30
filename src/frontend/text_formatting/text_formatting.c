@@ -48,10 +48,10 @@ int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modu
         
 
         // Übersicht nach Semester geordnet ausgeben
-        if (view_type == OV_BY_TIME) {
+        if (view_type == OV_BY_TIME && size_ver != 0) {
                 wprintf(L"\nSortierung: Semester, aufsteigend\n");
                 print_overview_by_time(ver, size_ver);
-        } else if (view_type == OV_BY_MOD) {
+        } else if (view_type == OV_BY_MOD && size_ver != 0) {
                 wprintf(L"\nSortierung: Modulgruppe\n");
                 print_overview_by_mod(ver, size_ver, mod, size_mod);
         }
@@ -160,7 +160,7 @@ void clear_display()
                 }
                 wprintf(L"\n");
         }
-        wprintf(L"\033[0;0H");
+        wprintf(L"\033[0;0H\n\n\n");
 
 }
 
@@ -177,10 +177,6 @@ void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver)
         struct Semester last_time;
         last_time.jahr = -1;
         last_time.jahreszeit = -1;
-        wchar_t v[] = L"bestanden";
-        wchar_t x[] = L"nicht bestanden";
-        wchar_t y[] = L"ausstehend";
-
 
 
         for (size_t i = 0; i < size_ver; ++i) {
@@ -190,9 +186,9 @@ void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver)
                 // AUFRUF FUNKTION ZUR ALPHABETISCHEN SORTIERUNG DER VERANSTALTUNGEN => Adrian
                 if (ver[i].semester.jahr != last_time.jahr || ver[i].semester.jahreszeit != last_time.jahreszeit) {
                         struct winsize w;
-    	                        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
-        	                        perror("ioctl");
-    	                        }
+                        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
+                                perror("ioctl");
+                        }
                         if (ver[i].semester.jahreszeit == Winter) {
                                 wprintf(L"\n\n%lsWS %i/%i%ls\n", TXT_UNDERLINED, ver[i].semester.jahr, ver[i].semester.jahr + 1, END_STYLE);
                                                                 for (int a = 0; a < w.ws_col; ++a) {
@@ -222,13 +218,13 @@ void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver)
                 // Restliche Daten der Veranstaltung ausgeben
                 switch(ver[i].state) {
                         case Bestanden:
-                                wprintf(L"        %ls%15ls%ls     %i    %.1f\n", TXT_GREEN, v, END_STYLE, ver[i].lp, ver[i].note);
+                                wprintf(L"        %ls%15ls%ls     %i    %.1f\n", TXT_GREEN, BESTANDEN, END_STYLE, ver[i].lp, ver[i].note);
                                 break;
                         case NichtBestanden:
-                                wprintf(L"        %ls%15ls%ls     %i    %ls%.1f%ls\n", TXT_RED, x, END_STYLE, ver[i].lp, TXT_RED, ver[i].note, END_STYLE);
+                                wprintf(L"        %ls%15ls%ls     %i    %ls%.1f%ls\n", TXT_RED, NICHT_BESTANDEN, END_STYLE, ver[i].lp, TXT_RED, ver[i].note, END_STYLE);
                                 break;
                         case Ausstehend:
-                                wprintf(L"        %ls%15ls%ls     %i    %ls/%ls\n", TXT_YELLOW, y, END_STYLE, ver[i].lp, TXT_YELLOW, END_STYLE);
+                                wprintf(L"        %ls%15ls%ls     %i    %ls/%ls\n", TXT_YELLOW, AUSSTEHEND, END_STYLE, ver[i].lp, TXT_YELLOW, END_STYLE);
                                 break;
                 }
         }
@@ -241,9 +237,6 @@ void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver)
 void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod)
 {
         int last_index = -1;
-        wchar_t v[] = L"bestanden";
-        wchar_t x[] = L"nicht bestanden";
-        wchar_t y[] = L"ausstehend";
         struct winsize w;
         if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
                 perror("ioctl");
@@ -287,13 +280,13 @@ void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Mo
                 // Restliche Daten der Veranstaltung ausgeben
                 switch(ver[i].state) {
                         case Bestanden:
-                                wprintf(L"        %ls%15ls%ls     %i    %.1f\n", TXT_GREEN, v, END_STYLE, ver[i].lp, ver[i].note);
+                                wprintf(L"        %ls%15ls%ls     %i    %.1f\n", TXT_GREEN, BESTANDEN, END_STYLE, ver[i].lp, ver[i].note);
                                 break;
                         case NichtBestanden:
-                                wprintf(L"        %ls%15ls%ls     %i    %ls%.1f%ls\n", TXT_RED, x, END_STYLE, ver[i].lp, TXT_RED, ver[i].note, END_STYLE);
+                                wprintf(L"        %ls%15ls%ls     %i    %ls%.1f%ls\n", TXT_RED, NICHT_BESTANDEN, END_STYLE, ver[i].lp, TXT_RED, ver[i].note, END_STYLE);
                                 break;
                         case Ausstehend:
-                                wprintf(L"        %ls%15ls%ls     %i    %ls/%ls\n", TXT_YELLOW, y, END_STYLE, ver[i].lp, TXT_YELLOW, END_STYLE);
+                                wprintf(L"        %ls%15ls%ls     %i    %ls/%ls\n", TXT_YELLOW, AUSSTEHEND, END_STYLE, ver[i].lp, TXT_YELLOW, END_STYLE);
                                 break;
                 }
         }

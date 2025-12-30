@@ -44,7 +44,7 @@ struct Veranstaltung *get_test_ver()
 	++i;
 
 	p[i].name = L"Informatik 1";
-	p[i].note = 2.7;
+	p[i].note = 2.0;
 	p[i].lp = 8;
 	p[i].modulgruppenindex = 0;
 	p[i].semester.jahr = 2025;
@@ -60,6 +60,7 @@ struct Veranstaltung *get_test_ver()
 	p[i].semester.jahreszeit = Winter;
 	p[i].state = Bestanden;
 	++i;
+	
 	
 	p[i].name = L"Informatik 2";
 	p[i].note = 2.0;
@@ -95,7 +96,7 @@ struct Veranstaltung *get_test_ver()
 	p[i].semester.jahr = 2026;
 	p[i].semester.jahreszeit = Winter;
 	p[i].state = Bestanden;	
-
+	
 	return p;
 }
 
