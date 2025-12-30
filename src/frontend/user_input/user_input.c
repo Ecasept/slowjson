@@ -8,30 +8,6 @@
 
 
 
-void input_test()
-{
-        wprintf(L"%ls", "╠ ╡ ╢ ╣ ╤");
-	wprintf(L"ÄÖÜäöüß\n>>>");
-	wprintf(L"%ls", "╠ ╡ ╢ ╣ ╤ ╭");
-	wprintf(L"ÄÖÜäöüß\n>>>");
-	
-	wchar_t v[20];
-	wchar_t c = '\0';
-	int i = 0;
-
-	while((c = getwchar()) != '\n') {
-		v[i] = c;
-		++i;
-	}
-	v[i] = '\0';
-	
-        for (int a = 0; a < i; ++a) {
-                putwchar(v[a]);
-        }
-       wprintf(L"\n\nAusgabe: %ls\n", v);
-
-}
-
 
 
 
@@ -88,7 +64,8 @@ int read_command(wchar_t valid_input[], size_t size)
                 if (counter == 0) {
                         return INVALID_USER_INPUT;
                 }
-                wprintf(L"\n%ls Bitte geben Sie nur einen einzigen Buchstaben ein!%ls\n", TXT_RED, END_STYLE);
+                wprintf(L"\n%ls Bitte geben Sie nur einen einzigen Buchstaben ein!%ls", TXT_RED, END_STYLE);
+                wprintf(L"\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
         }
 }
 
@@ -178,10 +155,6 @@ int read_string(wchar_t **s)
 
 
 
-
-
-
-
 int read_note(double *note)
 {
         // Fehlermeldung, wenn NULL für note übergeben wurde
@@ -224,8 +197,6 @@ int read_note(double *note)
 
 
                 if (stat == 1 && valid_number == 1) {
-                        // floor() funktioniert nicht => SCHÖNERE IMPLEMENTIERUNG MIT floor() EINFÜGEN
-                        wprintf(L"\n\nQUIEEEEEEEEEEEEEEEK\n\n");
                         if (result < 1.0 || result > 5.0 || !(result == 1.0 || result == 1.3 || result == 1.7 || result == 2.0 || result == 2.3 || result == 2.7 || result == 3.0 || result == 3.3 || result == 3.7 || result == 4.0 || result == 4.3 || result == 4.7 || result == 5.0)) {
                                 --counter;
                                 valid_number = 0;
@@ -249,13 +220,6 @@ int read_note(double *note)
 
 
 }
-
-
-
-
-
-
-
 
 
 
@@ -326,24 +290,6 @@ int read_lp(int *lp)
                 }
         }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -427,7 +373,7 @@ int read_jahr(int *jahr)
 int read_number_in_bound(int lower_bound, int upper_bound, int *number)
 {
         // Fehlermeldung, wenn NULL für number übergeben wurde oder upper_bound kleiner oder gleich lower_bound ist
-        if (number == NULL || upper_bound <= lower_bound) {
+        if (number == NULL || upper_bound < lower_bound) {
                 return INVALID_FUNCTION_INPUT;
         }
 

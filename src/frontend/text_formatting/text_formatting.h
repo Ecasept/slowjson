@@ -30,6 +30,8 @@
 #define TXT_UNDERLINED L"\033[4m"
 #define TXT_INVERSE L"\033[7m"
 
+#define CURSOR_INVISIBLE L"\033[8m"
+
 // Text Farben/Styles zurücksetzen
 #define END_STYLE L"\033[0m"
 
@@ -44,6 +46,7 @@
 #define CURR_PAGE_AV_SCR 2
 #define CURR_PAGE_HELP_SCR 3
 
+// view_type der Veranstaltungsüberischt
 #define OV_BY_TIME 1
 #define OV_BY_MOD 2
 
@@ -53,6 +56,12 @@
 
 // PO für Notendurchschnitt
 #define PO_2018 L"FPO Bachelor Informatik 2018"
+
+
+// Anzeige der Veranstaltungen
+#define BESTANDEN L"bestanden"
+#define NICHT_BESTANDEN L"nicht bestanden"
+#define AUSSTEHEND L"ausstehend"
 
 
 void print_welcomescreen();

@@ -4,6 +4,7 @@
 #include "../frontend/text_formatting/text_formatting.h"
 #include "../midend/data.h"
 #include "../frontend/user_input/user_input.h"
+#include "../frontend/edit_events/edit_events.h"
 #include <string.h>
 #include <wchar.h>
 #include <locale.h>
@@ -19,7 +20,7 @@
   
 int main() {
 	setlocale(LC_ALL, "");	
-	
+	/*
 	string str;
 	string_new(&str,
 			   "{ \"name\": \"John Doe\", \"age\": 30, \"is_student\": false, "
@@ -59,7 +60,7 @@ int main() {
 		
 
 	jsontest();
-	
+	*/
 	
 	// Standardvariablen
 	int status = 0;
@@ -89,8 +90,7 @@ int main() {
 		wprintf(L"%ls Programmfehler!\nBitte neu starten.%ls", TXT_RED, END_STYLE);
 		return 0;
 	} else if (status == INVALID_USER_INPUT) {
-		wprintf(L"\n%ls%ls Viermal falsche Eingabe. Bitte neu starten\n%ls", TXT_INVERSE, TXT_RED, END_STYLE);
-		return 0;
+		status = L'h';
 	}
 
 	// Unterscheidung Eingabeoptionen
@@ -211,6 +211,35 @@ int main() {
 				print_averagescreen(NO_NEW_ENTRY);
 				current_page = CURR_PAGE_AV_SCR;
 				break;
+			case L'b':
+				status = print_editver(&ver, &size_ver, &mod, &size_mod, &current_page);
+				if (status == BUFFER_ERROR) {
+					wprintf(L"%ls BUFFER ERROR %ls", TXT_RED, END_STYLE);
+					return 0;
+				} else if (status == MEM_ALLOC_ERROR) {
+					wprintf(L"%ls MEMORY ALLCOCATION ERROR %ls", TXT_RED, END_STYLE);
+					return 0;
+				} else if (status == INVALID_FUNCTION_INPUT) {
+					wprintf(L"%ls INVALID FUNCTION INPUT %ls", TXT_RED, END_STYLE);
+					return 0;
+				} else if (status == INVALID_USER_INPUT) {
+					current_page = CURR_PAGE_HELP_SCR;
+					print_helpscreen();
+				} else if (status == VALID_USER_INPUT) {
+					switch (current_page) {
+						case CURR_PAGE_OV_SCR:
+							print_overviewscreen(ver, size_ver, mod, size_mod, view_type, NO_NEW_ENTRY);
+							break;
+						case CURR_PAGE_AV_SCR:
+							print_averagescreen(NO_NEW_ENTRY);
+							break;
+						case CURR_PAGE_HELP_SCR:
+							print_helpscreen();
+							break;
+					}					
+				}
+				break;
+
 			case L'h':
 				print_helpscreen();
 				current_page = CURR_PAGE_HELP_SCR;
