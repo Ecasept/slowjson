@@ -69,12 +69,11 @@ void quicksort_by_time(struct Veranstaltung *ver, int low, int high)
     }
 }
 
-struct Veranstaltung *sort_by_time(struct Veranstaltung *ver, size_t size_ver)
+void sort_by_time(struct Veranstaltung *ver, size_t size_ver)
 {
     if (size_ver == 0)
-        return ver;
+        return;
     quicksort_by_time(ver, 0, size_ver - 1);
-    return ver;
 }
 
 int partition_by_mod(struct Veranstaltung *ver, int low, int high)
@@ -108,10 +107,9 @@ void quicksort_by_mod(struct Veranstaltung *ver, int low, int high)
     }
 }
 
-struct Veranstaltung *sort_by_mod(struct Veranstaltung *ver, size_t size_ver)
+void sort_by_mod(struct Veranstaltung *ver, size_t size_ver)
 {
     if (size_ver == 0)
-        return ver;
+        return;
     quicksort_by_mod(ver, 0, size_ver - 1);
-    return ver;
 }
