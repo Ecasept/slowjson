@@ -48,7 +48,6 @@ static Result _convert_to_json(struct Veranstaltung *v_out, size_t v_count,
 		json_value_hashmap_set(&veranstaltung.hashmap,
 								 string_newr("name"),
 								 json_value_new_string(&name));
-		string_free(&name);
 
 		json_value_hashmap_set(&veranstaltung.hashmap,
 								 string_newr("note"),
@@ -114,8 +113,8 @@ static Result _convert_to_json(struct Veranstaltung *v_out, size_t v_count,
 		json_value_hashmap_set(&modulgruppe.hashmap,
 							   string_newr("name"),
 							   json_value_new_string(&name));
-		string_free(&name);
-		json_value_hashmap_set(&modulgruppe.hashmap,
+
+							   json_value_hashmap_set(&modulgruppe.hashmap,
 							   string_newr("lp_todo"),
 							   json_value_new_integer(mg->lp_todo));
 		json_value_list_push(&mg_list.list, modulgruppe);
@@ -150,5 +149,6 @@ Result save_data_to_savefile(struct Veranstaltung *v, size_t v_count,
 		return r;
 	}
 	r = write_string_to_file(JSON_SAVEFILE_NAME, &str);
+	string_free(&str);
 	return r;
 }
