@@ -18,7 +18,7 @@ struct json_value_hashmap {
 	size_t size;
 };
 typedef struct json_value_hashmap json_value_hashmap;
-#include "../json.h"
+#include "../internal/jsonvalue.h"
 
 // ==== Functions ====
 

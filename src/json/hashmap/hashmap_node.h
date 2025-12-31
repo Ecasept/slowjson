@@ -1,5 +1,5 @@
 #pragma once
-#include "../json.h"
+#include "../internal/jsonvalue.h"
 
 struct json_value_hashmap_node {
 	JSONValue value;

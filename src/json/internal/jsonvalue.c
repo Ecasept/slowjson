@@ -1,4 +1,4 @@
-#include "json.h"
+#include "jsonvalue.h"
 
 void json_value_free(JSONValue *value) {
 	switch (value->type) {
@@ -8,6 +8,9 @@ void json_value_free(JSONValue *value) {
 		// does not need to be freed
 		break;
 	case JSON_ARRAY:
+		for (size_t i = 0; i < value->list.length; i++) {
+			json_value_free(&value->list.data[i]);
+		}
 		json_value_list_free(&value->list);
 		break;
 	case JSON_OBJECT:
@@ -39,10 +42,33 @@ JSONValue json_value_new_number(JSONNumber number) {
 	return val;
 }
 
+JSONValue json_value_new_integer(int64_t int_value) {
+	JSONValue val;
+	val.type = JSON_NUMBER;
+	val.number.is_integer = true;
+	val.number.int_value = int_value;
+	return val;
+}
+
+JSONValue json_value_new_float(double float_value) {
+	JSONValue val;
+	val.type = JSON_NUMBER;
+	val.number.is_integer = false;
+	val.number.float_value = float_value;
+	return val;
+}
+
 JSONValue json_value_new_string(string *str) {
 	JSONValue val;
 	val.type = JSON_STRING;
 	val.str = *str;
+	return val;
+}
+
+JSONValue json_value_new_string_cstr(const char *str) {
+	JSONValue val;
+	val.type = JSON_STRING;
+	string_new(&val.str, str);
 	return val;
 }
 
@@ -62,7 +88,7 @@ JSONValue json_value_new_object() {
 #define TYPE JSONValue
 #define TYPED_NAME(name) json_value_##name
 #define LIST_IMPLEMENTATION
-#include "../utils/list.h"
+#include "../../utils/list.h"
 #undef LIST_IMPLEMENTATION
 #undef TYPE
 #undef TYPED_NAME
