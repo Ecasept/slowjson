@@ -37,7 +37,7 @@ else
 endif
 
 valgrind: all
-	valgrind --leak-check=full ./$(BUILD_DIR)/$(TARGET)
+	valgrind --leak-check=full --show-leak-kinds=all ./$(BUILD_DIR)/$(TARGET)
 
 $(BUILD_DIR)/$(TARGET): $(OBJS)
 	$(call MKDIR,$(dir $@))
