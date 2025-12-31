@@ -1,24 +1,30 @@
 #pragma once
 #include <stdbool.h>
-#define try(code)                                                              \
-	r = code;                                                                  \
-	if (!r.success) {                                                          \
-		return r;                                                              \
-	}
+#define check(code) do {Result _r = (code); if (!_r.success) return _r;} while(0)
+
+#define FOREACH_ERROR_TYPE(macro)                                                   \
+	macro(ESuccess)                                     \
+		macro(EFailedToReadFile) \
+		macro(ELexerEOF) \
+		macro(EParserUnexpectedEOF)      \
+		macro(EParserSyntaxError) \
+		macro(ELexerSyntaxError)                    \
+		macro(ESubstrOutOfRange) \
+		macro(ENotImplemented)                   \
+		macro(EIndexOutOfBounds) \
+		macro(EUnicodeError)                 \
+		macro(EUnicodeUnexpectedEndOfString)                      \
+		macro(EHashmapKeyNotFound) \
+		macro(ESaveFormatError)
+
+#define DEFINE_ERROR_TYPE_ENUM(token) token,
+#define DECLARE_ERROR_TYPE_STRING(token) #token,
 
 typedef enum {
-	ESuccess,
-	// Recoverable Errors
-	EFailedToReadFile,
-	ELexerEOF,
-	ELexerSyntaxError,
-	ESubstrOutOfRange,
-	ENotImplemented,
-	EIndexOutOfBounds,
-	EUnicodeError,
-	EUnicodeUnexpectedEndOfString,
-	EHashmapKeyNotFound
+	FOREACH_ERROR_TYPE(DEFINE_ERROR_TYPE_ENUM)
 } ErrorType;
+
+const char* etostr(ErrorType type);
 
 typedef struct {
 	char *message;

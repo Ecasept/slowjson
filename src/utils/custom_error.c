@@ -32,9 +32,9 @@ void print_error(Result r) {
 		printf("No error occurred.\n");
 	} else {
 		if (r.message != NULL) {
-			printf("Error: %s\n", r.message);
+			printf("Error: %s: %s\n", etostr(r.type), r.message);
 		} else {
-			printf("An error occurred.\n");
+			printf("Error: %s\n", etostr(r.type));
 		}
 	}
 }
@@ -90,4 +90,15 @@ _Noreturn void panicf(const char *format, ...) {
 	fprintf(stderr, "\n");
 	va_end(args);
 	exit(EXIT_FAILURE);
+}
+
+static const char *error_type_strings[] = {
+	FOREACH_ERROR_TYPE(DECLARE_ERROR_TYPE_STRING)
+};
+
+const char* etostr(ErrorType type) {
+	if (type < 0 || type >= sizeof(error_type_strings) / sizeof(error_type_strings[0])) {
+		return "Unknown error";
+	}
+	return error_type_strings[type];
 }
