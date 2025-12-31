@@ -1,5 +1,5 @@
-#include <uchar.h>
+#include <stdint.h>
 
-typedef char32_t UnicodeCodePoint;
+typedef uint32_t UnicodeCodePoint;
 typedef UnicodeCodePoint UCP;
 typedef unsigned char uchar;

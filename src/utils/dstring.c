@@ -13,6 +13,12 @@ void string_new(string *str, const char *source) {
 	str->arr.length = len;
 }
 
+string string_newr(const char *source) {
+	string str;
+	string_new(&str, source);
+	return str;
+}
+
 /**
  * @brief Appends another string to this string.
  *
@@ -86,4 +92,16 @@ void string_at(const string *str, size_t index, uchar *out) {
 
 Result string_at_err(const string *str, size_t index, uchar *out) {
 	return uchar_list_get_err(&str->arr, index, out);
+}
+
+void string_clone(const string *str, string *out) {
+	uchar_list_init(&out->arr, str->arr.length);
+	memcpy(out->arr.data, str->arr.data, str->arr.length);
+	out->arr.length = str->arr.length;
+}
+
+bool string_eq_cstr(const string *str, const char *cstr) {
+    size_t len = strlen(cstr);
+    if (str->arr.length != len) return false;
+    return memcmp(str->arr.data, cstr, len) == 0;
 }

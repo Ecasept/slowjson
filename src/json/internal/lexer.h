@@ -1,6 +1,8 @@
-#include "../utils/custom_error.h"
-#include "../utils/dstring.h"
-#include "../utils/unicode/unicode_types.h"
+#pragma once
+#include "../../utils/custom_error.h"
+#include "../../utils/dstring.h"
+#include "../../utils/unicode/unicode_types.h"
+#include "jsonvalue.h"
 
 // Apply `macro` to each JSONTokenType
 #define FOREACH_TOKEN(macro)                                                   \
@@ -20,9 +22,10 @@ char *tk_as_str(JSONTokenType type);
 
 typedef struct {
 	JSONTokenType type;
-	string value;
 	size_t line;
 	size_t column;
+	string value;
+	JSONNumber number;
 } JSONToken;
 
 typedef struct {
@@ -35,13 +38,3 @@ typedef struct {
 void lexer_init(Lexer *lexer, const string *source);
 Result lexer_next_token(Lexer *lexer, JSONToken *token);
 void lexer_free_token(JSONToken *token);
-
-Result lexer_peek(const Lexer *lexer, UCP *out);
-Result lexer_consume(Lexer *lexer, UCP *out);
-
-Result lexer_lex_structural(Lexer *lexer, JSONToken *token);
-Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token);
-Result lexer_lex_string(Lexer *lexer, JSONToken *token);
-Result lexer_lex_number(Lexer *lexer, JSONToken *token);
-Result lexer_lex_literal(Lexer *lexer, JSONToken *token);
-Result lexer_test_literal(Lexer *lexer, string *string, bool *res);
