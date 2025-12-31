@@ -72,7 +72,7 @@ struct Veranstaltung *get_test_ver()
 	++i;
 
 	p[i].name = L"Mathematik für Informatiker II";
-	p[i].note = 0;
+	p[i].note = 5.0;
 	p[i].lp = 8;
 	p[i].modulgruppenindex = 2;
 	p[i].semester.jahr = 2026;

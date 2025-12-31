@@ -64,8 +64,7 @@ int read_command(wchar_t valid_input[], size_t size)
                 if (counter == 0) {
                         return INVALID_USER_INPUT;
                 }
-                wprintf(L"\n%ls Bitte geben Sie nur einen einzigen Buchstaben ein!%ls", TXT_RED, END_STYLE);
-                wprintf(L"\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+                print_wrong_command_screen(valid_input, size);
         }
 }
 
@@ -101,7 +100,7 @@ int read_string(wchar_t **s)
                 if (size == 1 && c == L'\n') {
                         valid_character = 0;
                         --counter;
-                        wprintf(L"%ls%lsFalsche Eingabe%ls", TXT_RED, TXT_INVERSE, END_STYLE);
+                        print_wrong_string_screen();
                 }
 
 
@@ -123,7 +122,7 @@ int read_string(wchar_t **s)
 
                 // Prüfung ob eingegebenes Zeichen Buchstabe, Zahl oder Leerzeichen ist
                 if (!(iswalnum(c) || iswpunct(c) || iswspace(c))) {
-                        wprintf(L"\n%lsFalsche Eingabe!%ls\nFolgende Zeichen sind erlaubt:\n- Deutsche Buchstaben\n- Ziffern\n- Sonstige Zeichen: Leerzeichen , ; : . - &", TXT_RED, END_STYLE);
+                        print_wrong_string_screen();
                         --counter;
                         valid_character = 0;
                         size = 1;
@@ -163,59 +162,87 @@ int read_note(double *note)
         }
 
         int counter = LIMIT_INPUT_ATTEMPTS;
-        int valid_number = -1;
         int stat = -1;
         double result = -1.0;
+        wchar_t array_number[4] = {0};
+        int i = 0;
 
         while (1) {
-                valid_number = 1;
-                
-                stat = wscanf(L"%lf", &result);
 
-                // Fehlerbehandlung bei falscher Eingabe
-                if (stat == EOF) {
-                        return BUFFER_ERROR;
-                } else if (stat != 1) {
+                while ((stat = getwchar())) {
+                        if (stat == L'\n' && i == 0) {
+                                i = 0;
+                                --counter;
+                                wprintf(L"\n\n");
+                                wprintf(L"┌────────────────────────────────────────────────────┐\n");
+                                wprintf(L"│                   %ls%lsFALSCHE EINGABE!%ls                 │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+                                wprintf(L"│        Bitte geben Sie eine gültige Note ein.      │\n");
+                                wprintf(L"└────────────────────────────────────────────────────┘");
+                                wprintf(L"\n\nNote eingeben:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+                                if (counter == 0) {
+                                        return INVALID_USER_INPUT;
+                                }
+                                continue;
+                        }
+
+                        if (stat == L'\n') {
+                                break;
+                        }
+
+
+                        if (i == 3 && stat != '\n') {
+                                if (flush() == BUFFER_ERROR) {
+                                        return BUFFER_ERROR;
+                                }
+                                --counter;
+                                wprintf(L"\n\n");
+                                wprintf(L"┌────────────────────────────────────────────────────┐\n");
+                                wprintf(L"│                   %ls%lsFALSCHE EINGABE!%ls                 │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+                                wprintf(L"│        Bitte geben Sie eine gültige Note ein.      │\n");
+                                wprintf(L"└────────────────────────────────────────────────────┘");
+                                wprintf(L"\n\nNote eingeben:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+                                if (counter == 0) {
+                                        return INVALID_USER_INPUT;
+                                }
+                                i = 0;
+                                continue;                        
+                        }
+
+                        
+
+
+                        array_number[i] = stat;
+                        ++i;
+                }
+
+                array_number[i] = L'\0';
+
+
+                result = wcstod(array_number, NULL);
+
+
+                if (result < 1.0 || result > 5.0 || !(result == 1.0 || result == 1.3 || result == 1.7 || result == 2.0 || result == 2.3 || result == 2.7 || result == 3.0 || result == 3.3 || result == 3.7 || result == 4.0 || result == 4.3 || result == 4.7 || result == 5.0)) {
                         --counter;
                         if (counter == 0) {
                                 return INVALID_USER_INPUT;
                         }
-                        valid_number = 0;
-                        wprintf(L"\n%ls%lsFalsche Eingabe!\nBitte eine gültige Note eingeben%ls\n>>> ", TXT_RED, TXT_INVERSE, END_STYLE);
+                        wprintf(L"\n\n");
+                        wprintf(L"┌────────────────────────────────────────────────────┐\n");
+                        wprintf(L"│                   %ls%lsFALSCHE EINGABE!%ls                 │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+                        wprintf(L"│        Bitte geben Sie eine gültige Note ein.      │\n");
+                        wprintf(L"└────────────────────────────────────────────────────┘"); 
+                        wprintf(L"\n\nNote eingeben:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);           
+                        i = 0;
+                        continue;                
                 }
-
-                if (getwchar() != L'\n') {
-                        if (flush() == BUFFER_ERROR) {
-                                return BUFFER_ERROR;
-                        }
-                        if (valid_number) {
-                                --counter;
-                                valid_number = 0;
-                                wprintf(L"\n%ls%lsFalsche Eingabe!\nBitte eine gültige Note eingeben%ls\n>>> ", TXT_RED, TXT_INVERSE, END_STYLE);
-                        }
-                }
-
-
-                if (stat == 1 && valid_number == 1) {
-                        if (result < 1.0 || result > 5.0 || !(result == 1.0 || result == 1.3 || result == 1.7 || result == 2.0 || result == 2.3 || result == 2.7 || result == 3.0 || result == 3.3 || result == 3.7 || result == 4.0 || result == 4.3 || result == 4.7 || result == 5.0)) {
-                                --counter;
-                                valid_number = 0;
-                                wprintf(L"\n%ls%lsFalsche Eingabe!\nBitte eine gültige Note eingeben%ls\n>>> ", TXT_RED, TXT_INVERSE, END_STYLE);                                
-                        }
-                }
-                
-
-                // Abbruch bei zu vielen falschen Eingaben
-                if (counter == 0) {
-                        return INVALID_USER_INPUT;
-                }
+        
 
                 
-                // Bei richtiger Eingabe, Eingabe in jahr speichern
-                if (valid_number) {
-                        *note = result;
-                        return VALID_USER_INPUT;
-                }
+
+                
+                // Bei richtiger Eingabe, Eingabe in note speichern
+                *note = result;
+                return VALID_USER_INPUT;
         }
 
 
@@ -234,61 +261,85 @@ int read_lp(int *lp)
         }
 
         int counter = LIMIT_INPUT_ATTEMPTS;
-        int valid_number = -1;
         int stat = -1;
         int result = -1;
+        wchar_t array_number[4] = {0};
+        int i = 0;
 
         while (1) {
-                valid_number = 1;
-                
-                stat = wscanf(L"%i", &result);
 
-                // Fehlerbehandlung bei falscher Eingabe
-                if (stat == EOF) {
-                        return BUFFER_ERROR;
-                } else if (stat != 1) {
+                while ((stat = getwchar())) {
+                        if (stat == L'\n' && i == 0) {
+                                i = 0;
+                                --counter;
+                                wprintf(L"\n\n");
+                                wprintf(L"┌──────────────────────────────────────────────────────────────────────┐\n");
+                                wprintf(L"│                       %ls%lsFALSCHE EINGABE!%ls                               │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+                                wprintf(L"│      Bitte geben Sie eine gültige Anzahl an Leistungspunkten ein.    │\n");
+                                wprintf(L"└──────────────────────────────────────────────────────────────────────┘");
+                                wprintf(L"\n\nLP eingeben:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+                                if (counter == 0) {
+                                        return INVALID_USER_INPUT;
+                                }
+                                continue;
+                        }
+
+                        if (stat == L'\n') {
+                                break;
+                        }
+
+
+                        if (i == 3 && stat != '\n') {
+                                if (flush() == BUFFER_ERROR) {
+                                        return BUFFER_ERROR;
+                                }
+                                --counter;
+                                wprintf(L"\n\n");
+                                wprintf(L"┌──────────────────────────────────────────────────────────────────────┐\n");
+                                wprintf(L"│                       %ls%lsFALSCHE EINGABE!%ls                               │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+                                wprintf(L"│      Bitte geben Sie eine gültige Anzahl an Leistungspunkten ein.    │\n");
+                                wprintf(L"└──────────────────────────────────────────────────────────────────────┘");
+                                wprintf(L"\n\nLP eingeben:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+                                if (counter == 0) {
+                                        return INVALID_USER_INPUT;
+                                }
+                                i = 0;
+                                continue;                        
+                        }
+
+                        
+
+
+                        array_number[i] = stat;
+                        ++i;
+                }
+
+                array_number[i] = L'\0';
+
+
+                result = wcstol(array_number, NULL, 10);
+
+
+                if (result < 1) {
                         --counter;
                         if (counter == 0) {
                                 return INVALID_USER_INPUT;
                         }
-                        valid_number = 0;
-                        wprintf(L"\n%ls%lsFalsche Eingabe!\nBitte eine positive ganze Zahl eingeben%ls\n%ls>>>%ls ", TXT_RED, TXT_INVERSE, END_STYLE, TXT_INVERSE, END_STYLE);
+                        wprintf(L"\n\n");
+                        wprintf(L"┌──────────────────────────────────────────────────────────────────────┐\n");
+                        wprintf(L"│                       %ls%lsFALSCHE EINGABE!%ls                               │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+                        wprintf(L"│      Bitte geben Sie eine gültige Anzahl an Leistungspunkten ein.    │\n");
+                        wprintf(L"└──────────────────────────────────────────────────────────────────────┘");
+                        wprintf(L"\n\nLP eingeben:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);  
+                        i = 0;
+                        continue;                
                 }
-
-
-                if (getwchar() != L'\n') {
-                        if (flush() == BUFFER_ERROR) {
-                                return BUFFER_ERROR;
-                        }
-                        if (valid_number) {
-                                --counter;
-                                valid_number = 0;
-                                wprintf(L"\n%ls%lsFalsche Eingabe!\nBitte eine positive ganze Zahl eingeben%ls\n%ls>>>%ls ", TXT_RED, TXT_INVERSE, END_STYLE, TXT_INVERSE, END_STYLE);
-                        }
-                }
-
-
-                if (stat == 1 && valid_number == 1) {
-                        if (result <= 0) {
-                                --counter;
-                                valid_number = 0;
-                                wprintf(L"\n%ls%lsFalsche Eingabe!\nBitte eine positive ganze Zahl eingeben%ls\n%ls>>>%ls ", TXT_RED, TXT_INVERSE, END_STYLE, TXT_INVERSE, END_STYLE);                                
-                        }
-                }
-
-
-                // Abbruch bei zu vielen falschen Eingaben
-                if (counter == 0) {
-                        return INVALID_USER_INPUT;
-                }
-
+        
                 
                 // Bei richtiger Eingabe, Eingabe in lp speichern
-                if (valid_number) {
-                        *lp = result;
-                        return VALID_USER_INPUT;
-                }
-        }
+                *lp = result;
+                return VALID_USER_INPUT;
+        }    
 }
 
 
@@ -304,63 +355,104 @@ int read_jahr(int *jahr)
         }
 
         int counter = LIMIT_INPUT_ATTEMPTS;
-        int valid_number = -1;
         int stat = -1;
         int result = -1;
+        wchar_t array_number[6] = {0};
+        int i = 0;
 
         while (1) {
-                valid_number = 1;
-                
-                stat = wscanf(L"%i", &result);
 
-                // Fehlerbehandlung bei falscher Eingabe
-                if (stat == EOF) {
-                        return BUFFER_ERROR;
-                } else if (stat != 1) {
+                while ((stat = getwchar())) {
+                        if (stat == L'\n' && i == 0) {
+                                i = 0;
+                                --counter;
+                                wprintf(L"\n\n");
+                                wprintf(L"┌──────────────────────────────────────────────────────────────────────┐\n");
+                                wprintf(L"│                          %ls%lsFALSCHE EINGABE!%ls                            │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+                                wprintf(L"│               Bitte geben Sie eine gültige Jahreszahl ein.           │\n");
+                                wprintf(L"└──────────────────────────────────────────────────────────────────────┘");
+                                wprintf(L"\n\nJahreszahl eingeben:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+                                if (counter == 0) {
+                                        return INVALID_USER_INPUT;
+                                }
+                                continue;
+                        }
+
+                        if (stat == L'\n') {
+                                break;
+                        }
+
+
+                        if (i == 5 && stat != '\n') {
+                                if (flush() == BUFFER_ERROR) {
+                                        return BUFFER_ERROR;
+                                }
+                                --counter;
+                                wprintf(L"\n\n");
+                                wprintf(L"┌──────────────────────────────────────────────────────────────────────┐\n");
+                                wprintf(L"│                          %ls%lsFALSCHE EINGABE!%ls                            │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+                                wprintf(L"│               Bitte geben Sie eine gültige Jahreszahl ein.           │\n");
+                                wprintf(L"└──────────────────────────────────────────────────────────────────────┘");
+                                wprintf(L"\n\nJahreszahl eingeben:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+                                if (counter == 0) {
+                                        return INVALID_USER_INPUT;
+                                }
+                                i = 0;
+                                continue;                        
+                        }
+
+
+                        if (!iswdigit(stat)) {
+                                if (flush() == BUFFER_ERROR) {
+                                        return BUFFER_ERROR;
+                                }
+                                --counter;
+                                wprintf(L"\n\n");
+                                wprintf(L"┌──────────────────────────────────────────────────────────────────────┐\n");
+                                wprintf(L"│                          %ls%lsFALSCHE EINGABE!%ls                            │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+                                wprintf(L"│               Bitte geben Sie eine gültige Jahreszahl ein.           │\n");
+                                wprintf(L"└──────────────────────────────────────────────────────────────────────┘");
+                                wprintf(L"\n\nJahreszahl eingeben:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+                                if (counter == 0) {
+                                        return INVALID_USER_INPUT;
+                                }
+                                i = 0;
+                                continue;                        
+                        }
+
+                        
+
+
+                        array_number[i] = stat;
+                        ++i;
+                }
+
+                array_number[i] = L'\0';
+
+
+                result = wcstol(array_number, NULL, 10);
+
+
+                if (result < 1) {
                         --counter;
                         if (counter == 0) {
                                 return INVALID_USER_INPUT;
                         }
-                        valid_number = 0;
-                        wprintf(L"\n%ls%lsFalsche Eingabe!\nBitte eine positive ganze Zahl eingeben%ls\n>>> ", TXT_RED, TXT_INVERSE, END_STYLE);
+                        wprintf(L"\n\n");
+                        wprintf(L"┌──────────────────────────────────────────────────────────────────────┐\n");
+                        wprintf(L"│                          %ls%lsFALSCHE EINGABE!%ls                            │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+                        wprintf(L"│               Bitte geben Sie eine gültige Jahreszahl ein.           │\n");
+                        wprintf(L"└──────────────────────────────────────────────────────────────────────┘");
+                        wprintf(L"\n\nJahreszahl eingeben:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+                        i = 0;
+                        continue;                
                 }
-
-                if (getwchar() != L'\n') {
-                        if (flush() == BUFFER_ERROR) {
-                                return BUFFER_ERROR;
-                        }
-                        if (valid_number) {
-                                --counter;
-                                valid_number = 0;
-                                wprintf(L"\n%ls%lsFalsche Eingabe!\nBitte eine positive ganze Zahl eingeben%ls\n>>> ", TXT_RED, TXT_INVERSE, END_STYLE);
-                        }
-                }
-
-
-                if (stat == 1 && valid_number == 1) {
-                        if (result <= 0) {
-                                --counter;
-                                valid_number = 0;
-                                wprintf(L"\n%ls%lsFalsche Eingabe!\nBitte eine positive ganze Zahl eingeben%ls\n>>> ", TXT_RED, TXT_INVERSE, END_STYLE);                                
-                        }
-                }
-                
-
-                // Abbruch bei zu vielen falschen Eingaben
-                if (counter == 0) {
-                        return INVALID_USER_INPUT;
-                }
-
+        
                 
                 // Bei richtiger Eingabe, Eingabe in jahr speichern
-                if (valid_number) {
-                        *jahr = result;
-                        return VALID_USER_INPUT;
-                }
-        }
-
-
-
+                *jahr = result;
+                return VALID_USER_INPUT;
+        }    
 }
 
 
@@ -372,68 +464,125 @@ int read_jahr(int *jahr)
 
 int read_number_in_bound(int lower_bound, int upper_bound, int *number)
 {
-        // Fehlermeldung, wenn NULL für number übergeben wurde oder upper_bound kleiner oder gleich lower_bound ist
+        // Fehlermeldung, wenn NULL für number übergeben wurde oder upper_bound kleiner oder lower_bound ist
         if (number == NULL || upper_bound < lower_bound) {
                 return INVALID_FUNCTION_INPUT;
         }
 
         int counter = LIMIT_INPUT_ATTEMPTS;
-        int valid_number = -1;
         int stat = -1;
         int result = -1;
+        wchar_t *array_number = NULL;
+        int i = 0;
 
         while (1) {
-                valid_number = 1;
-                
-                stat = wscanf(L"%i", &result);
 
-                // Fehlerbehandlung bei falscher Eingabe
-                if (stat == EOF) {
-                        return BUFFER_ERROR;
-                } else if (stat != 1) {
+                while ((stat = getwchar())) {
+                        wchar_t *array_number_temp = realloc(array_number, ((i + 1) * sizeof(wchar_t)));
+                        if (array_number_temp == NULL) {
+                                free(array_number);
+                                return MEM_ALLOC_ERROR;
+                        } else {
+                                array_number = array_number_temp;
+                        }
+                        if (stat == L'\n' && i == 0) {
+                                i = 0;
+                                --counter;
+                                wprintf(L"\n");
+                                wprintf(L"┌─────────────────────────────────────────────────────────────────────────────────────────────────┐\n");
+                                wprintf(L"│                                         %ls%lsFALSCHE EINGABE!%ls                                        │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+                                wprintf(L"│              Bitte geben Sie eine Zahl zwischen %i und %i ein (jeweils einschließlich).           │\n", lower_bound, upper_bound);
+                                wprintf(L"└─────────────────────────────────────────────────────────────────────────────────────────────────┘");
+                                wprintf(L"\n\nGültige Zahl eingeben:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+                                if (counter == 0) {
+                                        free(array_number);
+                                        return INVALID_USER_INPUT;
+                                }
+                                continue;
+                        }
+
+                        if (stat == L'\n') {
+                                break;
+                        }
+
+
+                        if (i == 5 && stat != '\n') {
+                                if (flush() == BUFFER_ERROR) {
+                                        free(array_number);
+                                        return BUFFER_ERROR;
+                                }
+                                --counter;
+                                wprintf(L"\n");
+                                wprintf(L"┌─────────────────────────────────────────────────────────────────────────────────────────────────┐\n");
+                                wprintf(L"│                                         %ls%lsFALSCHE EINGABE!%ls                                        │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+                                wprintf(L"│              Bitte geben Sie eine Zahl zwischen %i und %i ein (jeweils einschließlich).           │\n", lower_bound, upper_bound);
+                                wprintf(L"└─────────────────────────────────────────────────────────────────────────────────────────────────┘");
+                                wprintf(L"\n\nGültige Zahl eingeben:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+                                if (counter == 0) {
+                                        free(array_number);
+                                        return INVALID_USER_INPUT;
+                                }
+                                i = 0;
+                                continue;                        
+                        }
+
+
+                        if (!iswdigit(stat)) {
+                                if (flush() == BUFFER_ERROR) {
+                                        free(array_number);
+                                        return BUFFER_ERROR;
+                                }
+                                --counter;
+                                wprintf(L"\n");
+                                wprintf(L"┌─────────────────────────────────────────────────────────────────────────────────────────────────┐\n");
+                                wprintf(L"│                                         %ls%lsFALSCHE EINGABE!%ls                                        │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+                                wprintf(L"│              Bitte geben Sie eine Zahl zwischen %i und %i ein (jeweils einschließlich).           │\n", lower_bound, upper_bound);
+                                wprintf(L"└─────────────────────────────────────────────────────────────────────────────────────────────────┘");
+                                wprintf(L"\n\nGültige Zahl eingeben:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+                                if (counter == 0) {
+                                        free(array_number);
+                                        return INVALID_USER_INPUT;
+                                }
+                                i = 0;
+                                continue;                        
+                        }
+
+                        
+
+
+                        array_number[i] = stat;
+                        ++i;
+                }
+
+                array_number[i] = L'\0';
+
+
+                result = wcstol(array_number, NULL, 10);
+
+
+                if (result < lower_bound || result > upper_bound) {
                         --counter;
                         if (counter == 0) {
+                                free(array_number);
                                 return INVALID_USER_INPUT;
                         }
-                        valid_number = 0;
-                        wprintf(L"\n%ls%lsFalsche Eingabe!\nBitte eine positive ganze Zahl zwischen %i und %i eingeben (jeweils einschließlich)%ls\n>>> ", TXT_RED, TXT_INVERSE, lower_bound, upper_bound, END_STYLE);
+                        wprintf(L"\n");
+                        wprintf(L"┌─────────────────────────────────────────────────────────────────────────────────────────────────┐\n");
+                        wprintf(L"│                                         %ls%lsFALSCHE EINGABE!%ls                                        │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+                        wprintf(L"│              Bitte geben Sie eine Zahl zwischen %i und %i ein (jeweils einschließlich).           │\n", lower_bound, upper_bound);
+                        wprintf(L"└─────────────────────────────────────────────────────────────────────────────────────────────────┘");
+                        wprintf(L"\n\nGültige Zahl eingeben:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+                        i = 0;
+                        continue;                
                 }
-
-                if (getwchar() != L'\n') {
-                        if (flush() == BUFFER_ERROR) {
-                                return BUFFER_ERROR;
-                        }
-                        if (valid_number) {
-                                --counter;
-                                valid_number = 0;
-                                wprintf(L"\n%ls%lsFalsche Eingabe!\nBitte eine positive ganze Zahl zwischen %i und %i eingeben (jeweils einschließlich)%ls\n>>> ", TXT_RED, TXT_INVERSE, lower_bound, upper_bound, END_STYLE);
-                        }
-                }
-
-
-                if (stat == 1 && valid_number == 1) {
-                        if (result < lower_bound || result > upper_bound) {
-                                --counter;
-                                valid_number = 0;
-                                wprintf(L"\n%ls%lsFalsche Eingabe!\nBitte eine positive ganze Zahl zwischen %i und %i eingeben (jeweils einschließlich)%ls\n>>> ", TXT_RED, TXT_INVERSE, lower_bound, upper_bound, END_STYLE);
-                        }
-                }
-                
-
-                // Abbruch bei zu vielen falschen Eingaben
-                if (counter == 0) {
-                        return INVALID_USER_INPUT;
-                }
-
+        
                 
                 // Bei richtiger Eingabe, Eingabe in number speichern
-                if (valid_number) {
-                        *number = result;
-                        return VALID_USER_INPUT;
-                }
+                *number = result;
+                free(array_number);
+                return VALID_USER_INPUT;    
         }
 }
-
 
 
 

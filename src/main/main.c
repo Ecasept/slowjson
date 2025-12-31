@@ -20,7 +20,7 @@
   
 int main() {
 	setlocale(LC_ALL, "");	
-	/*
+	
 	string str;
 	string_new(&str,
 			   "{ \"name\": \"John Doe\", \"age\": 30, \"is_student\": false, "
@@ -60,12 +60,15 @@ int main() {
 		
 
 	jsontest();
-	*/
 	
 	// Standardvariablen
 	int status = 0;
 	int current_page = -1;
 	int view_type = OV_BY_TIME;
+
+
+	
+	
 
 
 	
@@ -84,7 +87,7 @@ int main() {
 	// Erste Eingabe + Fehlerbehandlung erste Eingabe
 	status = read_command(INPUT_WELC_SCR, SIZE_INPUT_WELC_SCR);
 	if (status == BUFFER_ERROR) {
-		wprintf(L"%ls BUFFER ERROR %ls", TXT_RED, END_STYLE);
+		print_buffer_error_screen();
 		return 0;
 	} else if (status == INVALID_FUNCTION_INPUT) {
 		wprintf(L"%ls Programmfehler!\nBitte neu starten.%ls", TXT_RED, END_STYLE);
@@ -127,17 +130,19 @@ int main() {
 		}
 	
 
-	
 		// Fehlerbehandlung bei Programmfehlern oder falscher Eingabe
 		if (status == BUFFER_ERROR) {
-			wprintf(L"%ls BUFFER ERROR %ls", TXT_RED, END_STYLE);
+			print_buffer_error_screen();
 			return 0;
 		} else if (status == INVALID_FUNCTION_INPUT) {
 			wprintf(L"%ls Programmfehler!\nBitte neu starten.%ls", TXT_RED, END_STYLE);
 			return 0;
-		} else if (status == INVALID_USER_INPUT) {
-			wprintf(L"\n%ls%ls Viermal falsche Eingabe. Bitte neu starten\n%ls", TXT_INVERSE, TXT_RED, END_STYLE);
+		} else if (status == INVALID_USER_INPUT && current_page == CURR_PAGE_HELP_SCR) {
+			print_endscreen();
 			return 0;
+		} else if (status == INVALID_USER_INPUT && current_page != CURR_PAGE_HELP_SCR) {
+			status = L'h'; // Hilfsseite bei viermaliger falscher Eingabe aufrufen
+
 		}
 
 
@@ -159,10 +164,10 @@ int main() {
 			case L'n':
 				status = print_addverscreen(&ver, &size_ver, &mod, &size_mod);
 				if (status == BUFFER_ERROR) {
-					wprintf(L"%ls BUFFER ERROR %ls", TXT_RED, END_STYLE);
+					print_buffer_error_screen();
 					return 0;
 				} else if (status == MEM_ALLOC_ERROR) {
-					wprintf(L"%ls MEMORY ALLCOCATION ERROR %ls", TXT_RED, END_STYLE);
+					print_memalloc_error_screen();
 					return 0;
 				} else if (status == INVALID_FUNCTION_INPUT) {
 					wprintf(L"%ls INVALID FUNCTION INPUT %ls", TXT_RED, END_STYLE);
@@ -176,7 +181,7 @@ int main() {
 							print_overviewscreen(ver, size_ver, mod, size_mod, view_type, NEW_ENTRY);
 							break;
 						case CURR_PAGE_AV_SCR:
-							print_averagescreen(NEW_ENTRY);
+							print_averagescreen(NEW_ENTRY, ver, size_ver);
 							break;
 					}
 				}
@@ -184,10 +189,10 @@ int main() {
 			case L'm':
 				status = print_addmodscreen(&mod, &size_mod);
 				if (status == BUFFER_ERROR) {
-					wprintf(L"%ls BUFFER ERROR %ls", TXT_RED, END_STYLE);
+					print_buffer_error_screen();
 					return 0;
 				} else if (status == MEM_ALLOC_ERROR) {
-					wprintf(L"%ls MEMORY ALLCOCATION ERROR %ls", TXT_RED, END_STYLE);
+					print_memalloc_error_screen();
 					return 0;
 				} else if (status == INVALID_FUNCTION_INPUT) {
 					wprintf(L"%ls INVALID FUNCTION INPUT %ls", TXT_RED, END_STYLE);
@@ -201,23 +206,23 @@ int main() {
 							print_overviewscreen(ver, size_ver, mod, size_mod, view_type, NEW_ENTRY);
 							break;
 						case CURR_PAGE_AV_SCR:
-							print_averagescreen(NEW_ENTRY);
+							print_averagescreen(NEW_ENTRY, ver, size_ver);
 							break;
 					}					
 				}
 				break;
 
 			case L'd':
-				print_averagescreen(NO_NEW_ENTRY);
+				print_averagescreen(NO_NEW_ENTRY, ver, size_ver);
 				current_page = CURR_PAGE_AV_SCR;
 				break;
 			case L'b':
 				status = print_editver(&ver, &size_ver, &mod, &size_mod, &current_page);
 				if (status == BUFFER_ERROR) {
-					wprintf(L"%ls BUFFER ERROR %ls", TXT_RED, END_STYLE);
+					print_buffer_error_screen();
 					return 0;
 				} else if (status == MEM_ALLOC_ERROR) {
-					wprintf(L"%ls MEMORY ALLCOCATION ERROR %ls", TXT_RED, END_STYLE);
+					print_memalloc_error_screen();
 					return 0;
 				} else if (status == INVALID_FUNCTION_INPUT) {
 					wprintf(L"%ls INVALID FUNCTION INPUT %ls", TXT_RED, END_STYLE);
@@ -231,7 +236,7 @@ int main() {
 							print_overviewscreen(ver, size_ver, mod, size_mod, view_type, NO_NEW_ENTRY);
 							break;
 						case CURR_PAGE_AV_SCR:
-							print_averagescreen(NO_NEW_ENTRY);
+							print_averagescreen(NO_NEW_ENTRY, ver, size_ver);
 							break;
 						case CURR_PAGE_HELP_SCR:
 							print_helpscreen();
