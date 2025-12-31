@@ -149,7 +149,7 @@ Result utf8_append_encoded_codepoint(UnicodeCodePoint cp, string *str) {
 	const uchar triple_header = b(111) << 5;
 	const uchar quadruple_header = b(1111) << 4;
 
-	if (_between(0, cp, 0x7F)) {
+	if (_btwcp(0, cp, 0x7F)) {
 		// One byte
 		string_append_uchar(str, cp);
 	} else if (_btwcp(0x0080, cp, 0x07FF)) {
@@ -176,11 +176,11 @@ Result utf8_append_encoded_codepoint(UnicodeCodePoint cp, string *str) {
 		string_append_uchar(str, byte2);
 		string_append_uchar(str, byte3);
 		string_append_uchar(str, byte4);
-	} else if (_btwcp(cp, 0xD800, 0xDBFF)) {
+	} else if (_btwcp(0xD800, cp, 0xDBFF)) {
 		return new_errorf(
 			"Invalid Unicode codepoint 0x%X: UTF-16 Surrogate High Half",
 			EUnicodeError, cp);
-	} else if (_btwcp(cp, 0xDC00, 0xDFFF)) {
+	} else if (_btwcp(0xDC00, cp, 0xDFFF)) {
 		return new_errorf(
 			"Invalid Unicode codepoint 0x%X: UTF-16 Surrogate Low Half",
 			EUnicodeError, cp);
