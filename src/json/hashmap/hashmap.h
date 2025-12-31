@@ -21,10 +21,14 @@ typedef struct json_value_hashmap json_value_hashmap;
 #include "../json.h"
 
 // ==== Functions ====
-Result json_value_hashmap_get(const json_value_hashmap *map, const string *key,
+
+Result json_value_hashmap_get_cstr(const json_value_hashmap *map, const char *key_cstr,
+									   JSONValue *out);
+
+Result json_value_hashmap_get(const json_value_hashmap *map, const string key,
 							  JSONValue *out);
 
-void json_value_hashmap_set(json_value_hashmap *map, string *key,
+void json_value_hashmap_set(json_value_hashmap *map, string key,
 							JSONValue value);
 
 void json_value_hashmap_init(json_value_hashmap *map);

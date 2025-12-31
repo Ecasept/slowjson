@@ -3,14 +3,14 @@
 
 struct json_value_hashmap_node {
 	JSONValue value;
-	string *key;
+	string key;
 	json_value_hashmap_node *next;
 };
 typedef struct json_value_hashmap_node json_value_hashmap_node;
 
 // ==== Functions ====
 Result json_value_hashmap_node_get(json_value_hashmap_node *node,
-								   const string *key, JSONValue *out);
-bool json_value_hashmap_node_set(json_value_hashmap_node *node, string *key,
+								   const string key, JSONValue *out);
+bool json_value_hashmap_node_set(json_value_hashmap_node *node, string key,
 								 JSONValue value);
 void json_value_hashmap_node_free(json_value_hashmap_node *node);
