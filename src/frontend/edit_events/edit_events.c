@@ -109,7 +109,7 @@ int select_ver(struct Veranstaltung **ver, size_t *size_ver, int *selected_ver)
 
 
         // Kopfzeile
-        wprintf(L"Bitte wählen sie eine Veranstaltung die Sie bearbeiten möchten:\n\n");
+        wprintf(L"Bitte wählen Sie eine Veranstaltung die Sie bearbeiten möchten:\n\n");
         struct winsize w;
         if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
                 perror("ioctl");
@@ -171,7 +171,7 @@ void print_selected_ver(struct Veranstaltung *ver, struct Modulgruppe *mod, size
         }
 
         
-        // Modulgruppe ermitteln und Breite Name der Modulgruppe ermitteln
+        // Modulgruppe ermitteln und Breite des Namens der Modulgruppe ermitteln
         for (int i = 0; i < (int) size_mod; ++i) {
                 if (mod[i].modulgruppenindex == ver[selected_ver].modulgruppenindex) {
                         pos_mod = i;
@@ -188,11 +188,11 @@ void print_selected_ver(struct Veranstaltung *ver, struct Modulgruppe *mod, size
                 width_square = width_name_mod + width_extra;
         }
 
-        wprintf(L"┌");
+        wprintf(L"╭");
         for (int i = 0; i <= width_square; ++i) {
                 wprintf(L"─");
         }
-        wprintf(L"┐\n");
+        wprintf(L"╮\n");
 
         
 
@@ -213,7 +213,7 @@ void print_selected_ver(struct Veranstaltung *ver, struct Modulgruppe *mod, size
         wprintf(L"│Semester:");
         STANDARD_SPACE(strlen("Semester:"));
         if (ver[selected_ver].semester.jahreszeit == Winter) {
-                                wprintf(L"WS %i/%i%ls", ver[selected_ver].semester.jahr, ver[selected_ver].semester.jahr + 1, END_STYLE);
+                wprintf(L"WS %i/%i%ls", ver[selected_ver].semester.jahr, ver[selected_ver].semester.jahr + 1, END_STYLE);
         } else {
                 wprintf(L"SS %i%ls", ver[selected_ver].semester.jahr, END_STYLE);                  
         }
@@ -264,11 +264,11 @@ void print_selected_ver(struct Veranstaltung *ver, struct Modulgruppe *mod, size
         wprintf(L"│\n");
 
 
-        wprintf(L"└");
+        wprintf(L"╰");
         for (int i = 0; i <= width_square; ++i) {
                 wprintf(L"─");
         }
-        wprintf(L"┘\n");
+        wprintf(L"╯\n");
 
 }
 
@@ -423,7 +423,7 @@ int change_modscreen(struct Veranstaltung **ver, struct Modulgruppe **mod, size_
         clear_display();
         print_selected_ver(*ver, *mod, *size_mod, selected_ver);
         wprintf(L"%ls%lsAchtung:%ls Möchten Sie Modulgruppe wirklich ändern?\n", TXT_RED, TXT_INVERSE, END_STYLE);
-        wprintf(L"\nNeue Modulgruppe eingeben        [n]");
+        wprintf(L"\nNeue Modulgruppe wählen          [n]");
         wprintf(L"\nAbbruch                          [b]\n\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
         status_changemodscreen = read_command(INPUT_MOD_OR_CANCEL, SIZE_INPUT_MOD_OR_CANCEL);
         STANDARD_ERROR_HANDLING(status_changemodscreen);

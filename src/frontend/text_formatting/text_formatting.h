@@ -62,19 +62,26 @@
 #define BESTANDEN L"bestanden"
 #define NICHT_BESTANDEN L"nicht bestanden"
 #define AUSSTEHEND L"ausstehend"
+#define STATUS L"Status"
+#define NOTE L"Note"
+#define LP L"LP"
 
 
 void print_welcomescreen();
 int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod, int view_type, int new_entry);
 void print_helpscreen();
 void print_endscreen();
-int print_averagescreen(int new_entry);
+int print_averagescreen(int new_entry, struct Veranstaltung *ver, size_t size_ver);
 void clear_display();
 void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver);
 void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod);
 int print_addverscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modulgruppe **mod, size_t *size_mod);
 void print_inputcompletescreen();
 int print_addmodscreen(struct Modulgruppe **mod, size_t *size_mod);
+void print_buffer_error_screen();
+void print_memalloc_error_screen();
+void print_wrong_command_screen(wchar_t *valid_commands, size_t size);
+void print_wrong_string_screen();
 
 
 

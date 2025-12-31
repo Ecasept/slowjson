@@ -1,6 +1,7 @@
 #include "text_formatting.h"
 #include "../user_input/user_input.h"
 #include "../../midend/data.h"
+#include "../../midend/mid.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <wchar.h>
@@ -10,15 +11,21 @@
 
 void print_welcomescreen()
 {
-        wprintf(L"┌───────────────────────────────────────────────────────┐\n");
-        wprintf(L"│                                                       │\n");
-        wprintf(L"│%ls     |  |  |  |    |/  /\\  |\\/|  |\\/|  |=  |\\ |  │     %ls│\n", TXT_GREEN, END_STYLE);
-        wprintf(L"│%ls     |/\\|  |  |__  |\\  \\/  |  |  |  |  |=  | \\|  .     %ls│\n", TXT_GREEN, END_STYLE);
-        wprintf(L"│                                                       │\n");
-        wprintf(L"│       %lsDies ist ihr persönlicher Studienplaner%ls         │\n", TXT_INVERSE, END_STYLE);
-        wprintf(L"│                                                       │\n");
-        wprintf(L"└───────────────────────────────────────────────────────┘\n");
-        wprintf(L"  %lsOptionen%ls                        %lsTaste%ls                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
+        wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐\n");
+        wprintf(L"│                                                                                                                      │\n");
+        wprintf(L"│%ls              ████████████████████████████████████████████████████████████████████████████████████████████%ls            │\n", TXT_GREEN, END_STYLE);
+        wprintf(L"│%ls              ███ █████ ██ ██ █████ █████ ██ ██       ██  ██████  ██  ██████  ██     ██  █████ ████  █████%ls            │\n", TXT_GREEN, END_STYLE);
+        wprintf(L"│%ls              ███ █████ ██ ██ █████ █████ █ ███ █████ ██ █ ████ █ ██ █ ████ █ ██ ██████ █ ████ ████  █████%ls            │\n", TXT_GREEN, END_STYLE);
+        wprintf(L"│%ls              ███ █████ ██ ██ █████ █████  ████ █████ ██ ██ ██ ██ ██ ██ ██ ██ ██    ███ ██ ███ ████  █████%ls            │\n", TXT_GREEN, END_STYLE);
+        wprintf(L"│%ls              ███ ██ ██ ██ ██ █████ █████  ████ █████ ██ ███  ███ ██ ███  ███ ██    ███ ███ ██ ████  █████%ls            │\n", TXT_GREEN, END_STYLE);
+        wprintf(L"│%ls              ███ █ █ █ ██ ██ █████ █████ █ ███ █████ ██ ████████ ██ ████████ ██ ██████ ████ █ ███████████%ls            │\n", TXT_GREEN, END_STYLE);
+        wprintf(L"│%ls              ███  ███  ██ ██    ██    ██ ██ ██       ██ ████████ ██ ████████ ██     ██ █████  ████  █████%ls            │\n", TXT_GREEN, END_STYLE);
+        wprintf(L"│%ls              ████████████████████████████████████████████████████████████████████████████████████████████%ls            │\n", TXT_GREEN, END_STYLE);
+        wprintf(L"│                                                                                                                      │\n");
+        wprintf(L"│                                   %lsDies ist ihr persönlicher Studienplaner%ls                                            │\n", TXT_INVERSE, END_STYLE);
+        wprintf(L"│                                                                                                                      │\n");
+        wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘\n");
+        wprintf(L"\n  %lsOptionen%ls                        %lsTaste%ls                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
         wprintf(L"  Veranstaltungsübersicht           [v]                    \n");
         wprintf(L"  Hilfe                             [h]                    \n");
         wprintf(L"  Programm beenden                  [q]                    \n");
@@ -44,15 +51,13 @@ int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modu
         }
 
 
-        wprintf(L"%ls  Veranstaltungsübersicht  %ls\n", TXT_INVERSE, END_STYLE);
+        wprintf(L"%ls Veranstaltungsübersicht %ls\n", TXT_INVERSE, END_STYLE);
         
 
         // Übersicht nach Semester geordnet ausgeben
         if (view_type == OV_BY_TIME && size_ver != 0) {
-                wprintf(L"\nSortierung: Semester, aufsteigend\n");
                 print_overview_by_time(ver, size_ver);
         } else if (view_type == OV_BY_MOD && size_ver != 0) {
-                wprintf(L"\nSortierung: Modulgruppe\n");
                 print_overview_by_mod(ver, size_ver, mod, size_mod);
         }
 
@@ -86,7 +91,37 @@ void print_helpscreen()
 {
         clear_display();
 
-        wprintf(L"\n%ls%lsDas hier ist die Hilfeseite%ls\n", TXT_RED, TXT_INVERSE, END_STYLE);
+
+        wprintf(L"%ls Hilfe %ls\n\n", TXT_INVERSE, END_STYLE);
+
+        wprintf(L"\n%lsAllgemeines%ls\n", TXT_UNDERLINED, END_STYLE);
+        wprintf(L"- An jedem Seitenende werden die aktuell verfügbaren \"%lsOptionen%ls\" angezeigt.\n", TXT_UNDERLINED, END_STYLE);
+        wprintf(L"- Auf jeder Seite werden nur die jeweils angezeigten Tasten als Eingabe unterstützt.\n");
+        wprintf(L"- Wird viermal hintereinander eine ungültige Eingabe getätigt wird automatisch die %lsHilfe%ls aufgerufen.\n", TXT_INVERSE, END_STYLE);
+        wprintf(L"- Wird bei angezeigter %lsHilfe%ls viermal hintereinander eine ungültige Eingabe getätigt wird das Programm automatisch beendet.\n", TXT_INVERSE, END_STYLE);
+        wprintf(L"\n");
+
+        
+        wprintf(L"\n%lsHinzufügen von Veranstaltungen%ls\n", TXT_UNDERLINED, END_STYLE);
+        wprintf(L"- Eine neue Veranstaltung kann von der %lsVeranstaltungsübersicht%ls oder der Anzeige des aktuelle %lsNotendurschnitts%ls aus hinzugefügt werden.\n", TXT_INVERSE, END_STYLE, TXT_INVERSE, END_STYLE);
+        wprintf(L"- Es %lsmüssen%ls folgende Daten eingegeben werden:\n", TXT_BOLD, END_STYLE);
+        wprintf(L"     - Name der Veranstaltung\n");
+        wprintf(L"     - Modulgruppe\n");
+        wprintf(L"     - Semester in dem die Veranstaltung besucht wird\n");
+        wprintf(L"     - Leistungspunkte (LP)\n");
+        wprintf(L"     - Optional: Erzielte Note (wird keine Note eingegeben wird der Status der Veranstaltung auf %lsausstehend%ls gesetzt).\n", TXT_YELLOW, END_STYLE);
+        wprintf(L"\n");
+
+
+        wprintf(L"\n%lsHinzufügen von Modulgruppen%ls\n", TXT_UNDERLINED, END_STYLE);
+        wprintf(L"- Eine neue Veranstaltung kann von der %lsVeranstaltungsübersicht%ls oder der Anzeige des aktuelle %lsNotendurschnitts%ls aus hinzugefügt werden.\n", TXT_INVERSE, END_STYLE, TXT_INVERSE, END_STYLE);
+        wprintf(L"- Es %lsmüssen%ls folgende Daten eingegeben werden:\n", TXT_BOLD, END_STYLE);
+        wprintf(L"     - Name der Modulgruppe\n");
+        wprintf(L"     - Innerhalb der Modulgruppe zu erreichende Leistungspunkte\n");
+        wprintf(L"\n");
+
+
+        wprintf(L"\n\n");
         wprintf(L"  %lsOptionen%ls                        %lsTaste%ls                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
         wprintf(L"  Veranstaltungsübersicht           [v]\n");
         wprintf(L"  Notendurchschnitt anzeigen        [d]\n");
@@ -104,8 +139,11 @@ void print_helpscreen()
 void print_endscreen()
 {
         clear_display();
-        
-        wprintf(L"Vielen Dank, dass Sie unser Programm benutzt haben.\nAuf Wiedersehen :-)\n");
+        wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────┐\n");
+        wprintf(L"│                               %ls%lsDas Programm wurde beendet!%ls                            │\n", TXT_INVERSE, TXT_GREEN, END_STYLE);
+        wprintf(L"│                 Vielen Dank, dass Sie unseren Studienplaner genutzt haben.           │\n");
+        wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────┘\n\n\n");
+
 }
 
 
@@ -116,7 +154,7 @@ void print_endscreen()
 
 
 
-int print_averagescreen(int new_entry)
+int print_averagescreen(int new_entry, struct Veranstaltung *ver, size_t size_ver)
 { 
         clear_display(); 
 
@@ -124,14 +162,14 @@ int print_averagescreen(int new_entry)
                 print_inputcompletescreen();      
         }
 
-        // FUNKTION ZUR BERECHNUNG DES AKTUELLEN NOTENDURSCHNITTS -> Adrian
-        double test_notendurchschnitt = 2.3;
+        // Berechnung des aktuellen Notendurchschnitts
+        double average_grade = notendurchschnitt_dumm(ver, size_ver);
 
-        wprintf(L"\n%lsNotendurchschnitt%ls\n\n", TXT_INVERSE, END_STYLE);
+        wprintf(L"\n%ls Notendurchschnitt %ls\n\n", TXT_INVERSE, END_STYLE);
         wprintf(L"Berechnung nach PO: %ls\n\n", PO_2018);
-        wprintf(L"   ┌───────────────────────────────────────────────────────┐\n");
-        wprintf(L"   │         %lsAktueller Notendurchschnitt:%ls %ls%.1f%ls              │\n", TXT_GREEN, END_STYLE, TXT_UNDERLINED, test_notendurchschnitt, END_STYLE);
-        wprintf(L"   └───────────────────────────────────────────────────────┘\n\n\n");
+        wprintf(L"      ╭───────────────────────────────────────────────────────╮\n");
+        wprintf(L"      │         %lsAktueller Notendurchschnitt:%ls %ls%.1f%ls              │\n", TXT_GREEN, END_STYLE, TXT_UNDERLINED, average_grade, END_STYLE);
+        wprintf(L"      ╰───────────────────────────────────────────────────────╯\n\n\n");
 
         wprintf(L"  %lsOptionen%ls                        %lsTaste%ls                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
         wprintf(L"  Veranstaltungsübersicht           [v]                    Veranstaltung hinzufügen          [n]\n");
@@ -178,30 +216,42 @@ void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver)
         last_time.jahr = -1;
         last_time.jahreszeit = -1;
 
+        // Sortierung der Veranstaltungen nach Semester
+        sort_by_time(ver, size_ver);
+
+        wprintf(L"\nSortierung: Semester, aufsteigend\n");
 
         for (size_t i = 0; i < size_ver; ++i) {
 
-                // AUFRUF FUNKTION ZUR SORTIERUNG DER VERANSTALTUNGEN NACH ZEIT => Adrian
-                // UND
-                // AUFRUF FUNKTION ZUR ALPHABETISCHEN SORTIERUNG DER VERANSTALTUNGEN => Adrian
+                
                 if (ver[i].semester.jahr != last_time.jahr || ver[i].semester.jahreszeit != last_time.jahreszeit) {
                         struct winsize w;
                         if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
                                 perror("ioctl");
                         }
                         if (ver[i].semester.jahreszeit == Winter) {
-                                wprintf(L"\n\n%lsWS %i/%i%ls\n", TXT_UNDERLINED, ver[i].semester.jahr, ver[i].semester.jahr + 1, END_STYLE);
+                                wprintf(L"\n\n%ls WS %i/%i %ls\n", TXT_INVERSE, ver[i].semester.jahr, ver[i].semester.jahr + 1, END_STYLE);
                                                                 for (int a = 0; a < w.ws_col; ++a) {
                                         wprintf(L"─");
                                 }
                         } else {
-                                wprintf(L"\n\n%lsSS %i%ls\n", TXT_UNDERLINED, ver[i].semester.jahr, END_STYLE);
+                                wprintf(L"\n\n%ls SS %i %ls\n", TXT_INVERSE, ver[i].semester.jahr, END_STYLE);
                                 for (int a = 0; a < w.ws_col; ++a) {
                                         wprintf(L"─");
                                 }                        
                         }
+
                         last_time.jahr = ver[i].semester.jahr;
                         last_time.jahreszeit = ver[i].semester.jahreszeit;
+
+                        // Bedeutung der Spalten ausgeben    
+                        wprintf(L"%lsName der Veranstaltung%ls", TXT_UNDERLINED, END_STYLE);
+                        int counter = 22;
+                        counter = 90 - counter;
+                        for (int a = 0; a < counter; ++a) {
+                                wprintf(L" ");
+                        }
+                        wprintf(L"                 %ls%ls%ls     %ls%ls%ls   %ls%ls%ls\n", TXT_UNDERLINED, STATUS, END_STYLE, TXT_UNDERLINED, LP, END_STYLE, TXT_UNDERLINED, NOTE, END_STYLE);
                 }
 
                 // Veranstaltungsnamen ausgeben   
@@ -238,33 +288,52 @@ void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Mo
 {
         int last_index = -1;
         struct winsize w;
+        int sum = -1;
+        size_t a = 0;
         if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
                 perror("ioctl");
         }
 
         
+        // Sortierung der Veranstaltungen nach Modulgruppe
+        sort_by_mod(ver, size_ver);
 
-
+        wprintf(L"\nSortierung: Modulgruppe, alphabetisch aufsteigendh\n");
 
         for (size_t i = 0; i < size_ver; ++i) {
 
-                // AUFRUF FUNKTION ZUR SORTIERUNG DER VERANSTALTUNGEN NACH MODULGRUPPE => Adrian
-                // UND
-                // AUFRUF FUNKTION ZUR ALPHABETISCHEN SORTIERUNG DER VERANSTALTUNGEN => Adrian
+
                 if (ver[i].modulgruppenindex != last_index) {
-                        size_t a = 0;
+
+                        if (last_index != -1) {
+                                wprintf(L"\n");
+                                wprintf(L"Summe: %i/%i\n", sum, mod[a].lp_todo);
+                        }
+
+                        a = 0;
                         while (a < size_mod) {
                                 if (ver[i].modulgruppenindex == mod[a].modulgruppenindex) {
                                         break;
                                 }
                                 ++a;
                         }
-                        wprintf(L"\n\n%ls%ls%ls\n", TXT_UNDERLINED, mod[a].name, END_STYLE);
+                        
+                        wprintf(L"\n\n%ls %ls %ls\n", TXT_INVERSE, mod[a].name, END_STYLE);
                         for (int a = 0; a < w.ws_col; ++a) {
                                         wprintf(L"─");
                         }                        
                         last_index = ver[i].modulgruppenindex;
+
+                        // Bedeutung der Spalten ausgeben    
+                        wprintf(L"%lsName der Veranstaltung%ls", TXT_UNDERLINED, END_STYLE);
+                        for (int a = 0; a < 90 - 22; ++a) {
+                                wprintf(L" ");
+                        }
+                        wprintf(L"                 %ls%ls%ls     %ls%ls%ls   %ls%ls%ls\n", TXT_UNDERLINED, STATUS, END_STYLE, TXT_UNDERLINED, LP, END_STYLE, TXT_UNDERLINED, NOTE, END_STYLE);
+                        sum = 0;
                 }
+
+                
 
                 // Veranstaltungsnamen ausgeben   
                 wprintf(L"%ls", ver[i].name);
@@ -289,22 +358,21 @@ void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Mo
                                 wprintf(L"        %ls%15ls%ls     %i    %ls/%ls\n", TXT_YELLOW, AUSSTEHEND, END_STYLE, ver[i].lp, TXT_YELLOW, END_STYLE);
                                 break;
                 }
+                if (ver[i].state == Bestanden) {
+                        sum += ver[i].lp;
+                }
         }
+
+        
+        for (int b = 0; b < 90; ++b) {
+                        wprintf(L" ");
+        }
+        wprintf(L"\nSumme: %i/%i\n", sum, mod[a].lp_todo);
+                        
 
 
 
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -362,6 +430,7 @@ int print_addverscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modu
         wprintf(L"\n\nZu bestehender Modulgruppe hinzufügen: [h]\nZu neuer Modulgruppe hinzufügen [n]\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
         status = read_command(ADD_TO_OLD_OR_NEW_MOD, SIZE_ADD_TO_OLD_OR_NEW_MOD);
         int stat_1 = 1;
+        int width_name_mod = 0;
         switch (status) {
                 case L'h':
                         wprintf(L"\nNummer der Modulgruppe:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
@@ -369,8 +438,25 @@ int print_addverscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modu
                         stat_1 = read_number_in_bound(0, (int) ((*size_mod) - 1), &zahl);
                         switch (stat_1) {
                                 case VALID_USER_INPUT:
-                                        wprintf(L"Die Veranstaltung wurde zu folgender Modulgruppe hinzugefügt:\n");
-                                        wprintf(L"%ls", (*mod)[zahl].name);
+
+                                        clear_display();
+                                        width_name_mod = 0;
+                                        while ((*mod)[zahl].name[width_name_mod] != '\0') {
+                                                ++width_name_mod;
+                                        }
+                                        wprintf(L"      ╭──────────────────────────────────────────────────────────────────────────────╮\n");
+                                        wprintf(L"      │                        %ls Die Eingabe war erfolgreich %ls                         │\n", TXT_GREEN, END_STYLE);
+                                        wprintf(L"      │                                                                              │\n");
+                                        wprintf(L"      │          Die Veranstaltung wurde zu folgender Modulgruppe hinzugefügt:       │\n");
+                                        wprintf(L"      │          %ls%ls%ls", TXT_UNDERLINED, (*mod)[zahl].name, END_STYLE);
+                                        for (int i = 0; i < 68 - width_name_mod; ++i) {
+                                                wprintf(L" ");
+                                        }
+                                        wprintf(L"│\n");
+                                        wprintf(L"      │                                                                              │\n");
+                                        wprintf(L"      ╰──────────────────────────────────────────────────────────────────────────────╯\n\n\n\n");
+
+
                                         new_ver.modulgruppenindex = zahl;
                                         break;
                                 case INVALID_USER_INPUT:
@@ -379,14 +465,33 @@ int print_addverscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modu
                                         return BUFFER_ERROR;
                                 case INVALID_FUNCTION_INPUT:
                                         return INVALID_FUNCTION_INPUT;
+                                case MEM_ALLOC_ERROR:
+                                        return MEM_ALLOC_ERROR;
                                 }
                         break;
                 case L'n':
                         stat_1 = print_addmodscreen(mod, size_mod);
                         switch (stat_1) {
                                 case VALID_USER_INPUT:
-                                        wprintf(L"\nDie Veranstaltung wurde zu folgender Modulgruppe hinzugefügt:\n");
-                                        wprintf(L"%ls", (*mod)[(*size_mod) - 1].name);
+                                        clear_display();
+                                        width_name_mod = 0;
+                                        while ((*mod)[(*size_mod) - 1].name[width_name_mod] != '\0') {
+                                                ++width_name_mod;
+                                        }
+                                        wprintf(L"      ╭──────────────────────────────────────────────────────────────────────────────╮\n");
+                                        wprintf(L"      │                      %ls Die Eingabe war erfolgreich %ls                           │\n", TXT_GREEN, END_STYLE);
+                                        wprintf(L"      │                                                                              │\n");
+                                        wprintf(L"      │                   Es wurde eine neue Modulgruppe angelegt:                   │\n");
+                                        wprintf(L"      │                   %ls%ls%ls", TXT_UNDERLINED, (*mod)[(*size_mod) - 1].name, END_STYLE);
+                                        for (int i = 0; i < 59 - width_name_mod; ++i) {
+                                                wprintf(L" ");
+                                        }
+                                        wprintf(L"│\n");
+                                        wprintf(L"      │                                                                              │\n");
+                                        wprintf(L"      │            Die Veranstaltung wurde zu dieser Modulgruppe hinzugefügt         │\n");
+                                        wprintf(L"      │                                                                              │\n");
+                                        wprintf(L"      ╰──────────────────────────────────────────────────────────────────────────────╯\n\n\n\n");
+
                                         new_ver.modulgruppenindex = (*size_mod) - 1;
                                         break;
                                 case INVALID_USER_INPUT:
@@ -405,6 +510,7 @@ int print_addverscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modu
                 case INVALID_FUNCTION_INPUT:
                         return INVALID_FUNCTION_INPUT;
         }
+        wprintf(L"%lsWeitere Daten der Veranstaltung:%ls", TXT_UNDERLINED, END_STYLE);
         status = 1;
 
 
@@ -430,7 +536,7 @@ int print_addverscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modu
         }
         status = 1;
         // Jahr einlesen
-        wprintf(L"\n\nJahreszahl des Semesterbeginns:\n     Beispiel:\n     - 2025 für WS 2025/2026\n     - 2026 für SS 2026\n");
+        wprintf(L"\n\nJahreszahl des Semesterbeginns:\nBeispiel:\n  - 2025 für WS 2025/2026\n  - 2026 für SS 2026\n");
         wprintf(L"%ls>>>%ls ", TXT_INVERSE, END_STYLE);
         int jahr = -1;
         status = read_jahr(&jahr);
@@ -544,20 +650,6 @@ int print_addverscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modu
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void print_inputcompletescreen()
 {
         wprintf(L"      ╭───────────────────────────────────────────────────────╮\n");
@@ -565,23 +657,6 @@ void print_inputcompletescreen()
         wprintf(L"      ╰───────────────────────────────────────────────────────╯\n\n\n");
         
 }  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -656,4 +731,49 @@ int print_addmodscreen(struct Modulgruppe **mod, size_t *size_mod)
         mod_p[temp].modulgruppenindex = new_mod.modulgruppenindex;
         *mod = mod_p;
         return VALID_USER_INPUT; 
+}
+
+
+void print_buffer_error_screen()
+{
+        clear_display();
+        wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────┐\n");
+        wprintf(L"│                                    %ls%lsPUFFERFEHLER!%ls                                     │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+        wprintf(L"│         Das Programm wird beendet. Für einen weiteren Versuch bitte neu starten.     │\n");
+        wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────┘\n\n\n");
+
+}
+
+void print_memalloc_error_screen()
+{
+        clear_display();
+        wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────┐\n");
+        wprintf(L"│                     %ls%lsDynamische Speicherreservierung fehlgeschlagen!%ls                  │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+        wprintf(L"│         Das Programm wird beendet. Für einen weiteren Versuch bitte neu starten.     │\n");
+        wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────┘\n\n\n");
+
+}
+
+
+void print_wrong_command_screen(wchar_t *valid_commands, size_t size)
+{
+        wprintf(L"\n");
+        wprintf(L"┌─────────────────────────────────────────────────────────────────────┐\n");
+        wprintf(L"│                         %ls%lsFALSCHE EINGABE!%ls                            │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+        wprintf(L"│               Bitte wählen Sie eine gültige Taste.                  │\n");
+        wprintf(L"└─────────────────────────────────────────────────────────────────────┘");
+        wprintf(L"\n\nGültige Taste wählen:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+
+}
+
+
+void print_wrong_string_screen()
+{       
+        wprintf(L"\n");
+        wprintf(L"┌─────────────────────────────────────────────────────────────────────┐\n");
+        wprintf(L"│                         %ls%lsFALSCHE EINGABE!%ls                            │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+        wprintf(L"│                    Bitte geben Sie einen Namen ein.                 │\n");
+        wprintf(L"└─────────────────────────────────────────────────────────────────────┘");
+        wprintf(L"\n\nName:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+
 }
