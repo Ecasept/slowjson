@@ -1,3 +1,4 @@
+#pragma once
 #include "utils.h"
 
 Result utf8_get_next_codepoint(const string *str, size_t *index,

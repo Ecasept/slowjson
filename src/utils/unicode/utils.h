@@ -1,3 +1,4 @@
+#pragma once
 #include "../../utils/custom_error.h"
 #include "../../utils/dstring.h"
 #include "unicode_types.h"
