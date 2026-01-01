@@ -80,7 +80,7 @@ void print_inputcompletescreen();
 int print_addmodscreen(struct Modulgruppe **mod, size_t *size_mod);
 void print_buffer_error_screen();
 void print_memalloc_error_screen();
-void print_wrong_command_screen(wchar_t *valid_commands, size_t size);
+void print_wrong_command_screen();
 void print_wrong_string_screen();
 
 
