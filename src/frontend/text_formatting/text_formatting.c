@@ -298,7 +298,7 @@ void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Mo
         // Sortierung der Veranstaltungen nach Modulgruppe
         sort_by_mod(ver, size_ver);
 
-        wprintf(L"\nSortierung: Modulgruppe, alphabetisch aufsteigendh\n");
+        wprintf(L"\nSortierung: Modulgruppe, alphabetisch aufsteigend\n");
 
         for (size_t i = 0; i < size_ver; ++i) {
 
@@ -365,7 +365,7 @@ void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Mo
 
         
         for (int b = 0; b < 90; ++b) {
-                        wprintf(L" ");
+                wprintf(L" ");
         }
         wprintf(L"\nSumme: %i/%i\n", sum, mod[a].lp_todo);
                         
@@ -479,7 +479,7 @@ int print_addverscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modu
                                                 ++width_name_mod;
                                         }
                                         wprintf(L"      ╭──────────────────────────────────────────────────────────────────────────────╮\n");
-                                        wprintf(L"      │                      %ls Die Eingabe war erfolgreich %ls                           │\n", TXT_GREEN, END_STYLE);
+                                        wprintf(L"      │                         %ls Die Eingabe war erfolgreich %ls                        │\n", TXT_GREEN, END_STYLE);
                                         wprintf(L"      │                                                                              │\n");
                                         wprintf(L"      │                   Es wurde eine neue Modulgruppe angelegt:                   │\n");
                                         wprintf(L"      │                   %ls%ls%ls", TXT_UNDERLINED, (*mod)[(*size_mod) - 1].name, END_STYLE);
@@ -755,7 +755,7 @@ void print_memalloc_error_screen()
 }
 
 
-void print_wrong_command_screen(wchar_t *valid_commands, size_t size)
+void print_wrong_command_screen()
 {
         wprintf(L"\n");
         wprintf(L"┌─────────────────────────────────────────────────────────────────────┐\n");

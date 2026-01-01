@@ -2,6 +2,9 @@
 #include "../frontend/text_formatting/text_formatting.h"
 #include "../frontend/user_input/user_input.h"
 #include "../frontend/edit_events/edit_events.h"
+#include "../data/load.h"
+#include "../data/save.h"
+#include "../utils/custom_error.h"
 #include <string.h>
 #include <wchar.h>
 #include <locale.h>
@@ -34,12 +37,18 @@ int main() {
 	size_t size_ver = 0;
 	struct Modulgruppe *mod = NULL;
 	size_t size_mod = 0;
-	get_test_data(&ver, &size_ver, &mod, &size_mod);
-
-
-
 
 	print_welcomescreen();
+
+	// Daten aus dem Speicher laden hihihi
+	Result r = load_data_from_savefile(&ver, &mod, &size_ver, &size_mod);
+	if (!r.success) {
+		print_error(r);
+	}
+	
+
+
+
 
 	// Erste Eingabe + Fehlerbehandlung erste Eingabe
 	status = read_command(INPUT_WELC_SCR, SIZE_INPUT_WELC_SCR);
@@ -133,6 +142,11 @@ int main() {
 					current_page = CURR_PAGE_HELP_SCR;
 					print_helpscreen();
 				} else if (status == VALID_USER_INPUT) {
+					// Daten in Datei speichern
+					r = save_data_to_savefile(ver, size_ver, mod, size_mod);
+					if (!r.success) {
+						print_error(r);
+					}
 					switch (current_page) {
 						case CURR_PAGE_OV_SCR:
 							print_overviewscreen(ver, size_ver, mod, size_mod, view_type, NEW_ENTRY);
@@ -158,6 +172,11 @@ int main() {
 					current_page = CURR_PAGE_HELP_SCR;
 					print_helpscreen();
 				} else if (status == VALID_USER_INPUT) {
+					// Daten in Datei speichern
+					r = save_data_to_savefile(ver, size_ver, mod, size_mod);
+					if (!r.success) {
+						print_error(r);
+					}
 					switch (current_page) {
 						case CURR_PAGE_OV_SCR:
 							print_overviewscreen(ver, size_ver, mod, size_mod, view_type, NEW_ENTRY);
@@ -188,6 +207,11 @@ int main() {
 					current_page = CURR_PAGE_HELP_SCR;
 					print_helpscreen();
 				} else if (status == VALID_USER_INPUT) {
+					// Daten in Datei speichern
+					r = save_data_to_savefile(ver, size_ver, mod, size_mod);
+					if (!r.success) {
+						print_error(r);
+					}
 					switch (current_page) {
 						case CURR_PAGE_OV_SCR:
 							print_overviewscreen(ver, size_ver, mod, size_mod, view_type, NO_NEW_ENTRY);
@@ -207,6 +231,11 @@ int main() {
 				current_page = CURR_PAGE_HELP_SCR;
 				break;
 			case L'q':
+				// Daten in Datei speichern
+				r = save_data_to_savefile(ver, size_ver, mod, size_mod);
+				if (!r.success) {
+					print_error(r);
+				}
 				print_endscreen();
 				return 0;
 		}
