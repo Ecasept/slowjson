@@ -71,7 +71,7 @@ void print_welcomescreen();
 int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod, int view_type, int new_entry);
 void print_helpscreen();
 void print_endscreen();
-int print_averagescreen(int new_entry, struct Veranstaltung *ver, size_t size_ver);
+int print_averagescreen(int new_entry, struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod);
 void clear_display();
 void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver);
 void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod);
@@ -82,6 +82,7 @@ void print_buffer_error_screen();
 void print_memalloc_error_screen();
 void print_wrong_command_screen();
 void print_wrong_string_screen();
+void print_wrong_function_input_screen();
 
 
 

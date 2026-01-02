@@ -154,7 +154,7 @@ void print_endscreen()
 
 
 
-int print_averagescreen(int new_entry, struct Veranstaltung *ver, size_t size_ver)
+int print_averagescreen(int new_entry, struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod)
 { 
         clear_display(); 
 
@@ -163,7 +163,7 @@ int print_averagescreen(int new_entry, struct Veranstaltung *ver, size_t size_ve
         }
 
         // Berechnung des aktuellen Notendurchschnitts
-        double average_grade = notendurchschnitt_dumm(ver, size_ver);
+        double average_grade = notendurchschnitt_po(ver, size_ver, mod, size_mod);
 
         wprintf(L"\n%ls Notendurchschnitt %ls\n\n", TXT_INVERSE, END_STYLE);
         wprintf(L"Berechnung nach PO: %ls\n\n", PO_2018);
@@ -414,6 +414,7 @@ int print_addverscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modu
                 wprintf(L" ");
         }
         wprintf(L"%lsNummer%ls\n", TXT_UNDERLINED, END_STYLE);
+        sort_mod_by_alpha(*mod, *size_mod);
         for (int i = 0; i < (int) *size_mod; ++i) {
                 wprintf(L"%ls", (*mod)[i].name);
                 int counter = 0;
@@ -775,5 +776,17 @@ void print_wrong_string_screen()
         wprintf(L"│                    Bitte geben Sie einen Namen ein.                 │\n");
         wprintf(L"└─────────────────────────────────────────────────────────────────────┘");
         wprintf(L"\n\nName:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+
+}
+
+
+void print_wrong_function_input_screen()
+{
+        clear_display();
+        wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────┐\n");
+        wprintf(L"│                                 %ls%lsPROGRAMMFEHLER!%ls                                      │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+        wprintf(L"│                     Ungültige Eingabedaten der aufgerufenen Funktion.                │\n");
+        wprintf(L"│         Das Programm wird beendet. Für einen weiteren Versuch bitte neu starten.     │\n");
+        wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────┘\n\n\n");
 
 }
