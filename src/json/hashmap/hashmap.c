@@ -1,10 +1,10 @@
 #include "hashmap.h"
 #include "hashmap_node.h"
 
-const static size_t HASHMAP_INITIAL_SIZE = 7;
-const static size_t HASH_PRIME = 53;
-const static double MAX_LOAD_FACTOR = 3;
-const static double MIN_LOAD_FACTOR = MAX_LOAD_FACTOR / 4;
+static const size_t HASHMAP_INITIAL_SIZE = 7;
+static const size_t HASH_PRIME = 53;
+static const double MAX_LOAD_FACTOR = 3;
+static const double MIN_LOAD_FACTOR = MAX_LOAD_FACTOR / 4;
 
 static size_t string_hash(const string *str, size_t size) {
 	// Implements a simple polynomial rolling hash function

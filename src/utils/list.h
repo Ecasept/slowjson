@@ -55,7 +55,7 @@ static inline bool TYPED_NAME(list_check_index)(const TYPED_NAME(list) * arr,
 
 #ifdef LIST_IMPLEMENTATION
 
-const static size_t TYPED_NAME(INITIAL_LIST_SIZE) = 8;
+static const size_t TYPED_NAME(INITIAL_LIST_SIZE) = 8;
 
 /** @brief Panics if the passed list is freed */
 void TYPED_NAME(list_ensure_not_freed)(const TYPED_NAME(list) * arr) {

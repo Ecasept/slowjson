@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 // How much to read per iteration
-const static size_t READ_SIZE = 4096;
+static const size_t READ_SIZE = 4096;
 const char *JSON_SAVEFILE_NAME = "data.json";
 
 
