@@ -82,6 +82,7 @@ void print_buffer_error_screen(void);
 void print_memalloc_error_screen(void);
 void print_wrong_command_screen();
 void print_wrong_string_screen(void);
+void print_wrong_function_input_screen();
 
 
 
