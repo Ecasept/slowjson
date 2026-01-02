@@ -22,8 +22,42 @@ double notendurchschnitt_dumm(struct Veranstaltung *ver, size_t size_ver)
 }
 
 double notendurchschnitt_po(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod)
-{    
-    return 1.0;
+{
+    double gesamt_zaehler = 0.0;
+    double gesamt_nenner = 0.0;
+
+    for (size_t i = 0; i < size_mod; i++)
+    {
+        double summe_noten_mal_lp = 0.0;
+        int summe_lp_benotet = 0;
+        
+        for (size_t j = 0; j < size_ver; j++)
+        {
+            if (ver[j].modulgruppenindex == mod[i].modulgruppenindex && ver[j].state == Bestanden) 
+            {
+                // man kann unbenotete sachen auch Bestanden haben
+                if (ver[j].note >= 1.0) 
+                {
+                    summe_noten_mal_lp += ver[j].note * ver[j].lp;
+                    summe_lp_benotet += ver[j].lp;
+                }
+            }
+        }
+
+        if (summe_lp_benotet > 0)
+        {
+            double gruppennote = summe_noten_mal_lp / summe_lp_benotet;
+            
+            gesamt_zaehler += gruppennote * mod[i].lp_todo;
+            gesamt_nenner += mod[i].lp_todo;
+        }
+    }
+
+    if (gesamt_nenner == 0.0) {
+        return 0.0;
+    }
+
+    return gesamt_zaehler / gesamt_nenner;
 }
 
 void swap(struct Veranstaltung *a, struct Veranstaltung *b)
@@ -112,4 +146,48 @@ void sort_by_mod(struct Veranstaltung *ver, size_t size_ver)
     if (size_ver == 0)
         return;
     quicksort_by_mod(ver, 0, size_ver - 1);
+}
+
+// sort mod by alpha
+
+void swap_mod(struct Modulgruppe *a, struct Modulgruppe *b)
+{
+    struct Modulgruppe temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+int partition_mod_by_alpha(struct Modulgruppe *mod, int low, int high)
+{
+    struct Modulgruppe pivot = mod[high];
+    int i = low - 1;
+
+    for (int j = low; j < high; j++) {
+
+            if (wcscmp(mod[j].name, pivot.name) < 0) {
+                i++;
+                swap_mod(&mod[i], &mod[j]);
+            }
+        
+    }
+
+    swap_mod(&mod[i + 1], &mod[high]);
+    return i + 1;
+}
+
+void quicksort_mod_by_alpha(struct Modulgruppe *mod, int low, int high)
+{
+    if (low < high) {
+        int p = partition_mod_by_alpha(mod, low, high);
+
+        quicksort_mod_by_alpha(mod, low, p - 1);
+        quicksort_mod_by_alpha(mod, p + 1, high);
+    }
+}
+
+void sort_mod_by_alpha(struct Modulgruppe *mod, size_t size_mod)
+{
+    if (size_mod == 0)
+        return;
+    quicksort_mod_by_alpha(mod, 0, size_mod - 1);
 }
