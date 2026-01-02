@@ -82,7 +82,7 @@ void json_value_hashmap_set(json_value_hashmap *map, string key,
 
 static void json_value_hashmap_set_internal(json_value_hashmap *map, string key,
 									  JSONValue value, bool should_rehash) {
-	size_t load_factor = get_load_factor(map);
+	double load_factor = get_load_factor(map);
 	if (should_rehash && load_factor > MAX_LOAD_FACTOR) {
 		rehash(map, map->buckets.length * 2);
 	} else if (should_rehash && load_factor < MIN_LOAD_FACTOR &&
