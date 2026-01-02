@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 
 Result new_error(const char msg[], ErrorType type) {
 	Result err;
@@ -28,15 +29,15 @@ Result new_success() {
 }
 
 void print_error(Result r) {
-	if (r.success) {
-		printf("No error occurred.\n");
-	} else {
-		if (r.message != NULL) {
-			printf("Error: %s: %s\n", etostr(r.type), r.message);
-		} else {
-			printf("Error: %s\n", etostr(r.type));
-		}
-	}
+    if (r.success) {
+        wprintf(L"No error occurred.\n");
+    } else {
+        if (r.message != NULL) {
+            wprintf(L"Error: %hs: %hs\n", etostr(r.type), r.message);
+        } else {
+            wprintf(L"Error: %hs\n", etostr(r.type));
+        }
+    }
 }
 
 Result new_errorf(const char *format, ErrorType type, ...) {
