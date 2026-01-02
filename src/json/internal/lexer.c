@@ -3,6 +3,7 @@
 #include "../../utils/unicode/utf8.h"
 #include "../../utils/unicode/utf16.h"
 #include <ctype.h>
+#include <math.h>
 
 // ==== Relevant Specifications ====
 // JSON Website (with syntax diagram):
@@ -33,16 +34,6 @@ static Result lexer_test_literal(Lexer *lexer, string *string, bool *res);
 
 const char *JSONTokenTypeStrings[] = {FOREACH_TOKEN(DECLARE_TOKEN_STRING)};
 
-static double pow(double x, double y) {
-	if (y == 0) {
-		return 1;
-	}
-	double result = x;
-	for (int i = 1; i < (int)y; i++) {
-		result *= x;
-	}
-	return result;
-}
 void lexer_init(Lexer *lexer, const string *source) {
 	lexer->source = source;
 	lexer->position = 0;
