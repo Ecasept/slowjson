@@ -281,7 +281,7 @@ void print_selected_ver(struct Veranstaltung *ver, struct Modulgruppe *mod, size
 
 
 
-void print_options_editver()
+void print_options_editver(void)
 {
         wprintf(L"\n\n\n  %lsOptionen%ls                        %lsTaste%ls                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
         wprintf(L"  Veranstaltung löschen             [l]           Zurück zur Veranstaltungsübersicht:          [v]\n");
@@ -340,7 +340,7 @@ int delete_verscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modulg
 }
 
 
-void print_eventdeleted()
+void print_eventdeleted(void)
 {
         wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────────────────┐\n");
         wprintf(L"│                                %ls%lsDie Veranstaltung wurde gelöscht!%ls                                 │\n", TXT_RED, TXT_INVERSE, END_STYLE);
@@ -348,7 +348,7 @@ void print_eventdeleted()
         wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────────────────┘\n");
 }
 
-int print_noverscreen()
+int print_noverscreen(void)
 {
         clear_display();
         int status_noverscreen = -1;
@@ -406,7 +406,7 @@ int change_notescreen(struct Veranstaltung **ver, struct Modulgruppe **mod, size
 }
 
 
-void print_notechangedscreen()
+void print_notechangedscreen(void)
 {
         wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────┐\n");
         wprintf(L"│                            %lsDie Note wurde geändert!%ls                                  │\n", TXT_GREEN, END_STYLE);
@@ -469,7 +469,7 @@ int change_modscreen(struct Veranstaltung **ver, struct Modulgruppe **mod, size_
 }
 
 
-void print_modchangedscreen()
+void print_modchangedscreen(void)
 {
         wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────┐\n");
         wprintf(L"│                            %lsDie Modulgruppe wurde geändert!%ls                           │\n", TXT_GREEN, END_STYLE);

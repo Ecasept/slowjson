@@ -20,7 +20,7 @@ Result new_error(const char msg[], ErrorType type) {
 	return err;
 }
 
-Result new_success() {
+Result new_success(void) {
 	Result err;
 	err.message = NULL;
 	err.success = true;

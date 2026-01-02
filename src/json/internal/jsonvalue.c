@@ -38,7 +38,7 @@ void json_value_free(JSONValue *value) {
 	}
 }
 
-JSONValue json_value_new_null() {
+JSONValue json_value_new_null(void) {
 	JSONValue val;
 	val.type = JSON_NULL;
 	return val;
@@ -88,13 +88,13 @@ JSONValue json_value_new_string_cstr(const char *str) {
 	return val;
 }
 
-JSONValue json_value_new_array() {
+JSONValue json_value_new_array(void) {
 	JSONValue val;
 	val.type = JSON_ARRAY;
 	json_value_list_init(&val.list, 0);
 	return val;
 }
-JSONValue json_value_new_object() {
+JSONValue json_value_new_object(void) {
 	JSONValue val;
 	val.type = JSON_OBJECT;
 	json_value_hashmap_init(&val.hashmap);

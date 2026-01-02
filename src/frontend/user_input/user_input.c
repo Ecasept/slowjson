@@ -606,7 +606,7 @@ int read_number_in_bound(int lower_bound, int upper_bound, int *number)
 
 
 
-int flush()
+int flush(void)
 {
         wchar_t c = L'\0';
         while(1) {

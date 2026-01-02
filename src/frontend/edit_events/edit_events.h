@@ -11,14 +11,14 @@
 int print_editver(struct Veranstaltung **ver, size_t *size_ver, struct Modulgruppe **mod, size_t *size_mod, int *current_page);
 int select_ver(struct Veranstaltung **ver, size_t *size_ver, int *selected_ver);
 void print_selected_ver(struct Veranstaltung *ver, struct Modulgruppe *mod, size_t size_mod, int selected_ver);
-void print_options_editver();
+void print_options_editver(void);
 int delete_verscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modulgruppe **mod, size_t *size_mod, int *selected_ver);
-void print_eventdeleted();
-int print_noverscreen();
+void print_eventdeleted(void);
+int print_noverscreen(void);
 int change_notescreen(struct Veranstaltung **ver, struct Modulgruppe **mod, size_t *size_mod, int selected_ver);
-void print_notechangedscreen();
+void print_notechangedscreen(void);
 int change_modscreen(struct Veranstaltung **ver, struct Modulgruppe **mod, size_t *size_mod, int selected_ver);
-void print_modchangedscreen();
+void print_modchangedscreen(void);
 
 
 #endif

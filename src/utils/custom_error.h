@@ -33,7 +33,7 @@ typedef struct {
 } Result;
 
 Result new_error(const char message[], ErrorType type);
-Result new_success();
+Result new_success(void);
 void print_error(Result r);
 Result new_errorf(const char *format, ErrorType type, ...)
 	__attribute__((format(printf, 1, 3)));

@@ -9,7 +9,7 @@
 #include <sys/ioctl.h>
 
 
-void print_welcomescreen()
+void print_welcomescreen(void)
 {
         wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐\n");
         wprintf(L"│                                                                                                                      │\n");
@@ -87,7 +87,7 @@ int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modu
 
 
 
-void print_helpscreen()
+void print_helpscreen(void)
 {
         clear_display();
 
@@ -136,7 +136,7 @@ void print_helpscreen()
 
 
 
-void print_endscreen()
+void print_endscreen(void)
 {
         clear_display();
         wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────┐\n");
@@ -189,7 +189,7 @@ int print_averagescreen(int new_entry, struct Veranstaltung *ver, size_t size_ve
 
 
 
-void clear_display()
+void clear_display(void)
 {
         wprintf(L"\033[0;0H");
         for (int i = 0; i < 50; ++i) {
@@ -650,7 +650,7 @@ int print_addverscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modu
 
 
 
-void print_inputcompletescreen()
+void print_inputcompletescreen(void)
 {
         wprintf(L"      ╭───────────────────────────────────────────────────────╮\n");
         wprintf(L"      │         %ls Die Eingabe war erfolgreich %ls                 │\n", TXT_GREEN, END_STYLE);
@@ -734,7 +734,7 @@ int print_addmodscreen(struct Modulgruppe **mod, size_t *size_mod)
 }
 
 
-void print_buffer_error_screen()
+void print_buffer_error_screen(void)
 {
         clear_display();
         wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────┐\n");
@@ -744,7 +744,7 @@ void print_buffer_error_screen()
 
 }
 
-void print_memalloc_error_screen()
+void print_memalloc_error_screen(void)
 {
         clear_display();
         wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────┐\n");
@@ -755,7 +755,7 @@ void print_memalloc_error_screen()
 }
 
 
-void print_wrong_command_screen()
+void print_wrong_command_screen(void)
 {
         wprintf(L"\n");
         wprintf(L"┌─────────────────────────────────────────────────────────────────────┐\n");
@@ -767,7 +767,7 @@ void print_wrong_command_screen()
 }
 
 
-void print_wrong_string_screen()
+void print_wrong_string_screen(void)
 {       
         wprintf(L"\n");
         wprintf(L"┌─────────────────────────────────────────────────────────────────────┐\n");
