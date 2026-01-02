@@ -1,6 +1,10 @@
 #pragma once
 #include <stdbool.h>
+#include "wchar.h"
 #define check(code) do {Result _r = (code); if (!_r.success) return _r;} while(0)
+
+struct string;
+typedef struct string string;
 
 #define FOREACH_ERROR_TYPE(macro)                                                   \
 	macro(ESuccess)                                     \
