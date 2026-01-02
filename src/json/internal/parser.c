@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "lexer.h"
+#include "../json.h"
 
 // Forward declaration
 static Result parse_json_value(json_token_list *tokens, size_t *position,

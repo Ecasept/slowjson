@@ -1,5 +1,5 @@
-#include "serialize.h"
 #include "../hashmap/hashmap_node.h"
+#include "../json.h"
 
 void serialize_json(JSONValue *val, string *str) {
 	switch (val->type) {
