@@ -576,6 +576,10 @@ static bool num_dfa_next_state(enum NumParseState current_state, UCP chr,
 	case NUM_STATE_AFTER_EXPONENT:
 		// End reached
 		return false;
+	case NUM_STATE_ERROR:
+	case NUM_STATE_ERROR_LEADING_ZERO:
+		*next_state = current_state;
+		return false;
 	default:
 		panicf("Invalid NumParseState: %u", current_state);
 	}
