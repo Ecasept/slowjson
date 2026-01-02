@@ -27,7 +27,7 @@ OBJS = $(SRCS:%.c=$(BUILD_DIR)/%.o)
 all: $(BUILD_DIR)/$(TARGET)
 
 # Cleans and builds everything from scratch
-build: clean all
+rebuild: clean all
 
 run: all
 ifeq ($(OS),Windows_NT)
