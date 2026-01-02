@@ -2,6 +2,7 @@
 #include "../utils/unicode/wchar.h"
 #include "../json/json.h"
 #include "file.h"
+#include "save.h"
 
 /**
  * Example:
@@ -30,7 +31,7 @@
 }
  */
 
-static Result _convert_to_json(struct Veranstaltung *v_out, size_t v_count,
+static Result convert_to_json(struct Veranstaltung *v_out, size_t v_count,
 						  struct Modulgruppe *mg_out, size_t mg_count,
 						  JSONValue *root) {
 	*root = json_value_new_object();
@@ -127,11 +128,11 @@ static Result _convert_to_json(struct Veranstaltung *v_out, size_t v_count,
 
 
 
-static Result _serialize_save_data(struct Veranstaltung *v, size_t v_count,
+static Result serialize_save_data(struct Veranstaltung *v, size_t v_count,
 							   struct Modulgruppe *mg, size_t mg_count,
 							   string *out) {
 	JSONValue root;
-	Result r = _convert_to_json(v, v_count, mg, mg_count, &root);
+	Result r = convert_to_json(v, v_count, mg, mg_count, &root);
 	if (!r.success) {
 		return r;
 	}
@@ -144,7 +145,7 @@ static Result _serialize_save_data(struct Veranstaltung *v, size_t v_count,
 Result save_data_to_savefile(struct Veranstaltung *v, size_t v_count,
 				 struct Modulgruppe *mg, size_t mg_count) {
 	string str;
-	Result r = _serialize_save_data(v, v_count, mg, mg_count, &str);
+	Result r = serialize_save_data(v, v_count, mg, mg_count, &str);
 	if (!r.success) {
 		return r;
 	}
