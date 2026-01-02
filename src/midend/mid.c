@@ -113,3 +113,47 @@ void sort_by_mod(struct Veranstaltung *ver, size_t size_ver)
         return;
     quicksort_by_mod(ver, 0, size_ver - 1);
 }
+
+// sort mod by alpha
+
+void swap_mod(struct Modulgruppe *a, struct Modulgruppe *b)
+{
+    struct Modulgruppe temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+int partition_mod_by_alpha(struct Modulgruppe *mod, int low, int high)
+{
+    struct Modulgruppe pivot = mod[high];
+    int i = low - 1;
+
+    for (int j = low; j < high; j++) {
+
+            if (wcscmp(mod[j].name, pivot.name) < 0) {
+                i++;
+                swap_mod(&mod[i], &mod[j]);
+            }
+        
+    }
+
+    swap_mod(&mod[i + 1], &mod[high]);
+    return i + 1;
+}
+
+void quicksort_mod_by_alpha(struct Modulgruppe *mod, int low, int high)
+{
+    if (low < high) {
+        int p = partition_mod_by_alpha(mod, low, high);
+
+        quicksort_mod_by_alpha(mod, low, p - 1);
+        quicksort_mod_by_alpha(mod, p + 1, high);
+    }
+}
+
+void sort_mod_by_alpha(struct Modulgruppe *mod, size_t size_mod)
+{
+    if (size_mod == 0)
+        return;
+    quicksort_mod_by_alpha(mod, 0, size_mod - 1);
+}
