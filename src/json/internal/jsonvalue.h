@@ -45,6 +45,8 @@ struct JSONValue {
 	};
 };
 
+const char *jtostr(JSONType type);
+
 void json_value_free(JSONValue *value);
 
 JSONValue json_value_new_null();

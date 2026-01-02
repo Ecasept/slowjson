@@ -1,5 +1,21 @@
 #include "jsonvalue.h"
 
+static const char *json_type_strings[] = {
+	"null",
+	"bool",
+	"number",
+	"string",
+	"array",
+	"object",
+};
+
+const char *jtostr(JSONType type) {
+	if (type < 0 || type >= (int)(sizeof(json_type_strings) / sizeof(json_type_strings[0]))) {
+		return "unknown";
+	}
+	return json_type_strings[type];
+}
+
 void json_value_free(JSONValue *value) {
 	switch (value->type) {
 	case JSON_NULL:

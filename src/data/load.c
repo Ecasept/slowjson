@@ -21,8 +21,8 @@ static Result json_get_typed(const JSONValue *obj, const char *key, JSONType typ
 	check(json_value_hashmap_get_cstr(&obj->hashmap, key, out));
 	
     if (out->type != type) {
-        return new_errorf("Field '%s': expected type %d, got %d", 
-                          ESaveFormatError, key, type, out->type);
+        return new_errorf("Field '%s': expected %s, got %s",
+                          ESaveFormatError, key, jtostr(type), jtostr(out->type));
     }
     return new_success();
 }
