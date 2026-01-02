@@ -18,7 +18,7 @@
 typedef enum { FOREACH_TOKEN(DEFINE_TOKEN_ENUM) } JSONTokenType;
 extern const char *JSONTokenTypeStrings[];
 
-char *tk_as_str(JSONTokenType type);
+const char *tk_as_str(JSONTokenType type);
 
 typedef struct {
 	JSONTokenType type;

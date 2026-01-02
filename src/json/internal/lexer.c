@@ -668,9 +668,9 @@ static Result lexer_lex_number(Lexer *lexer, JSONToken *token) {
 
 void lexer_free_token(JSONToken *token) { string_free(&token->value); }
 
-char *tk_as_str(JSONTokenType type) {
+const char *tk_as_str(JSONTokenType type) {
 	if (type < 0 || type >= sizeof(JSONTokenTypeStrings) / sizeof(char *)) {
 		panicf("Invalid JSONTokenType: %u", type);
 	}
-	return (char *)JSONTokenTypeStrings[type];
+	return (const char *)JSONTokenTypeStrings[type];
 }
