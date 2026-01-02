@@ -5,6 +5,7 @@
 #include "../text_formatting/text_formatting.h"
 #include "../user_input/user_input.h"
 #include "../../midend/data.h"
+#include "../../midend/mid.h"
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <string.h>
@@ -434,6 +435,7 @@ int change_modscreen(struct Veranstaltung **ver, struct Modulgruppe **mod, size_
                                                
 
                         // Vorhandene Modulgruppen anzeigen
+                        sort_mod_by_alpha(*mod, *size_mod);
                         wprintf(L"\n\n%lsVorhandene Modulgruppen:%ls                   \n\n", TXT_INVERSE, END_STYLE);
                         wprintf(L"%lsName%ls", TXT_UNDERLINED, END_STYLE);
                         for (int i = 0; i < 81; ++i) {
