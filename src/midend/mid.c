@@ -22,8 +22,42 @@ double notendurchschnitt_dumm(struct Veranstaltung *ver, size_t size_ver)
 }
 
 double notendurchschnitt_po(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod)
-{    
-    return 1.0;
+{
+    double gesamt_zaehler = 0.0;
+    double gesamt_nenner = 0.0;
+
+    for (size_t i = 0; i < size_mod; i++)
+    {
+        double summe_noten_mal_lp = 0.0;
+        int summe_lp_benotet = 0;
+        
+        for (size_t j = 0; j < size_ver; j++)
+        {
+            if (ver[j].modulgruppenindex == mod[i].modulgruppenindex && ver[j].state == Bestanden) 
+            {
+                // man kann unbenotete sachen auch Bestanden haben
+                if (ver[j].note >= 1.0) 
+                {
+                    summe_noten_mal_lp += ver[j].note * ver[j].lp;
+                    summe_lp_benotet += ver[j].lp;
+                }
+            }
+        }
+
+        if (summe_lp_benotet > 0)
+        {
+            double gruppennote = summe_noten_mal_lp / summe_lp_benotet;
+            
+            gesamt_zaehler += gruppennote * mod[i].lp_todo;
+            gesamt_nenner += mod[i].lp_todo;
+        }
+    }
+
+    if (gesamt_nenner == 0.0) {
+        return 0.0;
+    }
+
+    return gesamt_zaehler / gesamt_nenner;
 }
 
 void swap(struct Veranstaltung *a, struct Veranstaltung *b)
