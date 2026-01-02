@@ -67,22 +67,21 @@
 #define LP L"LP"
 
 
-void print_welcomescreen();
+void print_welcomescreen(void);
 int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod, int view_type, int new_entry);
-void print_helpscreen();
-void print_endscreen();
+void print_helpscreen(void);
+void print_endscreen(void);
 int print_averagescreen(int new_entry, struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod);
-void clear_display();
+void clear_display(void);
 void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver);
 void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod);
 int print_addverscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modulgruppe **mod, size_t *size_mod);
-void print_inputcompletescreen();
+void print_inputcompletescreen(void);
 int print_addmodscreen(struct Modulgruppe **mod, size_t *size_mod);
-void print_buffer_error_screen();
-void print_memalloc_error_screen();
+void print_buffer_error_screen(void);
+void print_memalloc_error_screen(void);
 void print_wrong_command_screen();
-void print_wrong_string_screen();
-void print_wrong_function_input_screen();
+void print_wrong_string_screen(void);
 
 
 

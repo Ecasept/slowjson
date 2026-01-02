@@ -1,10 +1,10 @@
 #include "hashmap.h"
 #include "hashmap_node.h"
 
-const size_t _HASHMAP_INITIAL_SIZE = 7;
-const size_t HASH_PRIME = 53;
-const double MAX_LOAD_FACTOR = 3;
-const double MIN_LOAD_FACTOR = MAX_LOAD_FACTOR / 4;
+static const size_t HASHMAP_INITIAL_SIZE = 7;
+static const size_t HASH_PRIME = 53;
+static const double MAX_LOAD_FACTOR = 3;
+static const double MIN_LOAD_FACTOR = MAX_LOAD_FACTOR / 4;
 
 static size_t string_hash(const string *str, size_t size) {
 	// Implements a simple polynomial rolling hash function
@@ -26,10 +26,10 @@ static double get_load_factor(const json_value_hashmap *map) {
 }
 
 void json_value_hashmap_init(json_value_hashmap *map) {
-	json_value_hashmap_node_list_init(&map->buckets, _HASHMAP_INITIAL_SIZE);
+	json_value_hashmap_node_list_init(&map->buckets, HASHMAP_INITIAL_SIZE);
 	memset(map->buckets.data, 0,
 		   sizeof(json_value_hashmap_node) * map->buckets.capacity);
-	map->buckets.length = _HASHMAP_INITIAL_SIZE;
+	map->buckets.length = HASHMAP_INITIAL_SIZE;
 	map->size = 0;
 }
 
@@ -82,11 +82,11 @@ void json_value_hashmap_set(json_value_hashmap *map, string key,
 
 static void json_value_hashmap_set_internal(json_value_hashmap *map, string key,
 									  JSONValue value, bool should_rehash) {
-	size_t load_factor = get_load_factor(map);
+	double load_factor = get_load_factor(map);
 	if (should_rehash && load_factor > MAX_LOAD_FACTOR) {
 		rehash(map, map->buckets.length * 2);
 	} else if (should_rehash && load_factor < MIN_LOAD_FACTOR &&
-			   map->buckets.length > _HASHMAP_INITIAL_SIZE) {
+			   map->buckets.length > HASHMAP_INITIAL_SIZE) {
 		rehash(map, map->buckets.length / 2);
 	}
 	size_t node_index = string_hash(&key, map->buckets.length);

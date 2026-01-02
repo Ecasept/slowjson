@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "lexer.h"
+#include "../json.h"
 
 // Forward declaration
 static Result parse_json_value(json_token_list *tokens, size_t *position,
@@ -73,17 +74,6 @@ static Result parser_expect_token(json_token_list *tokens, size_t *position,
 			token.line, token.column);
 	}
 	*out_token = token;
-	return new_success();
-}
-
-static Result parser_check_token(json_token_list *tokens, size_t position,
-								 JSONTokenType expected_type, bool *out_match) {
-	JSONToken token;
-	Result r = parser_peek_token(tokens, position, &token);
-	if (!r.success) {
-		return r;
-	}
-	*out_match = (token.type == expected_type);
 	return new_success();
 }
 

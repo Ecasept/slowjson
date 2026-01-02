@@ -21,8 +21,8 @@ static Result json_get_typed(const JSONValue *obj, const char *key, JSONType typ
 	check(json_value_hashmap_get_cstr(&obj->hashmap, key, out));
 	
     if (out->type != type) {
-        return new_errorf("Field '%s': expected type %d, got %d", 
-                          ESaveFormatError, key, type, out->type);
+        return new_errorf("Field '%s': expected %s, got %s",
+                          ESaveFormatError, key, jtostr(type), jtostr(out->type));
     }
     return new_success();
 }
@@ -67,7 +67,11 @@ static Result parse_semester(const JSONValue *val, struct Semester *sem) {
     } else if (string_eq_cstr(&season_val.str, "sommer")) {
         sem->jahreszeit = Sommer;
     } else {
-        return new_error("Invalid jahreszeit value", ESaveFormatError);
+		char *cstr;
+		string_to_cstr(&season_val.str, &cstr);
+        Result r = new_errorf("Invalid jahreszeit value: \"%s\"", ESaveFormatError, cstr);
+        free(cstr);
+        return r;
     }
     return new_success();
 }
@@ -107,7 +111,10 @@ static Result parse_veranstaltung(const JSONValue *val, struct Veranstaltung *v)
     else if (string_eq_cstr(&tmp.str, "nicht_bestanden")) v->state = NichtBestanden;
     else if (string_eq_cstr(&tmp.str, "ausstehend")) v->state = Ausstehend;
     else {
-        r = new_error("Invalid state value", ESaveFormatError);
+		char *cstr;
+		string_to_cstr(&tmp.str, &cstr);
+        r = new_errorf("Invalid state value: \"%s\"", ESaveFormatError, cstr);
+        free(cstr);
         goto error;
     }
 

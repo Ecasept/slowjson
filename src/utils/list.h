@@ -55,7 +55,7 @@ static inline bool TYPED_NAME(list_check_index)(const TYPED_NAME(list) * arr,
 
 #ifdef LIST_IMPLEMENTATION
 
-const size_t TYPED_NAME(INITIAL_LIST_SIZE) = 8;
+static const size_t TYPED_NAME(INITIAL_LIST_SIZE) = 8;
 
 /** @brief Panics if the passed list is freed */
 void TYPED_NAME(list_ensure_not_freed)(const TYPED_NAME(list) * arr) {
@@ -150,7 +150,7 @@ Result TYPED_NAME(list_get_err)(const TYPED_NAME(list) * arr, size_t index,
 								TYPE *element) {
 	TYPED_NAME(list_ensure_not_freed)(arr);
 	if (!TYPED_NAME(list_check_index)(arr, index)) {
-		return new_errorf("Index %ld out of bounds for array of length %ld",
+		return new_errorf("Index %zu out of bounds for array of length %zu",
 						  EIndexOutOfBounds, index, arr->length);
 	}
 	*element = arr->data[index];
@@ -162,7 +162,7 @@ Result TYPED_NAME(list_get_err)(const TYPED_NAME(list) * arr, size_t index,
  */
 void TYPED_NAME(list_ensure_index)(const TYPED_NAME(list) * arr, size_t index) {
 	if (!TYPED_NAME(list_check_index)(arr, index)) {
-		panicf("Tried to access array with length %ld at index %ld",
+		panicf("Tried to access array with length %zu at index %zu",
 			   arr->length, index);
 	}
 }

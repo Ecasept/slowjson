@@ -1,6 +1,10 @@
 #pragma once
 #include <stdbool.h>
+#include "wchar.h"
 #define check(code) do {Result _r = (code); if (!_r.success) return _r;} while(0)
+
+struct string;
+typedef struct string string;
 
 #define FOREACH_ERROR_TYPE(macro)                                                   \
 	macro(ESuccess)                                     \
@@ -33,8 +37,10 @@ typedef struct {
 } Result;
 
 Result new_error(const char message[], ErrorType type);
-Result new_success();
+Result new_success(void);
 void print_error(Result r);
+string format_error(Result r);
+wchar_t *format_error_wchar(Result r);
 Result new_errorf(const char *format, ErrorType type, ...)
 	__attribute__((format(printf, 1, 3)));
 void error_free(Result r);

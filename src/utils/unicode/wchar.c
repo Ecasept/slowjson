@@ -88,7 +88,7 @@ Result utf8_string_to_wchar(const string *src, wchar_t **dest) {
 		while (index < src->arr.length) {
 			r = utf8_get_next_codepoint(src, &index, &cp);
 			if (!r.success) {
-				free(*dest);
+				wchar_list_free(&out);
 				return r;
 			}
 			if (needs_surrogate_pair(cp)) {
@@ -112,6 +112,7 @@ Result utf8_string_to_wchar(const string *src, wchar_t **dest) {
 		while (index < src->arr.length) {
 			r = utf8_get_next_codepoint(src, &index, &cp);
 			if (!r.success) {
+				wchar_list_free(&out);
 				return r;
 			}
 			wchar_list_push(&out, (wchar_t)cp);

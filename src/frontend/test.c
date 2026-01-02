@@ -8,7 +8,7 @@
 
 // Eingabe von Umlaute als zwei normale char
 
-void printer_test()
+void printer_test(void)
 {
 	struct Veranstaltung vst1;
 	vst1.note = 2.7;
@@ -28,7 +28,7 @@ void printer_test()
 
 
 
-struct Veranstaltung *get_test_ver()
+struct Veranstaltung *get_test_ver(void)
 {
 	int i = 0;
 	struct Veranstaltung *p = malloc(SIZE_VER * sizeof(struct Veranstaltung));
@@ -103,7 +103,7 @@ struct Veranstaltung *get_test_ver()
 
 
 
-struct Modulgruppe *get_test_mod()
+struct Modulgruppe *get_test_mod(void)
 {
 	int i = 0;
 	struct Modulgruppe *p = malloc(SIZE_MOD * sizeof(struct Modulgruppe));

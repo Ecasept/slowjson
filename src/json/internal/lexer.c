@@ -3,6 +3,7 @@
 #include "../../utils/unicode/utf8.h"
 #include "../../utils/unicode/utf16.h"
 #include <ctype.h>
+#include <math.h>
 
 // ==== Relevant Specifications ====
 // JSON Website (with syntax diagram):
@@ -33,16 +34,6 @@ static Result lexer_test_literal(Lexer *lexer, string *string, bool *res);
 
 const char *JSONTokenTypeStrings[] = {FOREACH_TOKEN(DECLARE_TOKEN_STRING)};
 
-static double pow(double x, double y) {
-	if (y == 0) {
-		return 1;
-	}
-	double result = x;
-	for (int i = 1; i < (int)y; i++) {
-		result *= x;
-	}
-	return result;
-}
 void lexer_init(Lexer *lexer, const string *source) {
 	lexer->source = source;
 	lexer->position = 0;
@@ -357,7 +348,7 @@ static Result lexer_lex_string(Lexer *lexer, JSONToken *token) {
 		if (chr <= 0x1F) {
 			string_free(&value);
 			return new_errorf(
-				"Encountered control character with value %d in string at line %zu, column %zu",
+				"Encountered control character with value %u in string at line %zu, column %zu",
 				ELexerSyntaxError, chr, lexer->line, lexer->column - 1);
 		}
 
@@ -576,8 +567,12 @@ static bool num_dfa_next_state(enum NumParseState current_state, UCP chr,
 	case NUM_STATE_AFTER_EXPONENT:
 		// End reached
 		return false;
+	case NUM_STATE_ERROR:
+	case NUM_STATE_ERROR_LEADING_ZERO:
+		*next_state = current_state;
+		return false;
 	default:
-		panicf("Invalid NumParseState: %d", current_state);
+		panicf("Invalid NumParseState: %u", current_state);
 	}
 	return true;
 }
@@ -668,9 +663,9 @@ static Result lexer_lex_number(Lexer *lexer, JSONToken *token) {
 
 void lexer_free_token(JSONToken *token) { string_free(&token->value); }
 
-char *tk_as_str(JSONTokenType type) {
+const char *tk_as_str(JSONTokenType type) {
 	if (type < 0 || type >= sizeof(JSONTokenTypeStrings) / sizeof(char *)) {
-		panicf("Invalid JSONTokenType: %d", type);
+		panicf("Invalid JSONTokenType: %u", type);
 	}
-	return (char *)JSONTokenTypeStrings[type];
+	return (const char *)JSONTokenTypeStrings[type];
 }

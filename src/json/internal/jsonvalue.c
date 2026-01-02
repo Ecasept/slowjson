@@ -1,5 +1,21 @@
 #include "jsonvalue.h"
 
+static const char *json_type_strings[] = {
+	"null",
+	"bool",
+	"number",
+	"string",
+	"array",
+	"object",
+};
+
+const char *jtostr(JSONType type) {
+	if (type < 0 || type >= (int)(sizeof(json_type_strings) / sizeof(json_type_strings[0]))) {
+		return "unknown";
+	}
+	return json_type_strings[type];
+}
+
 void json_value_free(JSONValue *value) {
 	switch (value->type) {
 	case JSON_NULL:
@@ -22,7 +38,7 @@ void json_value_free(JSONValue *value) {
 	}
 }
 
-JSONValue json_value_new_null() {
+JSONValue json_value_new_null(void) {
 	JSONValue val;
 	val.type = JSON_NULL;
 	return val;
@@ -72,13 +88,13 @@ JSONValue json_value_new_string_cstr(const char *str) {
 	return val;
 }
 
-JSONValue json_value_new_array() {
+JSONValue json_value_new_array(void) {
 	JSONValue val;
 	val.type = JSON_ARRAY;
 	json_value_list_init(&val.list, 0);
 	return val;
 }
-JSONValue json_value_new_object() {
+JSONValue json_value_new_object(void) {
 	JSONValue val;
 	val.type = JSON_OBJECT;
 	json_value_hashmap_init(&val.hashmap);

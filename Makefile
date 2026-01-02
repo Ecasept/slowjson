@@ -1,5 +1,8 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -std=c11 -g
+CFLAGS = -Wall -Wextra -pedantic -std=c11
+DEBUG_CFLAGS = -g -fsanitize=address,undefined
+LDFLAGS = -lm
+DEBUG_LDFLAGS = -fsanitize=address,undefined
 TARGET = gradeviewer
 BUILD_DIR = build
 
@@ -27,7 +30,7 @@ OBJS = $(SRCS:%.c=$(BUILD_DIR)/%.o)
 all: $(BUILD_DIR)/$(TARGET)
 
 # Cleans and builds everything from scratch
-build: clean all
+rebuild: clean all
 
 run: all
 ifeq ($(OS),Windows_NT)
@@ -36,12 +39,16 @@ else
 	./$(BUILD_DIR)/$(TARGET)
 endif
 
+debug: CFLAGS := $(CFLAGS) $(DEBUG_CFLAGS)
+debug: LDFLAGS := $(LDFLAGS) $(DEBUG_LDFLAGS)
+debug: rebuild all
+
 valgrind: all
 	valgrind --leak-check=full --show-leak-kinds=all ./$(BUILD_DIR)/$(TARGET)
 
 $(BUILD_DIR)/$(TARGET): $(OBJS)
 	$(call MKDIR,$(dir $@))
-	$(CC) $(OBJS) -o $@
+	$(CC) $(OBJS) $(LDFLAGS) -o $@
 
 $(BUILD_DIR)/%.o: %.c
 	$(call MKDIR,$(dir $@))

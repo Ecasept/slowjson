@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
+#include "dstring.h"
+#include "unicode/wchar.h"
 
 Result new_error(const char msg[], ErrorType type) {
 	Result err;
@@ -19,7 +22,7 @@ Result new_error(const char msg[], ErrorType type) {
 	return err;
 }
 
-Result new_success() {
+Result new_success(void) {
 	Result err;
 	err.message = NULL;
 	err.success = true;
@@ -28,15 +31,51 @@ Result new_success() {
 }
 
 void print_error(Result r) {
+    if (r.success) {
+        wprintf(L"No error occurred.\n");
+    } else {
+        if (r.message != NULL) {
+            wprintf(L"Error: %hs: %hs\n", etostr(r.type), r.message);
+        } else {
+            wprintf(L"Error: %hs\n", etostr(r.type));
+        }
+    }
+}
+
+string format_error(Result r) {
 	if (r.success) {
-		printf("No error occurred.\n");
+		return string_newr("No error occurred.");
 	} else {
 		if (r.message != NULL) {
-			printf("Error: %s: %s\n", etostr(r.type), r.message);
+			string formatted = string_newr("Error: ");
+			string_append_cstr(&formatted, etostr(r.type));
+			string_append_cstr(&formatted, ": ");
+			string_append_cstr(&formatted, r.message);
+			return formatted;
 		} else {
-			printf("Error: %s\n", etostr(r.type));
+			string formatted = string_newr("Error: ");
+			string_append_cstr(&formatted, etostr(r.type));
+			return formatted;
 		}
 	}
+}
+
+wchar_t *format_error_wchar(Result r) {
+	string formatted = format_error(r);
+	wchar_t *wformatted = NULL;
+	Result res = utf8_string_to_wchar(&formatted, &wformatted);
+	string_free(&formatted);
+	if (!res.success) {
+		const wchar_t *fallback_msg = L"Error formatting error message.";
+		size_t n = wcslen(fallback_msg) + 1;
+		wchar_t *fallback = malloc(sizeof(wchar_t) * n);
+		if (fallback == NULL) {
+			panic("Failed to allocate memory");
+		}
+		wcscpy(fallback, fallback_msg);
+		return fallback;
+	}
+	return wformatted;
 }
 
 Result new_errorf(const char *format, ErrorType type, ...) {
