@@ -71,7 +71,7 @@ void print_welcomescreen(void);
 int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod, int view_type, int new_entry);
 void print_helpscreen(void);
 void print_endscreen(void);
-int print_averagescreen(int new_entry, struct Veranstaltung *ver, size_t size_ver);
+int print_averagescreen(int new_entry, struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod);
 void clear_display(void);
 void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver);
 void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod);

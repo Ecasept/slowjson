@@ -96,12 +96,13 @@ int main() {
 		}
 	
 
+		
 		// Fehlerbehandlung bei Programmfehlern oder falscher Eingabe
 		if (status == BUFFER_ERROR) {
 			print_buffer_error_screen();
 			return 0;
 		} else if (status == INVALID_FUNCTION_INPUT) {
-			wprintf(L"%ls Programmfehler!\nBitte neu starten.%ls", TXT_RED, END_STYLE);
+			print_wrong_function_input_screen();
 			return 0;
 		} else if (status == INVALID_USER_INPUT && current_page == CURR_PAGE_HELP_SCR) {
 			print_endscreen();
@@ -136,23 +137,23 @@ int main() {
 					print_memalloc_error_screen();
 					return 0;
 				} else if (status == INVALID_FUNCTION_INPUT) {
-					wprintf(L"%ls INVALID FUNCTION INPUT %ls", TXT_RED, END_STYLE);
+					print_wrong_function_input_screen();
 					return 0;
 				} else if (status == INVALID_USER_INPUT) {
 					current_page = CURR_PAGE_HELP_SCR;
 					print_helpscreen();
 				} else if (status == VALID_USER_INPUT) {
-					// Daten in Datei speichern
+					/* Daten in Datei speichern
 					r = save_data_to_savefile(ver, size_ver, mod, size_mod);
 					if (!r.success) {
 						print_error(r);
-					}
+					} */
 					switch (current_page) {
 						case CURR_PAGE_OV_SCR:
 							print_overviewscreen(ver, size_ver, mod, size_mod, view_type, NEW_ENTRY);
 							break;
 						case CURR_PAGE_AV_SCR:
-							print_averagescreen(NEW_ENTRY, ver, size_ver);
+							print_averagescreen(NEW_ENTRY, ver, size_ver, mod, size_mod);
 							break;
 					}
 				}
@@ -166,30 +167,30 @@ int main() {
 					print_memalloc_error_screen();
 					return 0;
 				} else if (status == INVALID_FUNCTION_INPUT) {
-					wprintf(L"%ls INVALID FUNCTION INPUT %ls", TXT_RED, END_STYLE);
+					print_wrong_function_input_screen();
 					return 0;
 				} else if (status == INVALID_USER_INPUT) {
 					current_page = CURR_PAGE_HELP_SCR;
 					print_helpscreen();
 				} else if (status == VALID_USER_INPUT) {
-					// Daten in Datei speichern
+					/* Daten in Datei speichern
 					r = save_data_to_savefile(ver, size_ver, mod, size_mod);
 					if (!r.success) {
 						print_error(r);
-					}
+					} */
 					switch (current_page) {
 						case CURR_PAGE_OV_SCR:
 							print_overviewscreen(ver, size_ver, mod, size_mod, view_type, NEW_ENTRY);
 							break;
 						case CURR_PAGE_AV_SCR:
-							print_averagescreen(NEW_ENTRY, ver, size_ver);
+							print_averagescreen(NEW_ENTRY, ver, size_ver, mod, size_mod);
 							break;
 					}					
 				}
 				break;
 
 			case L'd':
-				print_averagescreen(NO_NEW_ENTRY, ver, size_ver);
+				print_averagescreen(NO_NEW_ENTRY, ver, size_ver, mod, size_mod);
 				current_page = CURR_PAGE_AV_SCR;
 				break;
 			case L'b':
@@ -201,23 +202,23 @@ int main() {
 					print_memalloc_error_screen();
 					return 0;
 				} else if (status == INVALID_FUNCTION_INPUT) {
-					wprintf(L"%ls INVALID FUNCTION INPUT %ls", TXT_RED, END_STYLE);
+					print_wrong_function_input_screen();
 					return 0;
 				} else if (status == INVALID_USER_INPUT) {
 					current_page = CURR_PAGE_HELP_SCR;
 					print_helpscreen();
 				} else if (status == VALID_USER_INPUT) {
-					// Daten in Datei speichern
+					/* Daten in Datei speichern
 					r = save_data_to_savefile(ver, size_ver, mod, size_mod);
 					if (!r.success) {
 						print_error(r);
-					}
+					} */
 					switch (current_page) {
 						case CURR_PAGE_OV_SCR:
 							print_overviewscreen(ver, size_ver, mod, size_mod, view_type, NO_NEW_ENTRY);
 							break;
 						case CURR_PAGE_AV_SCR:
-							print_averagescreen(NO_NEW_ENTRY, ver, size_ver);
+							print_averagescreen(NO_NEW_ENTRY, ver, size_ver, mod, size_mod);
 							break;
 						case CURR_PAGE_HELP_SCR:
 							print_helpscreen();
