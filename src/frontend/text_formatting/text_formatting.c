@@ -73,7 +73,7 @@ int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modu
 
         wprintf(L"\n\n\n  %lsOptionen%ls                        %lsTaste%ls                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
         wprintf(L"  Ansicht ändern                    [a]                    Veranstaltung hinzufügen          [n]\n");
-        wprintf(L"  (Sortierung nach Modulgruppen)                           Modulgruppe hinzufügen            [m]\n");
+        wprintf(L"                                                           Modulgruppe hinzufügen            [m]\n");
         wprintf(L"  Notendurchschnitt anzeigen        [d]                    Veranstaltung bearbeiten          [b]\n");
         wprintf(L"\n");
         wprintf(L"  Hilfe                             [h]                    \n");
