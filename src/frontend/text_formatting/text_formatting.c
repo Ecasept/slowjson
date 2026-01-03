@@ -398,71 +398,26 @@ int print_addverscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modu
         
         // Modulgruppe einlesen
         clear_display();
+        wprintf(L"%lsModulgruppe der Veranstaltung%ls", TXT_UNDERLINED, END_STYLE);
         wprintf(L"\n\nDie Veranstaltung muss einer Modulgruppe hinzugefügt werden!\n");
-        wprintf(L"\n%lsVorhandene Modulgruppen%ls                   \n\n", TXT_INVERSE, END_STYLE);
-        wprintf(L"%lsName%ls", TXT_UNDERLINED, END_STYLE);
-        for (int i = 0; i < 81; ++i) {
-                wprintf(L" ");
-        }
-        wprintf(L"%lsNummer%ls\n", TXT_UNDERLINED, END_STYLE);
-        sort_mod_by_alpha(*mod, *size_mod);
-        for (int i = 0; i < (int) *size_mod; ++i) {
-                wprintf(L"%ls", (*mod)[i].name);
-                int counter = 0;
-                while((*mod)[i].name[counter] != L'\0') {
-                        ++counter;
-                }
-                counter = 90 - counter;
-                for (int a = 0; a < counter; ++a) {
-                        wprintf(L" ");
-                }
-                wprintf(L"%i\n", i);
-        }
+        
 
-        wprintf(L"\n\nZu bestehender Modulgruppe hinzufügen: [h]\nZu neuer Modulgruppe hinzufügen [n]\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
-        status = read_command(ADD_TO_OLD_OR_NEW_MOD, SIZE_ADD_TO_OLD_OR_NEW_MOD);
         int stat_1 = 1;
         int width_name_mod = 0;
-        switch (status) {
-                case L'h':
-                        wprintf(L"\nNummer der Modulgruppe:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
-                        int zahl = -1;
-                        stat_1 = read_number_in_bound(0, (int) ((*size_mod) - 1), &zahl);
-                        switch (stat_1) {
-                                case VALID_USER_INPUT:
+        if (*size_mod == 0) {
+                wprintf(L"\n");
+                wprintf(L"┌─────────────────────────────────────────────────────────────────────┐\n");
+                wprintf(L"│                  %lsEs ist keine Modulgruppe vorhanden%ls                 │\n", TXT_RED, END_STYLE);
+                wprintf(L"│             Bitte fügen Sie eine neue Modulgruppe hinzu.            │\n");
+                wprintf(L"│                                                                     │\n");
+                wprintf(L"│            Um fortzufahren bitte folgende Taste drücken [c]         │\n");
+                wprintf(L"└─────────────────────────────────────────────────────────────────────┘\n");
+                wprintf(L"\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
 
-                                        clear_display();
-                                        width_name_mod = 0;
-                                        while ((*mod)[zahl].name[width_name_mod] != '\0') {
-                                                ++width_name_mod;
-                                        }
-                                        wprintf(L"      ╭──────────────────────────────────────────────────────────────────────────────╮\n");
-                                        wprintf(L"      │                        %ls Die Eingabe war erfolgreich %ls                         │\n", TXT_GREEN, END_STYLE);
-                                        wprintf(L"      │                                                                              │\n");
-                                        wprintf(L"      │          Die Veranstaltung wurde zu folgender Modulgruppe hinzugefügt:       │\n");
-                                        wprintf(L"      │          %ls%ls%ls", TXT_UNDERLINED, (*mod)[zahl].name, END_STYLE);
-                                        for (int i = 0; i < 68 - width_name_mod; ++i) {
-                                                wprintf(L" ");
-                                        }
-                                        wprintf(L"│\n");
-                                        wprintf(L"      │                                                                              │\n");
-                                        wprintf(L"      ╰──────────────────────────────────────────────────────────────────────────────╯\n\n\n\n");
-
-
-                                        new_ver.modulgruppenindex = zahl;
-                                        break;
-                                case INVALID_USER_INPUT:
-                                        return INVALID_USER_INPUT;
-                                case BUFFER_ERROR:
-                                        return BUFFER_ERROR;
-                                case INVALID_FUNCTION_INPUT:
-                                        return INVALID_FUNCTION_INPUT;
-                                case MEM_ALLOC_ERROR:
-                                        return MEM_ALLOC_ERROR;
-                                }
-                        break;
-                case L'n':
-                        stat_1 = print_addmodscreen(mod, size_mod);
+                stat_1 = read_command(INPUT_CONTINUE, SIZE_INPUT_CONTINUE);
+                STANDARD_ERROR_HANDLING(stat_1);
+                stat_1 = 1;
+                stat_1 = print_addmodscreen(mod, size_mod);
                         switch (stat_1) {
                                 case VALID_USER_INPUT:
                                         clear_display();
@@ -492,15 +447,112 @@ int print_addverscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modu
                                         return BUFFER_ERROR;
                                 case INVALID_FUNCTION_INPUT:
                                         return INVALID_FUNCTION_INPUT;
-                                }
-                        break;
+                        }
+        } else {
+                wprintf(L"\n\n%lsVorhandene Modulgruppen%ls                   \n\n", TXT_INVERSE, END_STYLE);
+                wprintf(L"%lsName%ls", TXT_UNDERLINED, END_STYLE);
+                for (int i = 0; i < 81; ++i) {
+                        wprintf(L" ");
+                }
+                wprintf(L"%lsNummer%ls\n", TXT_UNDERLINED, END_STYLE);
+                sort_mod_by_alpha(*mod, *size_mod);
+                for (int i = 0; i < (int) *size_mod; ++i) {
+                        wprintf(L"%ls", (*mod)[i].name);
+                        int counter = 0;
+                        while((*mod)[i].name[counter] != L'\0') {
+                                ++counter;
+                        }
+                        counter = 90 - counter;
+                        for (int a = 0; a < counter; ++a) {
+                                wprintf(L" ");
+                        }
+                        wprintf(L"%i\n", i);
+                }
 
-                case INVALID_USER_INPUT:
-                        return INVALID_USER_INPUT;
-                case BUFFER_ERROR:
-                        return BUFFER_ERROR;
-                case INVALID_FUNCTION_INPUT:
-                        return INVALID_FUNCTION_INPUT;
+
+                wprintf(L"\n\nZu bestehender Modulgruppe hinzufügen: [h]\nZu neuer Modulgruppe hinzufügen [n]\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+                status = read_command(ADD_TO_OLD_OR_NEW_MOD, SIZE_ADD_TO_OLD_OR_NEW_MOD);
+                stat_1 = 1;
+                width_name_mod = 0;
+                switch (status) {
+                        case L'h':
+                                wprintf(L"\nNummer der Modulgruppe:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+                                int zahl = -1;
+                                stat_1 = read_number_in_bound(0, (int) ((*size_mod) - 1), &zahl);
+                                switch (stat_1) {
+                                        case VALID_USER_INPUT:
+
+                                                clear_display();
+                                                width_name_mod = 0;
+                                                while ((*mod)[zahl].name[width_name_mod] != '\0') {
+                                                        ++width_name_mod;
+                                                }
+                                                wprintf(L"      ╭──────────────────────────────────────────────────────────────────────────────╮\n");
+                                                wprintf(L"      │                        %ls Die Eingabe war erfolgreich %ls                         │\n", TXT_GREEN, END_STYLE);
+                                                wprintf(L"      │                                                                              │\n");
+                                                wprintf(L"      │          Die Veranstaltung wurde zu folgender Modulgruppe hinzugefügt:       │\n");
+                                                wprintf(L"      │          %ls%ls%ls", TXT_UNDERLINED, (*mod)[zahl].name, END_STYLE);
+                                                for (int i = 0; i < 68 - width_name_mod; ++i) {
+                                                        wprintf(L" ");
+                                                }
+                                                wprintf(L"│\n");
+                                                wprintf(L"      │                                                                              │\n");
+                                                wprintf(L"      ╰──────────────────────────────────────────────────────────────────────────────╯\n\n\n\n");
+
+
+                                                new_ver.modulgruppenindex = zahl;
+                                                break;
+                                        case INVALID_USER_INPUT:
+                                                return INVALID_USER_INPUT;
+                                        case BUFFER_ERROR:
+                                                return BUFFER_ERROR;
+                                        case INVALID_FUNCTION_INPUT:
+                                                return INVALID_FUNCTION_INPUT;
+                                        case MEM_ALLOC_ERROR:
+                                                return MEM_ALLOC_ERROR;
+                                        }
+                                break;
+                        case L'n':
+                                stat_1 = print_addmodscreen(mod, size_mod);
+                                switch (stat_1) {
+                                        case VALID_USER_INPUT:
+                                                clear_display();
+                                                width_name_mod = 0;
+                                                while ((*mod)[(*size_mod) - 1].name[width_name_mod] != '\0') {
+                                                        ++width_name_mod;
+                                                }
+                                                wprintf(L"      ╭──────────────────────────────────────────────────────────────────────────────╮\n");
+                                                wprintf(L"      │                         %ls Die Eingabe war erfolgreich %ls                        │\n", TXT_GREEN, END_STYLE);
+                                                wprintf(L"      │                                                                              │\n");
+                                                wprintf(L"      │                   Es wurde eine neue Modulgruppe angelegt:                   │\n");
+                                                wprintf(L"      │                   %ls%ls%ls", TXT_UNDERLINED, (*mod)[(*size_mod) - 1].name, END_STYLE);
+                                                for (int i = 0; i < 59 - width_name_mod; ++i) {
+                                                        wprintf(L" ");
+                                                }
+                                                wprintf(L"│\n");
+                                                wprintf(L"      │                                                                              │\n");
+                                                wprintf(L"      │            Die Veranstaltung wurde zu dieser Modulgruppe hinzugefügt         │\n");
+                                                wprintf(L"      │                                                                              │\n");
+                                                wprintf(L"      ╰──────────────────────────────────────────────────────────────────────────────╯\n\n\n\n");
+
+                                                new_ver.modulgruppenindex = (*size_mod) - 1;
+                                                break;
+                                        case INVALID_USER_INPUT:
+                                                return INVALID_USER_INPUT;
+                                        case BUFFER_ERROR:
+                                                return BUFFER_ERROR;
+                                        case INVALID_FUNCTION_INPUT:
+                                                return INVALID_FUNCTION_INPUT;
+                                        }
+                                break;
+
+                        case INVALID_USER_INPUT:
+                                return INVALID_USER_INPUT;
+                        case BUFFER_ERROR:
+                                return BUFFER_ERROR;
+                        case INVALID_FUNCTION_INPUT:
+                               return INVALID_FUNCTION_INPUT;
+                }
         }
         wprintf(L"%lsWeitere Daten der Veranstaltung:%ls", TXT_UNDERLINED, END_STYLE);
         status = 1;
@@ -803,7 +855,7 @@ void print_loaddata_error_screen(wchar_t *error_message)
         wprintf(L"│                                                                                      │\n");
         wprintf(L"│ %lsOptionen%ls                                                        %lsTaste%ls                │\n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
         wprintf(L"│ Erneut versuchen die Daten zu laden                               [r]                │\n");
-        wprintf(L"│ Daten zurücksetzen und neu anfangen                               [n]                │\n", TXT_BOLD, TXT_RED, END_STYLE);
+        wprintf(L"│ Daten zurücksetzen und neu beginnen                               [n]                │\n", TXT_BOLD, TXT_RED, END_STYLE);
         wprintf(L"│ (%ls%lsACHTUNG:%ls Es werden %lsalle%ls bisherigen Daten gelöscht)                                  │\n", TXT_INVERSE, TXT_RED, END_STYLE, TXT_RED, END_STYLE);
         wprintf(L"│ Programm beenden                                                  [q]                │\n");
         wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────┘\n");
