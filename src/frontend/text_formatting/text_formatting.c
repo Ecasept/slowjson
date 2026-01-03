@@ -824,7 +824,6 @@ void print_loaddata_nofile_screen(wchar_t *error_message)
         wprintf(L"│                                                                           │\n");
         wprintf(L"│                 Es wird automatisch eine neue Datei angelegt              │\n");
         wprintf(L"└───────────────────────────────────────────────────────────────────────────┘\n");
-        wprintf(L"\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
 
 }
 
