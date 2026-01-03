@@ -53,6 +53,12 @@
 #define INPUT_MOD_OR_CANCEL L"nb"
 #define SIZE_INPUT_MOD_OR_CANCEL 2
 
+#define INPUT_LOAD_DATA_ERROR L"rnq"
+#define SIZE_INPUT_LOAD_DATA_ERROR 3
+
+#define INPUT_SAVE_DATA_ERROR L"rq"
+#define SIZE_INPUT_SAVE_DATA_ERROR 2
+
 
 // Fehlerbehandlung
 // Weiterleitung der vier Fehlerfälle 1. BUFFER_ERROR 2. INVALID_FUNCTION_INPUT 3. MEM_ALLOC_ERROR 4. INVALID_USER_INPUT an die aufrufende Funktion

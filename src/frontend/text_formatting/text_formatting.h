@@ -68,6 +68,7 @@
 
 
 void print_welcomescreen(void);
+void print_welcomescreen_options(void);
 int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod, int view_type, int new_entry);
 void print_helpscreen(void);
 void print_endscreen(void);
@@ -80,9 +81,17 @@ void print_inputcompletescreen(void);
 int print_addmodscreen(struct Modulgruppe **mod, size_t *size_mod);
 void print_buffer_error_screen(void);
 void print_memalloc_error_screen(void);
-void print_wrong_command_screen();
+void print_wrong_command_screen(void);
 void print_wrong_string_screen(void);
-void print_wrong_function_input_screen();
+void print_wrong_function_input_screen(void);
+void print_loaddata_error_screen(wchar_t *error_message);
+void print_loaddata_complete_screen(void);
+void print_newsavefile_created(void);
+void print_no_ver_saved_screen(void);
+void print_savedata_complete_screen(void);
+void print_savedata_error_screen(wchar_t *error_message);
+
+void free_all(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod);
 
 
 
