@@ -56,7 +56,13 @@ int main() {
 	} else {
 		int continue_error_handling = 1;
 		wchar_t *error_message = format_error_wchar(r);
-		print_loaddata_error_screen(error_message);
+		if (r.type == EFileNotFound) {
+			print_loaddata_nofile_screen(error_message);
+			print_welcomescreen_options();
+			continue_error_handling = 0;
+		} else {
+			print_loaddata_error_screen(error_message);
+		}
 		error_free(r);
 		free(error_message);
 		while (continue_error_handling) {
