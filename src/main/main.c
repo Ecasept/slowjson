@@ -38,17 +38,13 @@ int main() {
 	struct Modulgruppe *mod = NULL;
 	size_t size_mod = 0;
 	
-	// Temporäre Variablen zum test, ob laden der daten funktioniert
-	struct Veranstaltung *ver_getdata = NULL;
-	size_t size_ver_getdata = 0;
-	struct Modulgruppe *mod_getdata = NULL;
-	size_t size_mod_getdata = 0;
+	
 
 	
 	print_welcomescreen();
 
 	// Daten aus dem Speicher laden
-	Result r = load_data_from_savefile(&ver_getdata, &mod_getdata, &size_ver_getdata, &size_mod_getdata);
+	Result r = load_data_from_savefile(&ver, &mod, &size_ver, &size_mod);
 
 	// Fehlerbehandlung, wenn laden der Daten fehlschlägt
 	if (r.success) {
@@ -56,14 +52,8 @@ int main() {
 		print_welcomescreen_options();	
 		error_free(r);	
 
-		// Daten in eigentliche Variablen übertragen
-		ver = ver_getdata;
-		size_ver = size_ver_getdata;
-		mod = mod_getdata;
-		size_mod = size_mod_getdata;
 
-	}
-	if (!r.success) {
+	} else {
 		wchar_t *error_message = format_error_wchar(r);
 		print_loaddata_error_screen(error_message);
 		error_free(r);
@@ -79,12 +69,6 @@ int main() {
 						print_welcomescreen_options();
 						error_free(r);
 						continue_error_handling = 0;
-
-						// Daten in eigentliche Variablen übertragen
-						ver = ver_getdata;
-						size_ver = size_ver_getdata;
-						mod = mod_getdata;
-						size_mod = size_mod_getdata;
 						break;											
 					} else {
 						error_message = format_error_wchar(r);
@@ -207,11 +191,6 @@ int main() {
 					current_page = CURR_PAGE_HELP_SCR;
 					print_helpscreen();
 				} else if (status == VALID_USER_INPUT) {
-					/* Daten in Datei speichern
-					r = save_data_to_savefile(ver, size_ver, mod, size_mod);
-					if (!r.success) {
-						print_error(r);
-					} */
 					switch (current_page) {
 						case CURR_PAGE_OV_SCR:
 							print_overviewscreen(ver, size_ver, mod, size_mod, view_type, NEW_ENTRY);
@@ -237,11 +216,6 @@ int main() {
 					current_page = CURR_PAGE_HELP_SCR;
 					print_helpscreen();
 				} else if (status == VALID_USER_INPUT) {
-					/* Daten in Datei speichern
-					r = save_data_to_savefile(ver, size_ver, mod, size_mod);
-					if (!r.success) {
-						print_error(r);
-					} */
 					switch (current_page) {
 						case CURR_PAGE_OV_SCR:
 							print_overviewscreen(ver, size_ver, mod, size_mod, view_type, NEW_ENTRY);
@@ -272,11 +246,7 @@ int main() {
 					current_page = CURR_PAGE_HELP_SCR;
 					print_helpscreen();
 				} else if (status == VALID_USER_INPUT) {
-					/* Daten in Datei speichern
-					r = save_data_to_savefile(ver, size_ver, mod, size_mod);
-					if (!r.success) {
-						print_error(r);
-					} */
+					
 					switch (current_page) {
 						case CURR_PAGE_OV_SCR:
 							print_overviewscreen(ver, size_ver, mod, size_mod, view_type, NO_NEW_ENTRY);
@@ -296,13 +266,46 @@ int main() {
 				current_page = CURR_PAGE_HELP_SCR;
 				break;
 			case L'q':
+				clear_display();
 				// Daten in Datei speichern
 				r = save_data_to_savefile(ver, size_ver, mod, size_mod);
-				if (!r.success) {
-					print_error(r);
+				if (r.success) {
+					print_savedata_complete_screen();
+					error_free(r);
+					return 0;
+				} else {
+					int continue_error_handling = 1;
+					wchar_t *error_message = format_error_wchar(r);
+					print_savedata_error_screen(error_message);
+					error_free(r);
+					free(error_message);
+					while (continue_error_handling) {
+						status = read_command(INPUT_SAVE_DATA_ERROR, SIZE_INPUT_SAVE_DATA_ERROR);
+						switch (status) {
+							case L'r':
+								r = save_data_to_savefile(ver, mod, size_ver, size_mod);
+								if (r.success) {
+									print_savedata_complete_screen();
+									error_free(r);
+									print_endscreen();					
+									break;											
+								} else {
+									error_message = format_error_wchar(r);
+									print_savedata_error_screen(error_message);
+									error_free(r);
+									free(error_message);
+									break;
+								}	
+				
+							case L'q':
+								print_endscreen();
+								return 0;
+						} 
+
+
+					}
+				
 				}
-				print_endscreen();
-				return 0;
 		}
 
 	}

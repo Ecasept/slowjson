@@ -802,25 +802,16 @@ void print_loaddata_error_screen(wchar_t *error_message)
         wprintf(L"│\n");
         wprintf(L"│                                                                                      │\n");
         wprintf(L"│ %lsOptionen%ls                                                        %lsTaste%ls                │\n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
-        wprintf(L"│ Laden der Daten erneut versuchen                                      [r]            │\n");
-        wprintf(L"│ Neue Datei erstellen (%lsbisherige Daten werden %lsgelöscht%ls)                [n]            │\n", TXT_BOLD, TXT_RED, END_STYLE);
-        wprintf(L"│ Programm beenden                                                      [q]            │\n");
+        wprintf(L"│ Laden der Daten erneut versuchen                                  [r]                │\n");
+        wprintf(L"│ Neue Datei erstellen (%lsbisherige Daten werden %lsgelöscht%ls)            [n]                │\n", TXT_BOLD, TXT_RED, END_STYLE);
+        wprintf(L"│ Programm beenden                                                  [q]                │\n");
         wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────┘\n");
         wprintf(L"\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
 
 }
 
 
-void print_savedata_error_screen(wchar_t *error_message)
-{
-        clear_display();
-        wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────┐\n");
-        wprintf(L"│                                 %ls%lsPROGRAMMFEHLER!%ls                                      │\n", TXT_INVERSE, TXT_RED, END_STYLE);
-        wprintf(L"│                     Ungültige Eingabedaten der aufgerufenen Funktion.                │\n");
-        wprintf(L"│         Das Programm wird beendet. Für einen weiteren Versuch bitte neu starten.     │\n");
-        wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────┘\n\n\n");
 
-}
 
 void print_loaddata_complete_screen(void)
 {
@@ -847,5 +838,49 @@ void print_no_ver_saved_screen(void)
         wprintf(L"      ╭─────────────────────────────────────────────────────────────╮\n");
         wprintf(L"      │        %ls Es wurde noch keine Veranstaltung hinzugefügt! %ls     │\n", TXT_GREEN, END_STYLE);
         wprintf(L"      ╰─────────────────────────────────────────────────────────────╯\n");
+
+}
+
+
+
+void print_savedata_complete_screen(void)
+{
+        wprintf(L"\n\n");
+        wprintf(L"      ╭───────────────────────────────────────────────────────╮\n");
+        wprintf(L"      │     %ls Speichern der Daten erfolgreich abgeschlossen! %ls  │\n", TXT_GREEN, END_STYLE);
+        wprintf(L"      ╰───────────────────────────────────────────────────────╯\n\n");
+        wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────┐\n");
+        wprintf(L"│                               %ls%lsDas Programm wurde beendet!%ls                            │\n", TXT_INVERSE, TXT_GREEN, END_STYLE);
+        wprintf(L"│                 Vielen Dank, dass Sie unseren Studienplaner genutzt haben.           │\n");
+        wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────┘\n\n\n");
+
+
+}
+
+
+
+void print_savedata_error_screen(wchar_t *error_message)
+{
+        int len = 0;
+        while (error_message[len] != L'\0') {
+                ++len;
+        }
+
+        wprintf(L"\n\n");
+        wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────┐\n");
+        wprintf(L"│                                 %ls%lsSPEICHERFEHLER!%ls                                      │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+        wprintf(L"│                 Die Daten konnten nicht korrekt gespeichert werden.                  │\n");
+        wprintf(L"│                                                                                      │\n");
+        wprintf(L"│ %lsError message:%ls %ls", TXT_RED, END_STYLE, error_message);
+        for (int i = 0; i < 70 - len; ++i) {
+                wprintf(L" ");
+        }
+        wprintf(L"│\n");
+        wprintf(L"│                                                                                      │\n");
+        wprintf(L"│ %lsOptionen%ls                                          %lsTaste%ls                              │\n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
+        wprintf(L"│ Speichern der Daten erneut versuchen                [r]                              │\n");
+        wprintf(L"│ Programm beenden %lsohne%ls zu speichern                  [q]                              │\n", TXT_RED, END_STYLE);
+        wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────┘\n");
+        wprintf(L"\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
 
 }
