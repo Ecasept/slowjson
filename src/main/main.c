@@ -86,6 +86,7 @@ int main() {
 
 				case L'q':
 					print_endscreen();
+					free_all(ver, size_ver, mod, size_mod);
 					return 0;
 			} 
 
@@ -102,9 +103,11 @@ int main() {
 	status = read_command(INPUT_WELC_SCR, SIZE_INPUT_WELC_SCR);
 	if (status == BUFFER_ERROR) {
 		print_buffer_error_screen();
+		free_all(ver, size_ver, mod, size_mod);
 		return 0;
 	} else if (status == INVALID_FUNCTION_INPUT) {
-		wprintf(L"%ls Programmfehler!\nBitte neu starten.%ls", TXT_RED, END_STYLE);
+		print_wrong_function_input_screen();
+		free_all(ver, size_ver, mod, size_mod);
 		return 0;
 	} else if (status == INVALID_USER_INPUT) {
 		status = L'h';
@@ -148,12 +151,15 @@ int main() {
 		// Fehlerbehandlung bei Programmfehlern oder falscher Eingabe
 		if (status == BUFFER_ERROR) {
 			print_buffer_error_screen();
+			free_all(ver, size_ver, mod, size_mod);
 			return 0;
 		} else if (status == INVALID_FUNCTION_INPUT) {
 			print_wrong_function_input_screen();
+			free_all(ver, size_ver, mod, size_mod);
 			return 0;
 		} else if (status == INVALID_USER_INPUT && current_page == CURR_PAGE_HELP_SCR) {
 			print_endscreen();
+			free_all(ver, size_ver, mod, size_mod);
 			return 0;
 		} else if (status == INVALID_USER_INPUT && current_page != CURR_PAGE_HELP_SCR) {
 			status = L'h'; // Hilfsseite bei viermaliger falscher Eingabe aufrufen
@@ -180,12 +186,15 @@ int main() {
 				status = print_addverscreen(&ver, &size_ver, &mod, &size_mod);
 				if (status == BUFFER_ERROR) {
 					print_buffer_error_screen();
+					free_all(ver, size_ver, mod, size_mod);
 					return 0;
 				} else if (status == MEM_ALLOC_ERROR) {
 					print_memalloc_error_screen();
+					free_all(ver, size_ver, mod, size_mod);
 					return 0;
 				} else if (status == INVALID_FUNCTION_INPUT) {
 					print_wrong_function_input_screen();
+					free_all(ver, size_ver, mod, size_mod);
 					return 0;
 				} else if (status == INVALID_USER_INPUT) {
 					current_page = CURR_PAGE_HELP_SCR;
@@ -205,12 +214,15 @@ int main() {
 				status = print_addmodscreen(&mod, &size_mod);
 				if (status == BUFFER_ERROR) {
 					print_buffer_error_screen();
+					free_all(ver, size_ver, mod, size_mod);
 					return 0;
 				} else if (status == MEM_ALLOC_ERROR) {
 					print_memalloc_error_screen();
+					free_all(ver, size_ver, mod, size_mod);
 					return 0;
 				} else if (status == INVALID_FUNCTION_INPUT) {
 					print_wrong_function_input_screen();
+					free_all(ver, size_ver, mod, size_mod);
 					return 0;
 				} else if (status == INVALID_USER_INPUT) {
 					current_page = CURR_PAGE_HELP_SCR;
@@ -235,12 +247,15 @@ int main() {
 				status = print_editver(&ver, &size_ver, &mod, &size_mod, &current_page);
 				if (status == BUFFER_ERROR) {
 					print_buffer_error_screen();
+					free_all(ver, size_ver, mod, size_mod);
 					return 0;
 				} else if (status == MEM_ALLOC_ERROR) {
 					print_memalloc_error_screen();
+					free_all(ver, size_ver, mod, size_mod);
 					return 0;
 				} else if (status == INVALID_FUNCTION_INPUT) {
 					print_wrong_function_input_screen();
+					free_all(ver, size_ver, mod, size_mod);
 					return 0;
 				} else if (status == INVALID_USER_INPUT) {
 					current_page = CURR_PAGE_HELP_SCR;
@@ -272,6 +287,7 @@ int main() {
 				if (r.success) {
 					print_savedata_complete_screen();
 					error_free(r);
+					free_all(ver, size_ver, mod, size_mod);
 					return 0;
 				} else {
 					int continue_error_handling = 1;
@@ -283,7 +299,7 @@ int main() {
 						status = read_command(INPUT_SAVE_DATA_ERROR, SIZE_INPUT_SAVE_DATA_ERROR);
 						switch (status) {
 							case L'r':
-								r = save_data_to_savefile(ver, mod, size_ver, size_mod);
+								r = save_data_to_savefile(ver, size_ver, mod, size_mod);
 								if (r.success) {
 									print_savedata_complete_screen();
 									error_free(r);
@@ -299,6 +315,7 @@ int main() {
 				
 							case L'q':
 								print_endscreen();
+								free_all(ver, size_ver, mod, size_mod);
 								return 0;
 						} 
 

@@ -176,7 +176,7 @@ void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Mo
                 // Sortierung der Veranstaltungen nach Modulgruppe
                 sort_by_mod(ver, size_ver);
 
-                wprintf(L"\nSortierung: Modulgruppe, alphabetisch aufsteigend\n");
+                wprintf(L"\nSortierung: Modulgruppe, alphabetisch\n");
 
 
                 for (size_t i = 0; i < size_ver; ++i) {
@@ -883,4 +883,25 @@ void print_savedata_error_screen(wchar_t *error_message)
         wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────┘\n");
         wprintf(L"\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
 
+}
+
+
+
+void free_all(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod)
+{
+        // Veranstaltungsname freigeben
+        for (int i = 0; i < (int) size_ver; ++i) {
+                free(ver[i].name);
+        }
+        
+        // Speicher der Veranstaltungen freigeben
+        free(ver);
+
+        // Modulgruppennamen freigeben
+        for (int i = 0; i < (int) size_mod; ++i) {
+                free(mod[i].name);
+        }
+
+        // Speicher der Modulgruppen freigeben
+        free(mod);
 }

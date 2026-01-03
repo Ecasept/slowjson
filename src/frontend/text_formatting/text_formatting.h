@@ -91,6 +91,8 @@ void print_no_ver_saved_screen(void);
 void print_savedata_complete_screen(void);
 void print_savedata_error_screen(wchar_t *error_message);
 
+void free_all(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod);
+
 
 
 #endif
