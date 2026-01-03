@@ -12,7 +12,12 @@ Result json_value_hashmap_node_get(json_value_hashmap_node *node,
 	} else {
 		if (node->next == NULL) {
 			// End reached
-			return new_errorf("Key not found", EHashmapKeyNotFound);
+			char *cstr;
+			string_to_cstr(&key, &cstr);
+			Result r = new_errorf("Key not found in hashmap: \"%s\"",
+								  EHashmapKeyNotFound, cstr);
+			free(cstr);
+			return r;
 		} else {
 			return json_value_hashmap_node_get(node->next, key, out);
 		}

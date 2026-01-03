@@ -48,7 +48,12 @@ Result json_value_hashmap_get(const json_value_hashmap *map, const string key,
 	json_value_hashmap_node node;
 	json_value_hashmap_node_list_get(&map->buckets, node_index, &node);
 	if (node.key.arr.data == NULL) {
-		return new_errorf("Key not found", EHashmapKeyNotFound);
+		char *cstr;
+		string_to_cstr(&key, &cstr);
+		Result r = new_errorf("Key not found in hashmap: \"%s\"",
+							  EHashmapKeyNotFound, cstr);
+		free(cstr);
+		return r;
 	}
 	return json_value_hashmap_node_get(&node, key, out);
 }
