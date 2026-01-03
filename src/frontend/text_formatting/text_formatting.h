@@ -85,6 +85,7 @@ void print_wrong_command_screen(void);
 void print_wrong_string_screen(void);
 void print_wrong_function_input_screen(void);
 void print_loaddata_error_screen(wchar_t *error_message);
+void print_loaddata_nofile_screen(wchar_t *error_message);
 void print_loaddata_complete_screen(void);
 void print_newsavefile_created(void);
 void print_no_ver_saved_screen(void);

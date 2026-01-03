@@ -802,10 +802,28 @@ void print_loaddata_error_screen(wchar_t *error_message)
         wprintf(L"│\n");
         wprintf(L"│                                                                                      │\n");
         wprintf(L"│ %lsOptionen%ls                                                        %lsTaste%ls                │\n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
-        wprintf(L"│ Laden der Daten erneut versuchen                                  [r]                │\n");
-        wprintf(L"│ Neue Datei erstellen (%lsbisherige Daten werden %lsgelöscht%ls)            [n]                │\n", TXT_BOLD, TXT_RED, END_STYLE);
+        wprintf(L"│ Erneut versuchen die Daten zu laden                               [r]                │\n");
+        wprintf(L"│ Daten zurücksetzen und neu anfangen                               [n]                │\n", TXT_BOLD, TXT_RED, END_STYLE);
+        wprintf(L"│ (%ls%lsACHTUNG:%ls Es werden %lsalle%ls bisherigen Daten gelöscht)                                  │\n", TXT_INVERSE, TXT_RED, END_STYLE, TXT_RED, END_STYLE);
         wprintf(L"│ Programm beenden                                                  [q]                │\n");
         wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────┘\n");
+        wprintf(L"\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+
+}
+
+void print_loaddata_nofile_screen(wchar_t *error_message)
+{
+        int len = 0;
+        while (error_message[len] != L'\0') {
+                ++len;
+        }
+        
+        wprintf(L"\n\n");
+        wprintf(L"┌───────────────────────────────────────────────────────────────────────────┐\n");
+        wprintf(L"│                        Es wurde %lskeine%ls Datei gefunden!                     │\n", TXT_RED, END_STYLE);
+        wprintf(L"│                                                                           │\n");
+        wprintf(L"│                 Es wird automatisch eine neue Datei angelegt              │\n");
+        wprintf(L"└───────────────────────────────────────────────────────────────────────────┘\n");
         wprintf(L"\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
 
 }

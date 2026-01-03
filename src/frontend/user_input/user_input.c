@@ -64,7 +64,7 @@ int read_command(wchar_t valid_input[], size_t size)
                 if (counter == 0) {
                         return INVALID_USER_INPUT;
                 }
-                print_wrong_command_screen(valid_input, size);
+                print_wrong_command_screen();
         }
 }
 
