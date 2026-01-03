@@ -8,7 +8,7 @@ typedef struct string string;
 
 #define FOREACH_ERROR_TYPE(macro)                                                   \
 	macro(ESuccess)                                     \
-		macro(EFailedToReadFile) \
+		macro(EFileOperationFailed) \
 		macro(ELexerEOF) \
 		macro(EParserUnexpectedEOF)      \
 		macro(EParserSyntaxError) \
@@ -19,7 +19,8 @@ typedef struct string string;
 		macro(EUnicodeError)                 \
 		macro(EUnicodeUnexpectedEndOfString)                      \
 		macro(EHashmapKeyNotFound) \
-		macro(ESaveFormatError)
+		macro(ESaveFormatError) 				 \
+		macro(EFileNotFound) 				 \
 
 #define DEFINE_ERROR_TYPE_ENUM(token) token,
 #define DECLARE_ERROR_TYPE_STRING(token) #token,

@@ -1,5 +1,7 @@
 #include "file.h"
 #include <stdio.h>
+#include <errno.h>
+#include <string.h>
 
 // How much to read per iteration
 static const size_t READ_SIZE = 4096;
@@ -12,8 +14,10 @@ const char *JSON_SAVEFILE_NAME = "data.json";
 Result read_file_to_string(const char *filename, string *str) {
 	FILE *fptr = fopen(filename, "rb");
 	if (fptr == NULL) {
-		return new_errorf("Could not open file \"%s\"", EFailedToReadFile,
-						  filename);
+        ErrorType type = (errno == ENOENT) ? EFileNotFound : EFileOperationFailed;
+        return new_errorf("Could not open file \"%s\": %s", type,
+                          filename, strerror(errno));
+
 	}
 
 	string_new(str, "");
@@ -24,37 +28,54 @@ Result read_file_to_string(const char *filename, string *str) {
 		size_t count = fread(ptr, sizeof(unsigned char), READ_SIZE, fptr);
 		str->arr.length += count;
 		if (count != READ_SIZE) {
-			if (feof(fptr)) {
-				break;
-			} else if (ferror(fptr)) {
-				string_free(str);
-				fclose(fptr);
-				return new_errorf("Could not read file \"%s\"",
-									  EFailedToReadFile, filename);
-			} else {
-				panic("Invalid error condition when reading file");
-			}
+           if (ferror(fptr)) {
+                int err = errno;
+                string_free(str);
+                fclose(fptr);
+                return new_errorf("Could not read file \"%s\": %s",
+                                  EFileOperationFailed, filename,
+                                  (err != 0) ? strerror(err) : "unknown I/O error");
+            }
+            if (feof(fptr)) {
+                break;
+            }
+            panic("Unreachable code reached in read_file_to_string");
 		}
 	}
 
-	fclose(fptr);
+    if (fclose(fptr) == EOF) {
+        int err = errno;
+        string_free(str);
+        return new_errorf("Could not close file \"%s\": %s",
+                          EFileOperationFailed, filename,
+                          (err != 0) ? strerror(err) : "unknown close error");
+    }
+
 	return new_success();
 }
 
 Result write_string_to_file(const char *filename, const string *str) {
 	FILE *fptr = fopen(filename, "wb");
-	if (fptr == NULL) {
-		return new_errorf("Could not open file \"%s\" for writing",
-						  EFailedToReadFile, filename);
-	}
+    if (fptr == NULL) {
+		ErrorType type = (errno == ENOENT) ? EFileNotFound : EFileOperationFailed;
+        return new_errorf("Could not open file \"%s\" for writing: %s",
+                          type, filename, strerror(errno));
+    }
 
 	size_t written = fwrite(str->arr.data, sizeof(uchar), str->arr.length, fptr);
-	if (written != str->arr.length) {
-		fclose(fptr);
-		return new_errorf("Could not write to file \"%s\"", EFailedToReadFile,
-						  filename);
-	}
+    if (written != str->arr.length) {
+        int err = errno;
+        fclose(fptr);
+        return new_errorf("Could not write to file \"%s\": %s",
+                          EFileOperationFailed, filename,
+                          (err != 0) ? strerror(err) : "unknown write error");
+    }
 
-	fclose(fptr);
+    if (fclose(fptr) == EOF) {
+        int err = errno;
+        return new_errorf("Could not close file \"%s\": %s",
+                          EFileOperationFailed, filename,
+                          (err != 0) ? strerror(err) : "unknown close error");
+    }
 	return new_success();
 }
