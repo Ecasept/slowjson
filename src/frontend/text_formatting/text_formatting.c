@@ -24,13 +24,17 @@ void print_welcomescreen(void)
         wprintf(L"│                                                                                                                      │\n");
         wprintf(L"│                                   %lsDies ist ihr persönlicher Studienplaner%ls                                            │\n", TXT_INVERSE, END_STYLE);
         wprintf(L"│                                                                                                                      │\n");
-        wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘\n");
+        wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘\n");        
+}
+
+
+void print_welcomescreen_options(void)
+{
         wprintf(L"\n  %lsOptionen%ls                        %lsTaste%ls                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
         wprintf(L"  Veranstaltungsübersicht           [v]                    \n");
         wprintf(L"  Hilfe                             [h]                    \n");
         wprintf(L"  Programm beenden                  [q]                    \n");
         wprintf(L"\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
-        
 }
 
 
@@ -55,9 +59,9 @@ int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modu
         
 
         // Übersicht nach Semester geordnet ausgeben
-        if (view_type == OV_BY_TIME && size_ver != 0) {
+        if (view_type == OV_BY_TIME) {
                 print_overview_by_time(ver, size_ver);
-        } else if (view_type == OV_BY_MOD && size_ver != 0) {
+        } else if (view_type == OV_BY_MOD) {
                 print_overview_by_mod(ver, size_ver, mod, size_mod);
         }
 
@@ -77,6 +81,177 @@ int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modu
         wprintf(L"\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
         
         return 0;
+}
+
+void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver)
+{
+        struct Semester last_time;
+        last_time.jahr = -1;
+        last_time.jahreszeit = -1;
+
+               
+
+        if (size_ver == 0) {
+                // Hinweis, dass noch keine Veranstaltung hinzugefügt wurde
+                print_no_ver_saved_screen();
+        } else {
+                // Sortierung der Veranstaltungen nach Semester
+                sort_by_time(ver, size_ver);
+                wprintf(L"\nSortierung: Semester, aufsteigend\n");
+                for (size_t i = 0; i < size_ver; ++i) {
+
+                
+                        if (ver[i].semester.jahr != last_time.jahr || ver[i].semester.jahreszeit != last_time.jahreszeit) {
+                                struct winsize w;
+                                if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
+                                        perror("ioctl");
+                                }
+                                if (ver[i].semester.jahreszeit == Winter) {
+                                        wprintf(L"\n\n%ls WS %i/%i %ls\n", TXT_INVERSE, ver[i].semester.jahr, ver[i].semester.jahr + 1, END_STYLE);
+                                        for (int a = 0; a < w.ws_col; ++a) {
+                                                wprintf(L"─");
+                                        }
+                                } else {
+                                        wprintf(L"\n\n%ls SS %i %ls\n", TXT_INVERSE, ver[i].semester.jahr, END_STYLE);
+                                        for (int a = 0; a < w.ws_col; ++a) {
+                                                wprintf(L"─");
+                                        }                        
+                                }
+
+                                last_time.jahr = ver[i].semester.jahr;
+                                last_time.jahreszeit = ver[i].semester.jahreszeit;
+
+                                // Bedeutung der Spalten ausgeben    
+                                wprintf(L"%lsName der Veranstaltung%ls", TXT_UNDERLINED, END_STYLE);
+                                int counter = 22;
+                                counter = 90 - counter;
+                                for (int a = 0; a < counter; ++a) {
+                                        wprintf(L" ");
+                                }
+                                wprintf(L"                 %ls%ls%ls     %ls%ls%ls   %ls%ls%ls\n", TXT_UNDERLINED, STATUS, END_STYLE, TXT_UNDERLINED, LP, END_STYLE, TXT_UNDERLINED, NOTE, END_STYLE);
+                        }
+
+                        // Veranstaltungsnamen ausgeben   
+                        wprintf(L"%ls", ver[i].name);
+                        int counter = 0;
+                        while(ver[i].name[counter] != L'\0') {
+                                ++counter;
+                        }
+                        counter = 90 - counter;
+                        for (int a = 0; a < counter; ++a) {
+                                wprintf(L" ");
+                        }
+
+                        // Restliche Daten der Veranstaltung ausgeben
+                        switch(ver[i].state) {
+                                case Bestanden:
+                                        wprintf(L"        %ls%15ls%ls     %i    %.1f\n", TXT_GREEN, BESTANDEN, END_STYLE, ver[i].lp, ver[i].note);
+                                       break;
+                                case NichtBestanden:
+                                       wprintf(L"        %ls%15ls%ls     %i    %ls%.1f%ls\n", TXT_RED, NICHT_BESTANDEN, END_STYLE, ver[i].lp, TXT_RED, ver[i].note, END_STYLE);
+                                        break;
+                                case Ausstehend:
+                                        wprintf(L"        %ls%15ls%ls     %i    %ls/%ls\n", TXT_YELLOW, AUSSTEHEND, END_STYLE, ver[i].lp, TXT_YELLOW, END_STYLE);
+                                        break;
+                        }
+                }
+        }
+}
+
+void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod)
+{
+        int last_index = -1;
+        struct winsize w;
+        int sum = -1;
+        size_t a = 0;
+        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
+                perror("ioctl");
+        }
+
+        if (size_ver == 0) {
+                // Hinweis, dass noch keine Veranstaltung hinzugefügt wurde
+                print_no_ver_saved_screen();
+        } else {
+        
+                // Sortierung der Veranstaltungen nach Modulgruppe
+                sort_by_mod(ver, size_ver);
+
+                wprintf(L"\nSortierung: Modulgruppe, alphabetisch aufsteigend\n");
+
+
+                for (size_t i = 0; i < size_ver; ++i) {
+
+
+                        if (ver[i].modulgruppenindex != last_index) {
+
+                                if (last_index != -1) {
+                                        wprintf(L"\n");
+                                        wprintf(L"Summe: %i/%i\n", sum, mod[a].lp_todo);
+                                }
+
+                                a = 0;
+                                while (a < size_mod) {
+                                        if (ver[i].modulgruppenindex == mod[a].modulgruppenindex) {
+                                                break;
+                                        }
+                                        ++a;
+                                }
+                        
+                                wprintf(L"\n\n%ls %ls %ls\n", TXT_INVERSE, mod[a].name, END_STYLE);
+                                for (int a = 0; a < w.ws_col; ++a) {
+                                                wprintf(L"─");
+                                }                        
+                                last_index = ver[i].modulgruppenindex;
+
+                                // Bedeutung der Spalten ausgeben    
+                                wprintf(L"%lsName der Veranstaltung%ls", TXT_UNDERLINED, END_STYLE);
+                                for (int a = 0; a < 90 - 22; ++a) {
+                                        wprintf(L" ");
+                                }
+                                wprintf(L"                 %ls%ls%ls     %ls%ls%ls   %ls%ls%ls\n", TXT_UNDERLINED, STATUS, END_STYLE, TXT_UNDERLINED, LP, END_STYLE, TXT_UNDERLINED, NOTE, END_STYLE);
+                                sum = 0;
+                        }
+
+                
+
+                        // Veranstaltungsnamen ausgeben   
+                        wprintf(L"%ls", ver[i].name);
+                        int counter = 0;
+                        while(ver[i].name[counter] != L'\0') {
+                                ++counter;
+                        }
+                        counter = 90 - counter;
+                        for (int a = 0; a < counter; ++a) {
+                                wprintf(L" ");
+                        }
+
+                        // Restliche Daten der Veranstaltung ausgeben
+                        switch(ver[i].state) {
+                                case Bestanden:
+                                        wprintf(L"        %ls%15ls%ls     %i    %.1f\n", TXT_GREEN, BESTANDEN, END_STYLE, ver[i].lp, ver[i].note);
+                                        break;
+                                case NichtBestanden:
+                                        wprintf(L"        %ls%15ls%ls     %i    %ls%.1f%ls\n", TXT_RED, NICHT_BESTANDEN, END_STYLE, ver[i].lp, TXT_RED, ver[i].note, END_STYLE);
+                                        break;
+                                case Ausstehend:
+                                        wprintf(L"        %ls%15ls%ls     %i    %ls/%ls\n", TXT_YELLOW, AUSSTEHEND, END_STYLE, ver[i].lp, TXT_YELLOW, END_STYLE);
+                                        break;
+                        }
+                        if (ver[i].state == Bestanden) {
+                                sum += ver[i].lp;
+                        }
+                }
+
+        
+                for (int b = 0; b < 90; ++b) {
+                        wprintf(L" ");
+                }
+                wprintf(L"\nSumme: %i/%i\n", sum, mod[a].lp_todo);
+        }
+                        
+
+
+
 }
 
 
@@ -132,10 +307,6 @@ void print_helpscreen(void)
 
 
 
-
-
-
-
 void print_endscreen(void)
 {
         clear_display();
@@ -145,10 +316,6 @@ void print_endscreen(void)
         wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────┘\n\n\n");
 
 }
-
-
-
-
 
 
 
@@ -186,9 +353,6 @@ int print_averagescreen(int new_entry, struct Veranstaltung *ver, size_t size_ve
 
 
 
-
-
-
 void clear_display(void)
 {
         wprintf(L"\033[0;0H");
@@ -201,179 +365,6 @@ void clear_display(void)
         wprintf(L"\033[0;0H\n\n\n");
 
 }
-
-
-
-
-
-
-
-
-
-void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver)
-{
-        struct Semester last_time;
-        last_time.jahr = -1;
-        last_time.jahreszeit = -1;
-
-        // Sortierung der Veranstaltungen nach Semester
-        sort_by_time(ver, size_ver);
-
-        wprintf(L"\nSortierung: Semester, aufsteigend\n");
-
-        for (size_t i = 0; i < size_ver; ++i) {
-
-                
-                if (ver[i].semester.jahr != last_time.jahr || ver[i].semester.jahreszeit != last_time.jahreszeit) {
-                        struct winsize w;
-                        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
-                                perror("ioctl");
-                        }
-                        if (ver[i].semester.jahreszeit == Winter) {
-                                wprintf(L"\n\n%ls WS %i/%i %ls\n", TXT_INVERSE, ver[i].semester.jahr, ver[i].semester.jahr + 1, END_STYLE);
-                                                                for (int a = 0; a < w.ws_col; ++a) {
-                                        wprintf(L"─");
-                                }
-                        } else {
-                                wprintf(L"\n\n%ls SS %i %ls\n", TXT_INVERSE, ver[i].semester.jahr, END_STYLE);
-                                for (int a = 0; a < w.ws_col; ++a) {
-                                        wprintf(L"─");
-                                }                        
-                        }
-
-                        last_time.jahr = ver[i].semester.jahr;
-                        last_time.jahreszeit = ver[i].semester.jahreszeit;
-
-                        // Bedeutung der Spalten ausgeben    
-                        wprintf(L"%lsName der Veranstaltung%ls", TXT_UNDERLINED, END_STYLE);
-                        int counter = 22;
-                        counter = 90 - counter;
-                        for (int a = 0; a < counter; ++a) {
-                                wprintf(L" ");
-                        }
-                        wprintf(L"                 %ls%ls%ls     %ls%ls%ls   %ls%ls%ls\n", TXT_UNDERLINED, STATUS, END_STYLE, TXT_UNDERLINED, LP, END_STYLE, TXT_UNDERLINED, NOTE, END_STYLE);
-                }
-
-                // Veranstaltungsnamen ausgeben   
-                wprintf(L"%ls", ver[i].name);
-                int counter = 0;
-                while(ver[i].name[counter] != L'\0') {
-                        ++counter;
-                }
-                counter = 90 - counter;
-                for (int a = 0; a < counter; ++a) {
-                        wprintf(L" ");
-                }
-
-                // Restliche Daten der Veranstaltung ausgeben
-                switch(ver[i].state) {
-                        case Bestanden:
-                                wprintf(L"        %ls%15ls%ls     %i    %.1f\n", TXT_GREEN, BESTANDEN, END_STYLE, ver[i].lp, ver[i].note);
-                                break;
-                        case NichtBestanden:
-                                wprintf(L"        %ls%15ls%ls     %i    %ls%.1f%ls\n", TXT_RED, NICHT_BESTANDEN, END_STYLE, ver[i].lp, TXT_RED, ver[i].note, END_STYLE);
-                                break;
-                        case Ausstehend:
-                                wprintf(L"        %ls%15ls%ls     %i    %ls/%ls\n", TXT_YELLOW, AUSSTEHEND, END_STYLE, ver[i].lp, TXT_YELLOW, END_STYLE);
-                                break;
-                }
-        }
-}
-
-
-
-
-
-void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod)
-{
-        int last_index = -1;
-        struct winsize w;
-        int sum = -1;
-        size_t a = 0;
-        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
-                perror("ioctl");
-        }
-
-        
-        // Sortierung der Veranstaltungen nach Modulgruppe
-        sort_by_mod(ver, size_ver);
-
-        wprintf(L"\nSortierung: Modulgruppe, alphabetisch aufsteigend\n");
-
-        for (size_t i = 0; i < size_ver; ++i) {
-
-
-                if (ver[i].modulgruppenindex != last_index) {
-
-                        if (last_index != -1) {
-                                wprintf(L"\n");
-                                wprintf(L"Summe: %i/%i\n", sum, mod[a].lp_todo);
-                        }
-
-                        a = 0;
-                        while (a < size_mod) {
-                                if (ver[i].modulgruppenindex == mod[a].modulgruppenindex) {
-                                        break;
-                                }
-                                ++a;
-                        }
-                        
-                        wprintf(L"\n\n%ls %ls %ls\n", TXT_INVERSE, mod[a].name, END_STYLE);
-                        for (int a = 0; a < w.ws_col; ++a) {
-                                        wprintf(L"─");
-                        }                        
-                        last_index = ver[i].modulgruppenindex;
-
-                        // Bedeutung der Spalten ausgeben    
-                        wprintf(L"%lsName der Veranstaltung%ls", TXT_UNDERLINED, END_STYLE);
-                        for (int a = 0; a < 90 - 22; ++a) {
-                                wprintf(L" ");
-                        }
-                        wprintf(L"                 %ls%ls%ls     %ls%ls%ls   %ls%ls%ls\n", TXT_UNDERLINED, STATUS, END_STYLE, TXT_UNDERLINED, LP, END_STYLE, TXT_UNDERLINED, NOTE, END_STYLE);
-                        sum = 0;
-                }
-
-                
-
-                // Veranstaltungsnamen ausgeben   
-                wprintf(L"%ls", ver[i].name);
-                int counter = 0;
-                while(ver[i].name[counter] != L'\0') {
-                        ++counter;
-                }
-                counter = 90 - counter;
-                for (int a = 0; a < counter; ++a) {
-                        wprintf(L" ");
-                }
-
-                // Restliche Daten der Veranstaltung ausgeben
-                switch(ver[i].state) {
-                        case Bestanden:
-                                wprintf(L"        %ls%15ls%ls     %i    %.1f\n", TXT_GREEN, BESTANDEN, END_STYLE, ver[i].lp, ver[i].note);
-                                break;
-                        case NichtBestanden:
-                                wprintf(L"        %ls%15ls%ls     %i    %ls%.1f%ls\n", TXT_RED, NICHT_BESTANDEN, END_STYLE, ver[i].lp, TXT_RED, ver[i].note, END_STYLE);
-                                break;
-                        case Ausstehend:
-                                wprintf(L"        %ls%15ls%ls     %i    %ls/%ls\n", TXT_YELLOW, AUSSTEHEND, END_STYLE, ver[i].lp, TXT_YELLOW, END_STYLE);
-                                break;
-                }
-                if (ver[i].state == Bestanden) {
-                        sum += ver[i].lp;
-                }
-        }
-
-        
-        for (int b = 0; b < 90; ++b) {
-                wprintf(L" ");
-        }
-        wprintf(L"\nSumme: %i/%i\n", sum, mod[a].lp_todo);
-                        
-
-
-
-}
-
 
 
 
@@ -780,7 +771,7 @@ void print_wrong_string_screen(void)
 }
 
 
-void print_wrong_function_input_screen()
+void print_wrong_function_input_screen(void)
 {
         clear_display();
         wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────┐\n");
@@ -788,5 +779,73 @@ void print_wrong_function_input_screen()
         wprintf(L"│                     Ungültige Eingabedaten der aufgerufenen Funktion.                │\n");
         wprintf(L"│         Das Programm wird beendet. Für einen weiteren Versuch bitte neu starten.     │\n");
         wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────┘\n\n\n");
+
+}
+
+
+void print_loaddata_error_screen(wchar_t *error_message)
+{
+        int len = 0;
+        while (error_message[len] != L'\0') {
+                ++len;
+        }
+        
+        wprintf(L"\n\n");
+        wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────┐\n");
+        wprintf(L"│                                 %ls%lsSPEICHERFEHLER!%ls                                      │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+        wprintf(L"│                   Die Daten konnten nicht korrekt geladen werden.                    │\n");
+        wprintf(L"│                                                                                      │\n");
+        wprintf(L"│ %lsError message:%ls %ls", TXT_RED, END_STYLE, error_message);
+        for (int i = 0; i < 70 - len; ++i) {
+                wprintf(L" ");
+        }
+        wprintf(L"│\n");
+        wprintf(L"│                                                                                      │\n");
+        wprintf(L"│ %lsOptionen%ls                                                        %lsTaste%ls                │\n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
+        wprintf(L"│ Laden der Daten erneut versuchen                                      [r]            │\n");
+        wprintf(L"│ Neue Datei erstellen (%lsbisherige Daten werden %lsgelöscht%ls)                [n]            │\n", TXT_BOLD, TXT_RED, END_STYLE);
+        wprintf(L"│ Programm beenden                                                      [q]            │\n");
+        wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────┘\n");
+        wprintf(L"\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
+
+}
+
+
+void print_savedata_error_screen(wchar_t *error_message)
+{
+        clear_display();
+        wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────┐\n");
+        wprintf(L"│                                 %ls%lsPROGRAMMFEHLER!%ls                                      │\n", TXT_INVERSE, TXT_RED, END_STYLE);
+        wprintf(L"│                     Ungültige Eingabedaten der aufgerufenen Funktion.                │\n");
+        wprintf(L"│         Das Programm wird beendet. Für einen weiteren Versuch bitte neu starten.     │\n");
+        wprintf(L"└──────────────────────────────────────────────────────────────────────────────────────┘\n\n\n");
+
+}
+
+void print_loaddata_complete_screen(void)
+{
+        wprintf(L"\n\n");
+        wprintf(L"      ╭───────────────────────────────────────────────────────╮\n");
+        wprintf(L"      │       %ls Laden der Daten erfolgreich abgeschlossen! %ls    │\n", TXT_GREEN, END_STYLE);
+        wprintf(L"      ╰───────────────────────────────────────────────────────╯\n\n");
+
+}
+
+
+void print_newsavefile_created(void)
+{
+        clear_display();
+        wprintf(L"      ╭───────────────────────────────────────────────────────╮\n");
+        wprintf(L"      │           %ls Es wurde eine neue Datei erstellt! %ls        │\n", TXT_GREEN, END_STYLE);
+        wprintf(L"      ╰───────────────────────────────────────────────────────╯\n\n\n");
+
+}
+
+void print_no_ver_saved_screen(void)
+{
+        wprintf(L"\n\n");
+        wprintf(L"      ╭─────────────────────────────────────────────────────────────╮\n");
+        wprintf(L"      │        %ls Es wurde noch keine Veranstaltung hinzugefügt! %ls     │\n", TXT_GREEN, END_STYLE);
+        wprintf(L"      ╰─────────────────────────────────────────────────────────────╯\n");
 
 }

@@ -37,13 +37,77 @@ int main() {
 	size_t size_ver = 0;
 	struct Modulgruppe *mod = NULL;
 	size_t size_mod = 0;
+	
+	// Temporäre Variablen zum test, ob laden der daten funktioniert
+	struct Veranstaltung *ver_getdata = NULL;
+	size_t size_ver_getdata = 0;
+	struct Modulgruppe *mod_getdata = NULL;
+	size_t size_mod_getdata = 0;
 
+	
 	print_welcomescreen();
 
-	// Daten aus dem Speicher laden hihihi
-	Result r = load_data_from_savefile(&ver, &mod, &size_ver, &size_mod);
+	// Daten aus dem Speicher laden
+	Result r = load_data_from_savefile(&ver_getdata, &mod_getdata, &size_ver_getdata, &size_mod_getdata);
+
+	// Fehlerbehandlung, wenn laden der Daten fehlschlägt
+	if (r.success) {
+		print_loaddata_complete_screen();
+		print_welcomescreen_options();	
+		error_free(r);	
+
+		// Daten in eigentliche Variablen übertragen
+		ver = ver_getdata;
+		size_ver = size_ver_getdata;
+		mod = mod_getdata;
+		size_mod = size_mod_getdata;
+
+	}
 	if (!r.success) {
-		print_error(r);
+		wchar_t *error_message = format_error_wchar(r);
+		print_loaddata_error_screen(error_message);
+		error_free(r);
+		free(error_message);
+		int continue_error_handling = 1;
+		while (continue_error_handling) {
+			status = read_command(INPUT_LOAD_DATA_ERROR, SIZE_INPUT_LOAD_DATA_ERROR);
+			switch (status) {
+				case L'r':
+					r = load_data_from_savefile(&ver, &mod, &size_ver, &size_mod);
+					if (r.success) {
+						print_loaddata_complete_screen();
+						print_welcomescreen_options();
+						error_free(r);
+						continue_error_handling = 0;
+
+						// Daten in eigentliche Variablen übertragen
+						ver = ver_getdata;
+						size_ver = size_ver_getdata;
+						mod = mod_getdata;
+						size_mod = size_mod_getdata;
+						break;											
+					} else {
+						error_message = format_error_wchar(r);
+						print_loaddata_error_screen(error_message);
+						error_free(r);
+						free(error_message);
+						break;
+					}
+				
+				case L'n':
+					continue_error_handling = 0;
+					print_newsavefile_created();
+					print_welcomescreen_options();
+					break;
+
+				case L'q':
+					print_endscreen();
+					return 0;
+			} 
+
+
+		}
+		
 	}
 	
 
