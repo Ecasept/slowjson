@@ -82,6 +82,7 @@ static Result parse_modulgruppe(const JSONValue *val, struct Modulgruppe *mg) {
     
     if (!(r = extract_wstring(val, "name", &mg->name)).success) goto error;
     if (!(r = extract_int(val, "lp_todo", &mg->lp_todo)).success) goto error;
+	if (!(r = extract_int(val, "modulgruppenindex", &mg->modulgruppenindex)).success) goto error;
 
     return new_success();
 error:

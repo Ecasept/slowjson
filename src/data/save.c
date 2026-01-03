@@ -114,6 +114,10 @@ static Result convert_to_json(struct Veranstaltung *v_out, size_t v_count,
 		json_value_hashmap_set(&modulgruppe.hashmap,
 							   string_newr("name"),
 							   json_value_new_string(&name));
+		
+	json_value_hashmap_set(&modulgruppe.hashmap,
+							   string_newr("modulgruppenindex"),
+							   json_value_new_integer(mg->modulgruppenindex));
 
 							   json_value_hashmap_set(&modulgruppe.hashmap,
 							   string_newr("lp_todo"),

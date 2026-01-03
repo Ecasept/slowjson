@@ -43,7 +43,8 @@ debug: CFLAGS := $(CFLAGS) $(DEBUG_CFLAGS)
 debug: LDFLAGS := $(LDFLAGS) $(DEBUG_LDFLAGS)
 debug: rebuild all
 
-valgrind: all
+valgrind: CFLAGS := $(CFLAGS) -g
+valgrind: rebuild
 	valgrind --leak-check=full --show-leak-kinds=all ./$(BUILD_DIR)/$(TARGET)
 
 $(BUILD_DIR)/$(TARGET): $(OBJS)

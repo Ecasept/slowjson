@@ -908,18 +908,22 @@ void print_savedata_error_screen(wchar_t *error_message)
 void free_all(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod)
 {
         // Veranstaltungsname freigeben
-        for (int i = 0; i < (int) size_ver; ++i) {
-                free(ver[i].name);
-        }
-        
-        // Speicher der Veranstaltungen freigeben
-        free(ver);
+	    if (ver != NULL) {
+                for (int i = 0; i < (int) size_ver; ++i) {
+                        free(ver[i].name);
+                }
+
+	        	// Speicher der Veranstaltungen freigeben
+    	    	free(ver);
+		}
 
         // Modulgruppennamen freigeben
-        for (int i = 0; i < (int) size_mod; ++i) {
-                free(mod[i].name);
-        }
+		if (mod != NULL) {
+    			for (int i = 0; i < (int) size_mod; ++i) {
+                		free(mod[i].name);
+        		}
 
-        // Speicher der Modulgruppen freigeben
-        free(mod);
+        		// Speicher der Modulgruppen freigeben
+        		free(mod);
+		}
 }
