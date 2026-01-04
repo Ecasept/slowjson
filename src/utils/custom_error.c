@@ -66,7 +66,9 @@ wchar_t *format_error_wchar(Result r) {
 	Result res = utf8_string_to_wchar(&formatted, &wformatted);
 	string_free(&formatted);
 	if (!res.success) {
-		const wchar_t *fallback_msg = L"Error formatting error message.";
+		// Do not try to return `res.message` as that may also fail to convert to wchar_t
+		error_free(res);
+		const wchar_t *fallback_msg = L"Error converting error message to wide characters";
 		size_t n = wcslen(fallback_msg) + 1;
 		wchar_t *fallback = malloc(sizeof(wchar_t) * n);
 		if (fallback == NULL) {
