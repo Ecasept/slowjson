@@ -3,20 +3,15 @@
 #include "hashmap.h"
 
 Result json_value_hashmap_node_get(json_value_hashmap_node *node,
-								   const string key, JSONValue *out) {
-	bool eq;
-	string_eq(&node->key, &key, &eq);
-	if (eq) {
+								   string_view key, JSONValue *out) {
+	if (string_eq_sv(&node->key, key)) {
 		*out = node->value;
 		return new_success();
 	} else {
 		if (node->next == NULL) {
 			// End reached
-			char *cstr;
-			string_to_cstr(&key, &cstr);
-			Result r = new_errorf("Key not found in hashmap: \"%s\"",
-								  EHashmapKeyNotFound, cstr);
-			free(cstr);
+			Result r = new_errorf("Key not found in hashmap: \"%.*s\"",
+								  EHashmapKeyNotFound, (int)key.size, key.data);
 			return r;
 		} else {
 			return json_value_hashmap_node_get(node->next, key, out);

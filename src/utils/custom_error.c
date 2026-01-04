@@ -5,6 +5,7 @@
 #include <string.h>
 #include <wchar.h>
 #include "dstring.h"
+#include "string_view.h"
 #include "unicode/wchar.h"
 
 Result new_error(const char msg[], ErrorType type) {
@@ -63,7 +64,7 @@ string format_error(Result r) {
 wchar_t *format_error_wchar(Result r) {
 	string formatted = format_error(r);
 	wchar_t *wformatted = NULL;
-	Result res = utf8_string_to_wchar(&formatted, &wformatted);
+	Result res = utf8_string_to_wchar(as_sv(formatted), &wformatted);
 	string_free(&formatted);
 	if (!res.success) {
 		// Do not try to return `res.message` as that may also fail to convert to wchar_t

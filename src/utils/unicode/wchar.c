@@ -72,10 +72,10 @@ Result wchar_to_utf8_string(const wchar_t *src, string *dest) {
 
 /**
  * @brief Converts a UTF-8 encoded string to a wchar_t string
- * @param src The source UTF-8 string (will be borrowed)
+ * @param src The source UTF-8 string
  * @param dest Pointer to store the resulting wchar_t string (will be allocated)
  */
-Result utf8_string_to_wchar(const string *src, wchar_t **dest) {
+Result utf8_string_to_wchar(string_view src, wchar_t **dest) {
 
 	wchar_list out;
 	wchar_list_init(&out, 0);
@@ -85,7 +85,7 @@ Result utf8_string_to_wchar(const string *src, wchar_t **dest) {
 		size_t index = 0;
 		Result r;
 		UnicodeCodePoint cp;
-		while (index < src->arr.length) {
+		while (index < src.size) {
 			r = utf8_get_next_codepoint(src, &index, &cp);
 			if (!r.success) {
 				wchar_list_free(&out);
@@ -109,7 +109,7 @@ Result utf8_string_to_wchar(const string *src, wchar_t **dest) {
 		UCP cp;
 		size_t index = 0;
 
-		while (index < src->arr.length) {
+		while (index < src.size) {
 			r = utf8_get_next_codepoint(src, &index, &cp);
 			if (!r.success) {
 				wchar_list_free(&out);
