@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -std=c11
-DEBUG_CFLAGS = -g -fsanitize=address,undefined
+CFLAGS = -Wall -Wextra -pedantic -std=c11 -g -DDEBUG
+DEBUG_CFLAGS = -g -fsanitize=address,undefined -DASAN_ENABLED
 LDFLAGS = -lm
 DEBUG_LDFLAGS = -fsanitize=address,undefined
 TARGET = gradeviewer
@@ -43,7 +43,7 @@ debug: CFLAGS := $(CFLAGS) $(DEBUG_CFLAGS)
 debug: LDFLAGS := $(LDFLAGS) $(DEBUG_LDFLAGS)
 debug: rebuild all
 
-valgrind: CFLAGS := $(CFLAGS) -g
+valgrind: CFLAGS := $(CFLAGS) -g -DDEBUG -DVALGRIND_ENABLED
 valgrind: rebuild
 	valgrind --leak-check=full --show-leak-kinds=all ./$(BUILD_DIR)/$(TARGET)
 
