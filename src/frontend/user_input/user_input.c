@@ -170,6 +170,9 @@ int read_note(double *note)
         while (1) {
 
                 while ((stat = getwchar())) {
+                        if (stat == EOF) {
+                                return BUFFER_ERROR;
+                        }
                         if (stat == L'\n' && i == 0) {
                                 i = 0;
                                 --counter;
@@ -189,8 +192,14 @@ int read_note(double *note)
                                 break;
                         }
 
+                        // Umwandlung von Komma zur Trennung von Vor- und Nachkommastellen in Punkt
+                        if (i == 1 && stat == L',') {
+                                stat = L'.';
+                        }
 
-                        if (i == 3 && stat != '\n') {
+                        
+                        // Fehlermeldung bei zu langer Eingabe
+                        if (i == 3 && stat != L'\n') {
                                 if (flush() == BUFFER_ERROR) {
                                         return BUFFER_ERROR;
                                 }

@@ -368,7 +368,7 @@ int print_averagescreen(int new_entry, struct Veranstaltung *ver, size_t size_ve
 
 void clear_display(void)
 {
-       
+        #ifdef __linux__
         wprintf(L"\033[0;0H");
         for (int i = 0; i < 50; ++i) {
                 for (int a = 0; a < 400; ++a) {
@@ -377,6 +377,7 @@ void clear_display(void)
                 wprintf(L"\n");
         }
         wprintf(L"\033[0;0H\n\n\n");
+        #endif
         #ifdef _WIN32
         wprintf(L"\033[H\033[J");
         #endif
