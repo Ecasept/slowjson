@@ -6,8 +6,6 @@
 #include "../user_input/user_input.h"
 #include "../../midend/data.h"
 #include "../../midend/mid.h"
-#include <unistd.h>
-#include <sys/ioctl.h>
 #include <string.h>
 
 
@@ -111,33 +109,38 @@ int select_ver(struct Veranstaltung **ver, size_t *size_ver, int *selected_ver)
 
         // Kopfzeile
         wprintf(L"Bitte wählen Sie eine Veranstaltung die Sie bearbeiten möchten:\n\n");
-        struct winsize w;
-        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
-                perror("ioctl");
-        }
-        int width = (int) (0.75 * w.ws_col);
         wprintf(L"Name");
         for (int i = 0; i < 86; ++i) {
                 wprintf(L" ");
         }
         wprintf(L"Nummer\n");
-        for (int i = 0; i < width; ++i) {
+        for (int i = 0; i < WIDTH_LINE_SELECT_VER; ++i) {
                 wprintf(L"─");
         }
 
         
         // Veranstaltungen auflisten
         for (int i = 0; i < (int) (*size_ver); ++i) {
-                wprintf(L"\n%ls", (*ver)[i].name);
-                int counter = 0;
-                while((*ver)[i].name[counter] != L'\0') {
-                        ++counter;
+                int counter_all = 0;
+                int counter_line = 0;
+                wprintf(L"\n");
+                while((*ver)[i].name[counter_all] != L'\0') {
+                        ++counter_line;
+                        if (counter_line > 80) {
+                                counter_line = 0;
+                                wprintf(L"-\n");
+                                ++counter_all;
+                                continue;
+                        }
+                        wprintf(L"%lc", (*ver)[i].name[counter_all]);
+                        ++counter_all;                    
                 }
-                counter = 90 - counter;
-                for (int a = 0; a < counter; ++a) {
+
+                counter_line = 90 - counter_line;
+                for (int a = 0; a < counter_line; ++a) {
                         wprintf(L" ");
                 }
-                wprintf(L"%i", i);
+                wprintf(L"%i", i);                
         }
 
         wprintf(L"\n\nNummer:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
