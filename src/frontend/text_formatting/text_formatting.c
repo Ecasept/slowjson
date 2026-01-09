@@ -5,8 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <wchar.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
+
 
 
 void print_welcomescreen(void)
@@ -102,27 +101,24 @@ void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver)
 
                 
                         if (ver[i].semester.jahr != last_time.jahr || ver[i].semester.jahreszeit != last_time.jahreszeit) {
-                                struct winsize w;
-                                if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
-                                        perror("ioctl");
-                                }
+                                
                                 if (ver[i].semester.jahreszeit == Winter) {
                                         wprintf(L"\n\n%ls WS %i/%i %ls\n", TXT_INVERSE, ver[i].semester.jahr, ver[i].semester.jahr + 1, END_STYLE);
-                                        for (int a = 0; a < w.ws_col; ++a) {
+                                        for (int a = 0; a < WIDTH_LINE; ++a) {
                                                 wprintf(L"─");
                                         }
                                 } else {
                                         wprintf(L"\n\n%ls SS %i %ls\n", TXT_INVERSE, ver[i].semester.jahr, END_STYLE);
-                                        for (int a = 0; a < w.ws_col; ++a) {
+                                        for (int a = 0; a < WIDTH_LINE; ++a) {
                                                 wprintf(L"─");
-                                        }                        
+                                        }    
                                 }
 
                                 last_time.jahr = ver[i].semester.jahr;
                                 last_time.jahreszeit = ver[i].semester.jahreszeit;
 
                                 // Bedeutung der Spalten ausgeben    
-                                wprintf(L"%lsName der Veranstaltung%ls", TXT_UNDERLINED, END_STYLE);
+                                wprintf(L"%ls\nName der Veranstaltung%ls", TXT_UNDERLINED, END_STYLE);
                                 int counter = 22;
                                 counter = 90 - counter;
                                 for (int a = 0; a < counter; ++a) {
@@ -132,13 +128,23 @@ void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver)
                         }
 
                         // Veranstaltungsnamen ausgeben   
-                        wprintf(L"%ls", ver[i].name);
-                        int counter = 0;
-                        while(ver[i].name[counter] != L'\0') {
-                                ++counter;
+                        int counter_all = 0;
+                        int counter_line = 0;
+                        while(ver[i].name[counter_all] != L'\0') {
+                                ++counter_line;
+                                if (counter_line > 90) {
+                                        counter_line = 0;
+                                        wprintf(L"-\n");
+                                        ++counter_all;
+                                        continue;
+                                }
+                                wprintf(L"%lc", ver[i].name[counter_all]);
+                                ++counter_all;                    
                         }
-                        counter = 90 - counter;
-                        for (int a = 0; a < counter; ++a) {
+                        
+                        
+                        counter_line = 90 - counter_line;
+                        for (int a = 0; a < counter_line; ++a) {
                                 wprintf(L" ");
                         }
 
@@ -161,12 +167,9 @@ void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver)
 void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod)
 {
         int last_index = -1;
-        struct winsize w;
         int sum = -1;
         size_t a = 0;
-        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
-                perror("ioctl");
-        }
+       
 
         if (size_ver == 0) {
                 // Hinweis, dass noch keine Veranstaltung hinzugefügt wurde
@@ -198,13 +201,13 @@ void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Mo
                                 }
                         
                                 wprintf(L"\n\n%ls %ls %ls\n", TXT_INVERSE, mod[a].name, END_STYLE);
-                                for (int a = 0; a < w.ws_col; ++a) {
+                                for (int a = 0; a < WIDTH_LINE; ++a) {
                                                 wprintf(L"─");
                                 }                        
                                 last_index = ver[i].modulgruppenindex;
 
                                 // Bedeutung der Spalten ausgeben    
-                                wprintf(L"%lsName der Veranstaltung%ls", TXT_UNDERLINED, END_STYLE);
+                                wprintf(L"%ls\nName der Veranstaltung%ls", TXT_UNDERLINED, END_STYLE);
                                 for (int a = 0; a < 90 - 22; ++a) {
                                         wprintf(L" ");
                                 }
@@ -215,15 +218,25 @@ void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Mo
                 
 
                         // Veranstaltungsnamen ausgeben   
-                        wprintf(L"%ls", ver[i].name);
-                        int counter = 0;
-                        while(ver[i].name[counter] != L'\0') {
-                                ++counter;
+                        int counter_all = 0;
+                        int counter_line = 0;
+                        while(ver[i].name[counter_all] != L'\0') {
+                                ++counter_line;
+                                if (counter_line > 90) {
+                                        counter_line = 0;
+                                        wprintf(L"-\n");
+                                        ++counter_all;
+                                        continue;
+                                }
+                                wprintf(L"%lc", ver[i].name[counter_all]);                               
+                                ++counter_all;
                         }
-                        counter = 90 - counter;
-                        for (int a = 0; a < counter; ++a) {
+                        
+                        counter_line = 90 - counter_line;
+                        for (int a = 0; a < counter_line; ++a) {
                                 wprintf(L" ");
                         }
+
 
                         // Restliche Daten der Veranstaltung ausgeben
                         switch(ver[i].state) {
@@ -355,6 +368,7 @@ int print_averagescreen(int new_entry, struct Veranstaltung *ver, size_t size_ve
 
 void clear_display(void)
 {
+       
         wprintf(L"\033[0;0H");
         for (int i = 0; i < 50; ++i) {
                 for (int a = 0; a < 400; ++a) {
@@ -363,7 +377,9 @@ void clear_display(void)
                 wprintf(L"\n");
         }
         wprintf(L"\033[0;0H\n\n\n");
-
+        #ifdef _WIN32
+        wprintf(L"\033[H\033[J");
+        #endif
 }
 
 
@@ -842,15 +858,34 @@ void print_loaddata_error_screen(wchar_t *error_message)
                 ++len;
         }
         
+        
         wprintf(L"\n\n");
         wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────┐\n");
         wprintf(L"│                                 %ls%lsSPEICHERFEHLER!%ls                                      │\n", TXT_INVERSE, TXT_RED, END_STYLE);
         wprintf(L"│                   Die Daten konnten nicht korrekt geladen werden.                    │\n");
         wprintf(L"│                                                                                      │\n");
-        wprintf(L"│ %lsError message:%ls %ls", TXT_RED, END_STYLE, error_message);
-        for (int i = 0; i < 70 - len; ++i) {
-                wprintf(L" ");
+        wprintf(L"│ %lsError message:%ls ", TXT_RED, END_STYLE);
+        int counter_all = 0;
+        int counter_line = 0;
+        while(error_message[counter_all] != L'\0') {
+                ++counter_line;
+                if (counter_line > 60) {
+                        wprintf(L"-");
+                        for (int i = 0; i < 70 - counter_line; ++i) {
+                                wprintf(L" ");
+                        }
+                        counter_line = 0;
+                        wprintf(L"│\n│");
+                        wprintf(L"                ");
+                        continue;
+                }
+                wprintf(L"%lc", error_message[counter_all]);
+                ++counter_all;                    
         }
+        for (int i = 0; i < 70 - counter_line; ++i) {
+                wprintf(L" ");
+                }
+                       
         wprintf(L"│\n");
         wprintf(L"│                                                                                      │\n");
         wprintf(L"│ %lsOptionen%ls                                                        %lsTaste%ls                │\n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);

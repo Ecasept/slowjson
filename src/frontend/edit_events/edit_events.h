@@ -7,6 +7,8 @@
 
 #define STANDARD_SPACE(a) {for (int i = 0; i < 20 - (int) a; ++i) {wprintf(L" ");}}
 
+#define WIDTH_LINE_SELECT_VER 96
+
 
 int print_editver(struct Veranstaltung **ver, size_t *size_ver, struct Modulgruppe **mod, size_t *size_mod, int *current_page);
 int select_ver(struct Veranstaltung **ver, size_t *size_ver, int *selected_ver);

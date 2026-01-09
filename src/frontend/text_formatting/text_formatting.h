@@ -67,6 +67,9 @@
 #define LP L"LP"
 
 
+#define WIDTH_LINE 127
+
+
 void print_welcomescreen(void);
 void print_welcomescreen_options(void);
 int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modulgruppe *mod, size_t size_mod, int view_type, int new_entry);
