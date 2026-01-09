@@ -855,15 +855,35 @@ void print_loaddata_error_screen(wchar_t *error_message)
                 ++len;
         }
         
+        
         wprintf(L"\n\n");
         wprintf(L"┌──────────────────────────────────────────────────────────────────────────────────────┐\n");
         wprintf(L"│                                 %ls%lsSPEICHERFEHLER!%ls                                      │\n", TXT_INVERSE, TXT_RED, END_STYLE);
         wprintf(L"│                   Die Daten konnten nicht korrekt geladen werden.                    │\n");
         wprintf(L"│                                                                                      │\n");
-        wprintf(L"│ %lsError message:%ls %ls", TXT_RED, END_STYLE, error_message);
-        for (int i = 0; i < 70 - len; ++i) {
-                wprintf(L" ");
+        wprintf(L"│ %lsError message:%ls ", TXT_RED, END_STYLE);
+        int counter_all = 0;
+        int counter_line = 0;
+        while(error_message[counter_all] != L'\0') {
+                ++counter_line;
+                if (counter_line > 60) {
+                        wprintf(L"-");
+                        for (int i = 0; i < 70 - counter_line; ++i) {
+                                wprintf(L" ");
+                        }
+                        counter_line = 0;
+                        wprintf(L"│\n│");
+                        wprintf(L"                ");
+                        ++counter_all;
+                        continue;
+                }
+                wprintf(L"%lc", error_message[counter_all]);
+                ++counter_all;                    
         }
+        for (int i = 0; i < 70 - counter_line; ++i) {
+                wprintf(L" ");
+                }
+                       
         wprintf(L"│\n");
         wprintf(L"│                                                                                      │\n");
         wprintf(L"│ %lsOptionen%ls                                                        %lsTaste%ls                │\n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);

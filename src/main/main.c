@@ -27,6 +27,10 @@ int main() {
 	int view_type = OV_BY_TIME;
 
 
+	print_loaddata_error_screen(L"leaiufhslirhflisufhlisufehlisuahflisyufhliyushfrliuyshfrliyushfliyusfehiylsuefhiuesyfhilesyufhlisyuefhylisuhfiyurhiyufhlifsyuh");
+	return 0;
+
+
 	
 	
 
