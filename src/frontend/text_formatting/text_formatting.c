@@ -368,6 +368,7 @@ int print_averagescreen(int new_entry, struct Veranstaltung *ver, size_t size_ve
 
 void clear_display(void)
 {
+       
         wprintf(L"\033[0;0H");
         for (int i = 0; i < 50; ++i) {
                 for (int a = 0; a < 400; ++a) {
@@ -376,7 +377,9 @@ void clear_display(void)
                 wprintf(L"\n");
         }
         wprintf(L"\033[0;0H\n\n\n");
-
+        #ifdef _WIN32
+        wprintf(L"\033[H\033[J");
+        #endif
 }
 
 
@@ -874,7 +877,6 @@ void print_loaddata_error_screen(wchar_t *error_message)
                         counter_line = 0;
                         wprintf(L"│\n│");
                         wprintf(L"                ");
-                        ++counter_all;
                         continue;
                 }
                 wprintf(L"%lc", error_message[counter_all]);
