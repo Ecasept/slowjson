@@ -83,10 +83,6 @@ static Result parse_json_array(json_token_list *tokens, size_t *position,
 	JSONToken token;
 	out_value->type = JSON_ARRAY;
 	json_value_list_init(&out_value->list, 0);
-	// Consume '['
-	r = parser_expect_token(tokens, position, JSONTok_LBracket, &token);
-	if (!r.success)
-		goto error;
 
 	r = parser_peek_token(tokens, *position, &token);
 	if (!r.success)
@@ -140,11 +136,6 @@ static Result parse_json_object(json_token_list *tokens, size_t *position,
 	Result r;
 	out_value->type = JSON_OBJECT;
 	json_value_hashmap_init(&out_value->hashmap);
-	// Consume '{'
-	r = parser_expect_token(tokens, position, JSONTok_LBrace, &token);
-	if (!r.success) {
-		panic("JSON object called but no '{' found");
-	}
 
 	r = parser_peek_token(tokens, *position, &token);
 	if (!r.success)
@@ -243,8 +234,10 @@ static Result parse_json_value(json_token_list *tokens, size_t *position,
 		check(parser_consume_token(tokens, position, &token));
 		return new_success();
 	case JSONTok_LBracket:
+		check(parser_consume_token(tokens, position, &token));
 		return parse_json_array(tokens, position, out_value);
 	case JSONTok_LBrace:
+		check(parser_consume_token(tokens, position, &token));
 		return parse_json_object(tokens, position, out_value);
 	default:
 		return new_errorf(

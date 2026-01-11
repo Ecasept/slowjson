@@ -96,6 +96,7 @@ Result lexer_next_token(Lexer *lexer, JSONToken *token) {
 	case ' ':
 		return lexer_lex_whitespace(lexer, token);
 	case '"':
+		check(lexer_consume(lexer, &current_char));
 		return lexer_lex_string(lexer, token);
 	case '-':
 	case '0':
@@ -328,10 +329,6 @@ static Result lexer_lex_unicode_literal(Lexer *lexer, UCP *out) {
 
 static Result lexer_lex_string(Lexer *lexer, JSONToken *token) {
 	UCP chr;
-	check(lexer_consume(lexer, &chr));
-	if (chr != '"') {
-		panicf("String called but character was %c", chr);
-	}
 
 	string value;
 	string_new(&value, "");
@@ -571,8 +568,6 @@ static bool num_dfa_next_state(enum NumParseState current_state, UCP chr,
 	case NUM_STATE_ERROR_LEADING_ZERO:
 		*next_state = current_state;
 		return false;
-	default:
-		panicf("Invalid NumParseState: %u", current_state);
 	}
 	return true;
 }
