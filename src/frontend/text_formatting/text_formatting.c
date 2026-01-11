@@ -391,6 +391,13 @@ int print_addverscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modu
 
         int status = 1;
         struct Veranstaltung new_ver;
+        new_ver.name = NULL;
+        new_ver.modulgruppenindex = -1;
+        new_ver.semester.jahr = -1;
+        new_ver.semester.jahreszeit = -1;
+        new_ver.lp = -1;
+        new_ver.note = -1;
+        new_ver.state = Ausstehend;
 
         // Name einlesen
         wprintf(L"\n%lsNeue Veranstaltung hinzufügen%ls\n\n", TXT_UNDERLINED, END_STYLE);
@@ -728,6 +735,8 @@ int print_addmodscreen(struct Modulgruppe **mod, size_t *size_mod)
 
         int status = 1;
         struct Modulgruppe new_mod;
+        new_mod.name = NULL;
+        new_mod.lp_todo = -1;
 
         // Name einlesen
         wprintf(L"\n%lsNeue Modulgruppe hinzufügen%ls\n\n", TXT_UNDERLINED, END_STYLE);
