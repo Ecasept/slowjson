@@ -9,6 +9,11 @@
 #include <wchar.h>
 #include <locale.h>
 #include <math.h>
+#ifdef _WIN32
+#include <io.h>
+#include <fcntl.h>
+#include <windows.h>
+#endif
 
 
 
@@ -20,6 +25,15 @@
   
 int main() {
 	setlocale(LC_ALL, "");
+	setlocale(LC_NUMERIC, "C");
+	
+
+	#ifdef _WIN32
+	_setmode(_fileno(stdout), _O_U16TEXT);
+        _setmode(_fileno(stdin), _O_U16TEXT);
+	SetConsoleOutputCP(CP_UTF8);
+	SetConsoleCP(CP_UTF8);
+	#endif
 
 	// Standardvariablen
 	int status = 0;
