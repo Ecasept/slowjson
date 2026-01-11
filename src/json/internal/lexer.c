@@ -1,7 +1,7 @@
 
 #include "lexer.h"
-#include "../../utils/unicode/utf8.h"
-#include "../../utils/unicode/utf16.h"
+#include "../utils/unicode/utf8.h"
+#include "../utils/unicode/utf16.h"
 #include <ctype.h>
 #include <math.h>
 

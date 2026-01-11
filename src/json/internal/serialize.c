@@ -1,7 +1,7 @@
-#include "../hashmap/hashmap_node.h"
-#include "../json.h"
+#include "../utils/hashmap/hashmap_node.h"
+#include "../serialize.h"
 
-void serialize_json(JSONValue *val, string *str) {
+void json_serialize(JSONValue *val, string *str) {
 	switch (val->type) {
 	case JSON_NULL:
 		string_append_cstr(str, "null");
@@ -29,7 +29,7 @@ void serialize_json(JSONValue *val, string *str) {
 		string_append_uchar(str, '[');
 		for (size_t i = 0; i < val->list.length; i++) {
 			if (i > 0) {string_append_uchar(str, ',');}
-			serialize_json(&val->list.data[i], str);
+			json_serialize(&val->list.data[i], str);
 		}
 		string_append_uchar(str, ']');
 		break;
@@ -43,7 +43,7 @@ void serialize_json(JSONValue *val, string *str) {
 				string_append_uchar(str, '"');
 				string_append(str, &node->key);
 				string_append_cstr(str, "\":");
-				serialize_json(&node->value, str);
+				json_serialize(&node->value, str);
 				first = false;
 				node = node->next;
 			}

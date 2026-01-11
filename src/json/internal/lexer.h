@@ -1,7 +1,7 @@
 #pragma once
-#include "../../utils/custom_error.h"
-#include "../../utils/dstring.h"
-#include "../../utils/unicode/unicode_types.h"
+#include "../utils/custom_error.h"
+#include "../utils/string/dstring.h"
+#include "../utils/unicode/unicode_types.h"
 #include "jsonvalue.h"
 
 // Apply `macro` to each JSONTokenType

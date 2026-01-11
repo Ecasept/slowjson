@@ -104,7 +104,7 @@ JSONValue json_value_new_object(void) {
 #define TYPE JSONValue
 #define TYPED_NAME(name) json_value_##name
 #define LIST_IMPLEMENTATION
-#include "../../utils/list.h"
+#include "../utils/list.h"
 #undef LIST_IMPLEMENTATION
 #undef TYPE
 #undef TYPED_NAME

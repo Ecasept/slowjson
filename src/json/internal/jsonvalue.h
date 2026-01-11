@@ -1,5 +1,5 @@
 #pragma once
-#include "../../utils/dstring.h"
+#include "../utils/string/dstring.h"
 #include "stdbool.h"
 
 enum JSONType {
@@ -18,12 +18,12 @@ typedef struct JSONValue JSONValue;
 #define TYPE JSONValue
 #define TYPED_NAME(name) json_value_##name
 #define LIST_DECLARATION
-#include "../../utils/list.h"
+#include "../utils/list.h"
 #undef LIST_DECLARATION
 #undef TYPE
 #undef TYPED_NAME
 
-#include "../hashmap/hashmap.h"
+#include "../utils/hashmap/hashmap.h"
 
 struct JSONNumber {
 	bool is_integer;

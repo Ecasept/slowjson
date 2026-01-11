@@ -129,7 +129,7 @@ Result utf8_string_to_wchar(string_view src, wchar_t **dest) {
 #define TYPE wchar_t
 #define TYPED_NAME(name) wchar_##name
 #define LIST_IMPLEMENTATION
-#include "../../utils/list.h"
+#include "../list.h"
 #undef LIST_IMPLEMENTATION
 #undef TYPE
 #undef TYPED_NAME

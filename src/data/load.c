@@ -1,47 +1,12 @@
-#include "../utils/dstring.h"
-#include "../utils/unicode/utf8.h"
-#include "../utils/unicode/wchar.h"
+#include "../json/utils/string/dstring.h"
+#include "../json/utils/unicode/utf8.h"
+#include "../json/utils/unicode/wchar.h"
 #include "../midend/data.h"
-#include "../json/json.h"
+#include "../json/deserialize.h"
 #include "load.h"
-#include "file.h"
-/**
- * @brief Gets a field from a json object and verifies its type.
- * 
- * @param obj The JSON object
- * @param key The key to look for
- * @param type The expected type
- * @param out Pointer to store the resulting JSONValue pointer
- */
-static Result json_get_typed(const JSONValue *obj, string_view key, JSONType type, JSONValue *out) {
-    if (obj->type != JSON_OBJECT) {
-        return new_error("Expected JSON object", ESaveFormatError);
-    }
-    
-	check(json_value_hashmap_get(&obj->hashmap, key, out));
-	
-	if (out->type != type) {
-		return new_errorf("Field '%.*s': expected %s, got %s",
-						  ESaveFormatError, (int)key.size, key.data, jtostr(type), jtostr(out->type));
-	}
-    return new_success();
-}
+#include "../json/utils/string/file.h"
 
-/**
- * @brief Extracts a number field from a JSON object and verifies it is an integer.
- * @param obj The JSON object
- * @param key The key to look for
- * @param out Pointer to store the resulting integer
- */
-static Result extract_int(const JSONValue *obj, string_view key, int *out) {
-    JSONValue val;
-    check(json_get_typed(obj, key, JSON_NUMBER, &val));
-    if (!val.number.is_integer) {
-        return new_errorf("Field '%.*s' must be an integer", ESaveFormatError, (int)key.size, key.data);
-    }
-    *out = (int)val.number.int_value;
-    return new_success();
-}
+const char *JSON_SAVEFILE_NAME = "data.json";
 
 /**
  * @brief Extracts a string field from a JSON object and converts it to wchar_t string.
@@ -186,7 +151,7 @@ Result load_data_from_savefile(struct Veranstaltung **v, struct Modulgruppe **mg
     if (!r.success) return r;
 
     JSONValue root;
-    r = deserialize_json(&json, &root);
+    r = json_deserialize(&json, &root);
     string_free(&json);
     
     if (!r.success) return r;
@@ -197,7 +162,7 @@ Result load_data_from_savefile(struct Veranstaltung **v, struct Modulgruppe **mg
 #define TYPE struct Veranstaltung
 #define TYPED_NAME(name) veranstaltung_##name
 #define LIST_IMPLEMENTATION
-#include "../utils/list.h"
+#include "../json/utils/list.h"
 #undef LIST_IMPLEMENTATION
 #undef TYPE
 #undef TYPED_NAME
@@ -205,7 +170,7 @@ Result load_data_from_savefile(struct Veranstaltung **v, struct Modulgruppe **mg
 #define TYPE struct Modulgruppe
 #define TYPED_NAME(name) modulgruppe_##name
 #define LIST_IMPLEMENTATION
-#include "../utils/list.h"
+#include "../json/utils/list.h"
 #undef LIST_IMPLEMENTATION
 #undef TYPE
 #undef TYPED_NAME

@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
-#include "dstring.h"
-#include "string_view.h"
+#include "string/dstring.h"
+#include "string/string_view.h"
 #include "unicode/wchar.h"
 
 Result new_error(const char msg[], ErrorType type) {

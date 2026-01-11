@@ -1,5 +1,5 @@
 #include "hashmap_node.h"
-#include "../../utils/custom_error.h"
+#include "../custom_error.h"
 #include "hashmap.h"
 
 Result json_value_hashmap_node_get(json_value_hashmap_node *node,

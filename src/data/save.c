@@ -1,8 +1,9 @@
 #include "../midend/data.h"
-#include "../utils/unicode/wchar.h"
-#include "../json/json.h"
-#include "file.h"
+#include "../json/utils/unicode/wchar.h"
+#include "../json/serialize.h"
+#include "../json/utils/string/file.h"
 #include "save.h"
+#include "load.h"
 
 /**
  * Example:
@@ -151,7 +152,7 @@ static Result serialize_save_data(struct Veranstaltung *v, size_t v_count,
 		return r;
 	}
 	string_new(out, "");
-	serialize_json(&root, out);
+	json_serialize(&root, out);
 	json_value_free(&root);
 	return new_success();
 }

@@ -3,7 +3,7 @@
 #include "../frontend/edit_events/edit_events.h"
 #include "../data/load.h"
 #include "../data/save.h"
-#include "../utils/custom_error.h"
+#include "../json/utils/custom_error.h"
 #include <string.h>
 #include <wchar.h>
 #include <locale.h>

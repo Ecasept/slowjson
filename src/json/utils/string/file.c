@@ -5,7 +5,6 @@
 
 // How much to read per iteration
 static const size_t READ_SIZE = 4096;
-const char *JSON_SAVEFILE_NAME = "data.json";
 
 
 /**

@@ -1,6 +1,6 @@
 #include "hashmap.h"
 #include "hashmap_node.h"
-#include "../../utils/string_view.h"
+#include "../string/string_view.h"
 
 static const size_t HASHMAP_INITIAL_SIZE = 7;
 static const size_t HASH_PRIME = 53;
@@ -115,7 +115,7 @@ void json_value_hashmap_free(json_value_hashmap *map) {
 #define TYPE json_value_hashmap_node
 #define TYPED_NAME(name) json_value_hashmap_node_##name
 #define LIST_IMPLEMENTATION
-#include "../../utils/list.h"
+#include "../list.h"
 #undef LIST_IMPLEMENTATION
 #undef TYPE
 #undef TYPED_NAME

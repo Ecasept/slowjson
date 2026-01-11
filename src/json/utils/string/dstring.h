@@ -1,12 +1,12 @@
 #pragma once
 
-#include "custom_error.h"
-#include "unicode/unicode_types.h"
+#include "../custom_error.h"
+#include "../unicode/unicode_types.h"
 
 #define TYPE uchar
 #define TYPED_NAME(name) uchar_##name
 #define LIST_DECLARATION
-#include "list.h"
+#include "../list.h"
 #undef LIST_DECLARATION
 #undef TYPE
 #undef TYPED_NAME

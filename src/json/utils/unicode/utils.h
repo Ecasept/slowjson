@@ -1,7 +1,7 @@
 #pragma once
-#include "../../utils/custom_error.h"
-#include "../../utils/dstring.h"
-#include "../../utils/string_view.h"
+#include "../custom_error.h"
+#include "../string/dstring.h"
+#include "../string/string_view.h"
 #include "unicode_types.h"
 #include <stdint.h>
 

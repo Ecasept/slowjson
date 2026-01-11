@@ -1,6 +1,6 @@
 #include "parser.h"
 #include "lexer.h"
-#include "../json.h"
+#include "../deserialize.h"
 
 // Forward declaration
 static Result parse_json_value(json_token_list *tokens, size_t *position,
@@ -271,7 +271,7 @@ static Result parse_json_value_top_level(json_token_list *tokens,
 	return new_success();
 }
 
-Result deserialize_json(string *json, JSONValue *result) {
+Result json_deserialize(string *json, JSONValue *result) {
 	Lexer lexer;
 	lexer_init(&lexer, json);
 	json_token_list tokens;
@@ -295,7 +295,7 @@ Result deserialize_json(string *json, JSONValue *result) {
 #define TYPE JSONToken
 #define TYPED_NAME(name) json_token_##name
 #define LIST_IMPLEMENTATION
-#include "../../utils/list.h"
+#include "../utils/list.h"
 #undef LIST_IMPLEMENTATION
 #undef TYPE
 #undef TYPED_NAME
