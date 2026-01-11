@@ -134,6 +134,7 @@ int main() {
 			break;
 		case L'q':
 			print_endscreen();
+			free_all(ver, size_ver, mod, size_mod);
 			return 0;
 	}
 

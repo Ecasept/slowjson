@@ -73,7 +73,7 @@ static void decode_quadruple_byte(uchar c1, uchar c2, uchar c3, uchar c4,
  * the next codepoint's index after reading.
  * @param out Pointer to store the resulting codepoint
  */
-Result utf8_get_next_codepoint(const string *str, size_t *index,
+Result utf8_get_next_codepoint(string_view str, size_t *index,
 							   UnicodeCodePoint *out) {
 	size_t index_cpy = *index;
 	uchar c1;

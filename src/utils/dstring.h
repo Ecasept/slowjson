@@ -16,6 +16,8 @@ struct string {
 };
 typedef struct string string;
 
+typedef struct string_view string_view;
+
 void string_free(string *str);
 void string_new(string *str, const char *source);
 string string_newr(const char *source);
@@ -34,3 +36,4 @@ void string_at(const string *str, size_t index, uchar *out);
 Result string_at_err(const string *str, size_t index, uchar *out);
 
 bool string_eq_cstr(const string *str, const char *cstr);
+bool string_eq_sv(const string *str, string_view sv);

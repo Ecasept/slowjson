@@ -1,20 +1,19 @@
 #include "hashmap.h"
 #include "hashmap_node.h"
+#include "../../utils/string_view.h"
 
 static const size_t HASHMAP_INITIAL_SIZE = 7;
 static const size_t HASH_PRIME = 53;
 static const double MAX_LOAD_FACTOR = 3;
 static const double MIN_LOAD_FACTOR = MAX_LOAD_FACTOR / 4;
 
-static size_t string_hash(const string *str, size_t size) {
+static size_t string_hash(string_view str, size_t size) {
 	// Implements a simple polynomial rolling hash function
 	// https://cp-algorithms.com/string/string-hashing.html
 	size_t hash = 0;
 	size_t pow = 1;
-	for (size_t i = 0; i < str->arr.length; i++) {
-		uchar v;
-		string_at(str, i, &v);
-		hash += (v * pow);
+	for (size_t i = 0; i < str.size; i++) {
+		hash += (sv_at_unchecked(str, i) * pow);
 		hash %= size;
 		pow *= HASH_PRIME;
 	}
@@ -33,26 +32,15 @@ void json_value_hashmap_init(json_value_hashmap *map) {
 	map->size = 0;
 }
 
-Result json_value_hashmap_get_cstr(const json_value_hashmap *map, const char *key_cstr,
-									   JSONValue *out) {
-	string key;
-	string_new(&key, key_cstr);
-	Result r = json_value_hashmap_get(map, key, out);
-	string_free(&key);
-	return r;
-}
-
-Result json_value_hashmap_get(const json_value_hashmap *map, const string key,
+Result json_value_hashmap_get(const json_value_hashmap *map, string_view key,
 							  JSONValue *out) {
-	size_t node_index = string_hash(&key, map->buckets.length);
+	size_t node_index = string_hash(key, map->buckets.length);
 	json_value_hashmap_node node;
 	json_value_hashmap_node_list_get(&map->buckets, node_index, &node);
 	if (node.key.arr.data == NULL) {
-		char *cstr;
-		string_to_cstr(&key, &cstr);
-		Result r = new_errorf("Key not found in hashmap: \"%s\"",
-							  EHashmapKeyNotFound, cstr);
-		free(cstr);
+		Result r = new_errorf("Key not found in hashmap: \"%.*s\"",
+			EHashmapKeyNotFound,
+			(int)key.size, key.data);
 		return r;
 	}
 	return json_value_hashmap_node_get(&node, key, out);
@@ -94,7 +82,7 @@ static void json_value_hashmap_set_internal(json_value_hashmap *map, string key,
 			   map->buckets.length > HASHMAP_INITIAL_SIZE) {
 		rehash(map, map->buckets.length / 2);
 	}
-	size_t node_index = string_hash(&key, map->buckets.length);
+	size_t node_index = string_hash(as_sv(key), map->buckets.length);
 	json_value_hashmap_node *node;
 	json_value_hashmap_node_list_get_ref(&map->buckets, node_index, &node);
 	if (node->key.arr.data == NULL) {

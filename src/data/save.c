@@ -34,7 +34,9 @@
 static Result convert_to_json(struct Veranstaltung *v_out, size_t v_count,
 						  struct Modulgruppe *mg_out, size_t mg_count,
 						  JSONValue *root) {
+	Result r;
 	*root = json_value_new_object();
+	JSONValue mg_list = {0};
 
 	JSONValue v_list = json_value_new_array();
 	for (size_t i = 0; i < v_count; i++) {
@@ -42,9 +44,11 @@ static Result convert_to_json(struct Veranstaltung *v_out, size_t v_count,
 		JSONValue veranstaltung = json_value_new_object();
 
 		string name;
-		Result r = wchar_to_utf8_string(v->name, &name);
+		r = wchar_to_utf8_string(v->name, &name);
 		if (!r.success) {
-			return r;
+			json_value_free(&veranstaltung);
+			json_value_free(&v_list);
+			goto cleanup;
 		}
 		json_value_hashmap_set(&veranstaltung.hashmap,
 								 string_newr("name"),
@@ -100,16 +104,18 @@ static Result convert_to_json(struct Veranstaltung *v_out, size_t v_count,
 							string_newr("veranstaltungen"),
 							v_list);
 
-	JSONValue mg_list = json_value_new_array();
+	mg_list = json_value_new_array();
 	for (size_t i = 0; i < mg_count; i++) {
 		struct Modulgruppe *mg = &mg_out[i];
 		JSONValue modulgruppe = json_value_new_object();
 
 
 		string name;
-		Result r = wchar_to_utf8_string(mg->name, &name);
+		r = wchar_to_utf8_string(mg->name, &name);
 		if (!r.success) {
-			return r;
+			json_value_free(&modulgruppe);
+			json_value_free(&mg_list);
+			goto cleanup;
 		}
 		json_value_hashmap_set(&modulgruppe.hashmap,
 							   string_newr("name"),
@@ -128,6 +134,10 @@ static Result convert_to_json(struct Veranstaltung *v_out, size_t v_count,
 							string_newr("modulgruppen"),
 							mg_list);
 	return new_success();
+
+cleanup:
+	json_value_free(root);
+	return r;
 }
 
 

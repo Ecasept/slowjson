@@ -1,5 +1,6 @@
 #pragma once
 #include "../../utils/dstring.h"
+#include "../../utils/string_view.h"
 
 struct json_value_hashmap_node;
 typedef struct json_value_hashmap_node json_value_hashmap_node;
@@ -22,10 +23,7 @@ typedef struct json_value_hashmap json_value_hashmap;
 
 // ==== Functions ====
 
-Result json_value_hashmap_get_cstr(const json_value_hashmap *map, const char *key_cstr,
-									   JSONValue *out);
-
-Result json_value_hashmap_get(const json_value_hashmap *map, const string key,
+Result json_value_hashmap_get(const json_value_hashmap *map, string_view key,
 							  JSONValue *out);
 
 void json_value_hashmap_set(json_value_hashmap *map, string key,

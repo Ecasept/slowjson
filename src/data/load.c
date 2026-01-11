@@ -13,34 +13,46 @@
  * @param type The expected type
  * @param out Pointer to store the resulting JSONValue pointer
  */
-static Result json_get_typed(const JSONValue *obj, const char *key, JSONType type, JSONValue *out) {
+static Result json_get_typed(const JSONValue *obj, string_view key, JSONType type, JSONValue *out) {
     if (obj->type != JSON_OBJECT) {
         return new_error("Expected JSON object", ESaveFormatError);
     }
     
-	check(json_value_hashmap_get_cstr(&obj->hashmap, key, out));
+	check(json_value_hashmap_get(&obj->hashmap, key, out));
 	
-    if (out->type != type) {
-        return new_errorf("Field '%s': expected %s, got %s",
-                          ESaveFormatError, key, jtostr(type), jtostr(out->type));
-    }
+	if (out->type != type) {
+		return new_errorf("Field '%.*s': expected %s, got %s",
+						  ESaveFormatError, (int)key.size, key.data, jtostr(type), jtostr(out->type));
+	}
     return new_success();
 }
 
-static Result extract_int(const JSONValue *obj, const char *key, int *out) {
+/**
+ * @brief Extracts a number field from a JSON object and verifies it is an integer.
+ * @param obj The JSON object
+ * @param key The key to look for
+ * @param out Pointer to store the resulting integer
+ */
+static Result extract_int(const JSONValue *obj, string_view key, int *out) {
     JSONValue val;
     check(json_get_typed(obj, key, JSON_NUMBER, &val));
     if (!val.number.is_integer) {
-        return new_errorf("Field '%s' must be an integer", ESaveFormatError, key);
+        return new_errorf("Field '%.*s' must be an integer", ESaveFormatError, (int)key.size, key.data);
     }
     *out = (int)val.number.int_value;
     return new_success();
 }
 
-static Result extract_wstring(const JSONValue *obj, const char *key, wchar_t **out) {
+/**
+ * @brief Extracts a string field from a JSON object and converts it to wchar_t string.
+ * @param obj The JSON object
+ * @param key The key to look for
+ * @param out Pointer to store the resulting wchar_t string (will be allocated)
+ */
+static Result extract_wstring(const JSONValue *obj, string_view key, wchar_t **out) {
     JSONValue val;
     check(json_get_typed(obj, key, JSON_STRING, &val));
-    return utf8_string_to_wchar(&val.str, out);
+    return utf8_string_to_wchar(as_sv(val.str), out);
 }
 
 static void free_veranstaltung_content(struct Veranstaltung *v) {
@@ -59,18 +71,17 @@ static void free_modulgruppe_content(struct Modulgruppe *mg) {
 
 static Result parse_semester(const JSONValue *val, struct Semester *sem) {
     JSONValue season_val;
-    check(extract_int(val, "jahr", &sem->jahr));
-    check(json_get_typed(val, "jahreszeit", JSON_STRING, &season_val));
+    check(extract_int(val, svl("jahr"), &sem->jahr));
+    check(json_get_typed(val, svl("jahreszeit"), JSON_STRING, &season_val));
 
     if (string_eq_cstr(&season_val.str, "winter")) {
         sem->jahreszeit = Winter;
     } else if (string_eq_cstr(&season_val.str, "sommer")) {
         sem->jahreszeit = Sommer;
     } else {
-		char *cstr;
-		string_to_cstr(&season_val.str, &cstr);
-        Result r = new_errorf("Invalid jahreszeit value: \"%s\"", ESaveFormatError, cstr);
-        free(cstr);
+        Result r = new_errorf("Invalid jahreszeit value: \"%.*s\"",
+							  ESaveFormatError, (int)season_val.str.arr.length,
+							  season_val.str.arr.data);
         return r;
     }
     return new_success();
@@ -79,10 +90,9 @@ static Result parse_semester(const JSONValue *val, struct Semester *sem) {
 static Result parse_modulgruppe(const JSONValue *val, struct Modulgruppe *mg) {
     memset(mg, 0, sizeof(struct Modulgruppe));
     Result r;
-    
-    if (!(r = extract_wstring(val, "name", &mg->name)).success) goto error;
-    if (!(r = extract_int(val, "lp_todo", &mg->lp_todo)).success) goto error;
-	if (!(r = extract_int(val, "modulgruppenindex", &mg->modulgruppenindex)).success) goto error;
+    if (!(r = extract_wstring(val, svl("name"), &mg->name)).success) goto error;
+    if (!(r = extract_int(val, svl("lp_todo"), &mg->lp_todo)).success) goto error;
+	if (!(r = extract_int(val, svl("modulgruppenindex"), &mg->modulgruppenindex)).success) goto error;
 
     return new_success();
 error:
@@ -95,27 +105,24 @@ static Result parse_veranstaltung(const JSONValue *val, struct Veranstaltung *v)
     Result r;
     JSONValue tmp;
 
-    if (!(r = extract_wstring(val, "name", &v->name)).success) goto error;
+    if (!(r = extract_wstring(val, svl("name"), &v->name)).success) goto error;
     
     // Note can be int or float
-    if (!(r = json_get_typed(val, "note", JSON_NUMBER, &tmp)).success) goto error;
+    if (!(r = json_get_typed(val, svl("note"), JSON_NUMBER, &tmp)).success) goto error;
     v->note = tmp.number.is_integer ? (double)tmp.number.int_value : tmp.number.float_value;
 
-    if (!(r = extract_int(val, "lp", &v->lp)).success) goto error;
-    if (!(r = extract_int(val, "modulindex", &v->modulgruppenindex)).success) goto error;
-    
-    if (!(r = json_get_typed(val, "semester", JSON_OBJECT, &tmp)).success) goto error;
+    if (!(r = extract_int(val, svl("lp"), &v->lp)).success) goto error;
+    if (!(r = extract_int(val, svl("modulindex"), &v->modulgruppenindex)).success) goto error;
+
+    if (!(r = json_get_typed(val, svl("semester"), JSON_OBJECT, &tmp)).success) goto error;
     if (!(r = parse_semester(&tmp, &v->semester)).success) goto error;
 
-    if (!(r = json_get_typed(val, "state", JSON_STRING, &tmp)).success) goto error;
+    if (!(r = json_get_typed(val, svl("state"), JSON_STRING, &tmp)).success) goto error;
     if (string_eq_cstr(&tmp.str, "bestanden")) v->state = Bestanden;
     else if (string_eq_cstr(&tmp.str, "nicht_bestanden")) v->state = NichtBestanden;
     else if (string_eq_cstr(&tmp.str, "ausstehend")) v->state = Ausstehend;
     else {
-		char *cstr;
-		string_to_cstr(&tmp.str, &cstr);
-        r = new_errorf("Invalid state value: \"%s\"", ESaveFormatError, cstr);
-        free(cstr);
+        r = new_errorf("Invalid state value: \"%.*s\"", ESaveFormatError, (int)tmp.str.arr.length, tmp.str.arr.data);
         goto error;
     }
 
@@ -136,8 +143,8 @@ static Result parse_savefile_json(JSONValue root, struct Veranstaltung **v, stru
 	Result r;
 
     // Use TRY for logic that doesn't require cleanup yet
-    if (!(r = json_get_typed(&root, "veranstaltungen", JSON_ARRAY, &v_arr)).success) goto cleanup;
-    if (!(r = json_get_typed(&root, "modulgruppen", JSON_ARRAY, &mg_arr)).success) goto cleanup;
+    if (!(r = json_get_typed(&root, svl("veranstaltungen"), JSON_ARRAY, &v_arr)).success) goto cleanup;
+    if (!(r = json_get_typed(&root, svl("modulgruppen"), JSON_ARRAY, &mg_arr)).success) goto cleanup;
 
     // Load Veranstaltungen
     *v_count = v_arr.list.length;

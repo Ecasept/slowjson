@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -std=c11
+CFLAGS = -Wall -Wextra -pedantic -std=c11 -g -DDEBUG -O2
 DEBUG_CFLAGS = -g -fsanitize=address,undefined
 LDFLAGS = -lm
 DEBUG_LDFLAGS = -fsanitize=address,undefined
@@ -43,9 +43,9 @@ debug: CFLAGS := $(CFLAGS) $(DEBUG_CFLAGS)
 debug: LDFLAGS := $(LDFLAGS) $(DEBUG_LDFLAGS)
 debug: rebuild all
 
-valgrind: CFLAGS := $(CFLAGS) -g
+valgrind: CFLAGS := $(CFLAGS) -g -DDEBUG
 valgrind: rebuild
-	valgrind --leak-check=full --show-leak-kinds=all ./$(BUILD_DIR)/$(TARGET)
+	valgrind --tool=callgrind --dump-instr=yes ./$(BUILD_DIR)/$(TARGET)
 
 $(BUILD_DIR)/$(TARGET): $(OBJS)
 	$(call MKDIR,$(dir $@))
