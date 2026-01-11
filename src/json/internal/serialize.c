@@ -22,7 +22,44 @@ void json_serialize(JSONValue *val, string *str) {
 		break;
 	case JSON_STRING:
 		string_append_uchar(str, '"');
-		string_append(str, &val->str);
+		// A byte <= 0x7F may only appear representing a single-byte UTF-8 character
+		// So we can iterate over the bytes directly instead of decoding codepoints
+		for (size_t i = 0; i < val->str.arr.length; i++) {
+			uchar c = val->str.arr.data[i];
+			switch (c) {
+			case '"':
+				string_append_cstr(str, "\\\"");
+				break;
+			case '\n':
+				string_append_cstr(str, "\\n");
+				break;
+			case '\t':
+				string_append_cstr(str, "\\t");
+				break;
+			case '\\':
+				string_append_cstr(str, "\\\\");
+				break;
+			case '\r':
+				string_append_cstr(str, "\\r");
+				break;
+			case '\b':
+				string_append_cstr(str, "\\b");
+				break;
+			case '\f':
+				string_append_cstr(str, "\\f");
+				break;
+			default:
+				if (c <= 0x1F) {
+					// Control character
+					char buf[7];
+					sprintf(buf, "\\u%04X", c);
+					string_append_cstr(str, buf);
+				} else {
+					string_append_uchar(str, c);
+				}
+				break;
+			}
+		}
 		string_append_uchar(str, '"');
 		break;
 	case JSON_ARRAY:
