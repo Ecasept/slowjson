@@ -43,6 +43,9 @@ debug: CFLAGS := $(CFLAGS) $(DEBUG_CFLAGS)
 debug: LDFLAGS := $(LDFLAGS) $(DEBUG_LDFLAGS)
 debug: rebuild all
 
+test: CFLAGS := $(CFLAGS) -DRUN_TESTS
+test: rebuild all
+
 valgrind: CFLAGS := $(CFLAGS) -g -DDEBUG
 valgrind: rebuild
 	valgrind --tool=callgrind --dump-instr=yes ./$(BUILD_DIR)/$(TARGET)
