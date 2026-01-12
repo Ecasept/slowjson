@@ -382,14 +382,14 @@ static Result build_json_number(Lexer *lexer, ParserConfig *config,
 		case CONFIG_DOUBLE_OVERFLOW_ERROR:
 			if (significant_overflow_error == TOO_LARGE) {
 				return new_errorf("Significant larger than maximum "
-								  "supported value %e at line %zu, column %zu",
-								  ELexerNumberOverflow, DBL_MAX, lexer->line,
-								  lexer->column);
+								  "supported value %" PRIdMAX " at line %zu, column %zu",
+								  ELexerNumberOverflow, INTMAX_MAX,
+								  lexer->line, lexer->column);
 			} else {
 				return new_errorf("Significant smaller than minimum "
-								  "supported value %e at line %zu, column %zu",
-								  ELexerNumberOverflow, -DBL_MAX, lexer->line,
-								  lexer->column);
+								  "supported value %" PRIdMAX " at line %zu, column %zu",
+								  ELexerNumberOverflow, INTMAX_MIN,
+								  lexer->line, lexer->column);
 			}
 			return new_success();
 		}
