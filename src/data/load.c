@@ -5,6 +5,7 @@
 #include "../json/deserialize.h"
 #include "load.h"
 #include "../json/utils/string/file.h"
+#include "../json/config.h"
 
 const char *JSON_SAVEFILE_NAME = "data.json";
 
@@ -151,7 +152,7 @@ Result load_data_from_savefile(struct Veranstaltung **v, struct Modulgruppe **mg
     if (!r.success) return r;
 
     JSONValue root;
-    r = json_deserialize(&json, &root);
+    r = json_deserialize(&json, &root, config_default_parser_config());
     string_free(&json);
     
     if (!r.success) return r;

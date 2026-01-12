@@ -1,9 +1,8 @@
-
-#include "lexer.h"
-#include "../utils/unicode/utf8.h"
-#include "../utils/unicode/utf16.h"
+#include "../../utils/unicode/utf8.h"
+#include "../../utils/unicode/utf16.h"
 #include <ctype.h>
-#include <math.h>
+#include "number.h"
+#include "utils.h"
 
 // ==== Relevant Specifications ====
 // JSON Website (with syntax diagram):
@@ -20,51 +19,23 @@
 // https://www.ietf.org/rfc/rfc3629.txt
 
 // ==== Forward Declarations ====
-static Result lexer_peek(const Lexer *lexer, UCP *out);
-static Result lexer_consume(Lexer *lexer, UCP *out);
-
 static Result lexer_lex_structural(Lexer *lexer, JSONToken *token);
 static Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token);
 static Result lexer_lex_string(Lexer *lexer, JSONToken *token);
-static Result lexer_lex_number(Lexer *lexer, JSONToken *token);
 static Result lexer_lex_literal(Lexer *lexer, JSONToken *token);
 static Result lexer_test_literal(Lexer *lexer, string *string, bool *res);
 
-
-
 const char *JSONTokenTypeStrings[] = {FOREACH_TOKEN(DECLARE_TOKEN_STRING)};
 
-void lexer_init(Lexer *lexer, const string *source) {
+void lexer_init(Lexer *lexer, const string *source, ParserConfig config) {
 	lexer->source = source;
 	lexer->position = 0;
 	lexer->line = 0;
 	lexer->column = 0;
+	lexer->config = config;
 }
 
-static Result lexer_peek(const Lexer *lexer, UCP *out) {
-	size_t pos_copy =
-		lexer->position; // Don't pass the actual position. We are just peeking
-	Result r = utf8_get_next_codepoint(as_sv(*lexer->source), &pos_copy, out);
-	if (r.type == EUnicodeUnexpectedEndOfString) {
-		error_free(r);
-		return new_error("Unexpected end of input", ELexerEOF);
-	} else if (!r.success) {
-		return r;
-	}
-	return new_success();
-}
 
-static Result lexer_consume(Lexer *lexer, UCP *out) {
-	Result r = utf8_get_next_codepoint(as_sv(*lexer->source), &lexer->position, out);
-	if (r.type == EUnicodeUnexpectedEndOfString) {
-		error_free(r);
-		return new_error("Unexpected end of input", ELexerEOF);
-	} else if (!r.success) {
-		return r;
-	}
-	lexer->column++;
-	return new_success();
-}
 
 Result lexer_next_token(Lexer *lexer, JSONToken *token) {
 	token->column = lexer->column;
@@ -420,241 +391,6 @@ static Result lexer_lex_string(Lexer *lexer, JSONToken *token) {
 	}
 }
 
-enum NumParseState {
-	NUM_STATE_ERROR,
-	NUM_STATE_ERROR_LEADING_ZERO,
-	NUM_STATE_START,
-	NUM_STATE_AFTER_SIGN,
-	NUM_STATE_AFTER_ONE_INT_DIGIT,
-	NUM_STATE_AFTER_INT,
-	NUM_STATE_AFTER_DECIMAL_POINT,
-	NUM_STATE_AFTER_ONE_FRACTION_DIGIT,
-	NUM_STATE_AFTER_FRACTION,
-	NUM_STATE_AFTER_EXPONENT_SYMBOL,
-	NUM_STATE_AFTER_EXPONENT_SIGN,
-	NUM_STATE_AFTER_ONE_EXPONENT_DIGIT,
-	NUM_STATE_AFTER_EXPONENT
-};
-
-struct ParsedNumber {
-	int sign;
-	uint64_t integer_part;
-	bool has_fraction;
-	uint64_t fractional_part;
-	uint64_t fraction_length;
-	bool has_exponent;
-	int exponent_sign;
-	uint64_t exponent_part;
-};
-
-static bool num_dfa_next_state(enum NumParseState current_state, UCP chr,
-						 enum NumParseState *next_state,
-						 struct ParsedNumber *parsed_number,
-						 bool *was_epsilon_transition) {
-	switch (current_state) {
-	case NUM_STATE_START:
-		if (chr == '-') {
-			parsed_number->sign = -1;
-			*next_state = NUM_STATE_AFTER_SIGN;
-		} else {
-			parsed_number->sign = 1;
-			*next_state = NUM_STATE_AFTER_SIGN;
-			*was_epsilon_transition = true;
-		}
-		break;
-	case NUM_STATE_AFTER_SIGN:
-		if (chr == '0') {
-			parsed_number->integer_part = 0;
-			*next_state = NUM_STATE_AFTER_INT;
-		} else if (chr >= '1' && chr <= '9') {
-			parsed_number->integer_part = chr - '0';
-			*next_state = NUM_STATE_AFTER_ONE_INT_DIGIT;
-		} else {
-			*next_state = NUM_STATE_ERROR;
-		}
-		break;
-	case NUM_STATE_AFTER_ONE_INT_DIGIT:
-		if (chr >= '0' && chr <= '9') {
-			parsed_number->integer_part =
-				parsed_number->integer_part * 10 + (chr - '0');
-			*next_state = NUM_STATE_AFTER_ONE_INT_DIGIT;
-		} else {
-			*next_state = NUM_STATE_AFTER_INT;
-			*was_epsilon_transition = true;
-		}
-		break;
-	case NUM_STATE_AFTER_INT:
-		if (chr == '.') {
-			*next_state = NUM_STATE_AFTER_DECIMAL_POINT;
-		} else if (parsed_number->integer_part == 0 && chr >= '0' && chr <= '9') {
-			// This is a "leading zero"
-			// If we woud not catch this here, the lexer would lex something like
-			// 01 as two separate numbers: 0 and 1
-			// Which then would be rejected by the parser, as two numbers can't follow each other.
-			// In order to provide better error messages, we catch this case here
-			*next_state = NUM_STATE_ERROR_LEADING_ZERO;
-		} else {
-			*next_state = NUM_STATE_AFTER_FRACTION;
-			*was_epsilon_transition = true;
-		}
-		break;
-	case NUM_STATE_AFTER_DECIMAL_POINT:
-		if (chr >= '0' && chr <= '9') {
-			parsed_number->has_fraction = true;
-			parsed_number->fractional_part = chr - '0';
-			parsed_number->fraction_length = 1;
-			*next_state = NUM_STATE_AFTER_ONE_FRACTION_DIGIT;
-		} else {
-			*next_state = NUM_STATE_ERROR;
-		}
-		break;
-	case NUM_STATE_AFTER_ONE_FRACTION_DIGIT:
-		if (chr >= '0' && chr <= '9') {
-			parsed_number->fractional_part =
-				parsed_number->fractional_part * 10 + (chr - '0');
-			parsed_number->fraction_length += 1;
-			*next_state = NUM_STATE_AFTER_ONE_FRACTION_DIGIT;
-		} else {
-			*next_state = NUM_STATE_AFTER_FRACTION;
-			*was_epsilon_transition = true;
-		}
-		break;
-	case NUM_STATE_AFTER_FRACTION:
-		if (chr == 'e' || chr == 'E') {
-			*next_state = NUM_STATE_AFTER_EXPONENT_SYMBOL;
-		} else {
-			*next_state = NUM_STATE_AFTER_EXPONENT;
-			*was_epsilon_transition = true;
-		}
-		break;
-	case NUM_STATE_AFTER_EXPONENT_SYMBOL:
-		if (chr == '+' || chr == '-') {
-			parsed_number->has_exponent = true;
-			*next_state = NUM_STATE_AFTER_EXPONENT_SIGN;
-			if (chr == '-') {
-				parsed_number->exponent_sign = -1;
-			} else {
-				parsed_number->exponent_sign = 1;
-			}
-		} else {
-			parsed_number->has_exponent = true;
-			parsed_number->exponent_sign = 1;
-			*next_state = NUM_STATE_AFTER_EXPONENT_SIGN;
-			*was_epsilon_transition = true;
-		}
-		break;
-	case NUM_STATE_AFTER_EXPONENT_SIGN:
-		if (chr >= '0' && chr <= '9') {
-			parsed_number->exponent_part = chr - '0';
-			*next_state = NUM_STATE_AFTER_ONE_EXPONENT_DIGIT;
-		} else {
-			*next_state = NUM_STATE_ERROR;
-		}
-		break;
-	case NUM_STATE_AFTER_ONE_EXPONENT_DIGIT:
-		if (chr >= '0' && chr <= '9') {
-			parsed_number->exponent_part =
-				parsed_number->exponent_part * 10 + (chr - '0');
-			*next_state = NUM_STATE_AFTER_ONE_EXPONENT_DIGIT;
-		} else {
-			*next_state = NUM_STATE_AFTER_EXPONENT;
-			*was_epsilon_transition = true;
-		}
-		break;
-	case NUM_STATE_AFTER_EXPONENT:
-		// End reached
-		return false;
-	case NUM_STATE_ERROR:
-	case NUM_STATE_ERROR_LEADING_ZERO:
-		*next_state = current_state;
-		return false;
-	}
-	return true;
-}
-
-static JSONNumber build_json_number(struct ParsedNumber *parsed_number) {
-	JSONNumber number;
-	if (!parsed_number->has_fraction && !parsed_number->has_exponent) {
-		// Integer
-		number.is_integer = true;
-		number.int_value = (int64_t)(parsed_number->sign *
-									 (int64_t)parsed_number->integer_part);
-	} else {
-		// Floating point
-		number.is_integer = false;
-		double value = (double)parsed_number->integer_part;
-		if (parsed_number->has_fraction) {
-			double fraction = (double)parsed_number->fractional_part;
-			value += fraction / pow(10.0, parsed_number->fraction_length);
-		}
-		if (parsed_number->has_exponent) {
-			double exponent_value = pow(10.0, parsed_number->exponent_sign *
-												  parsed_number->exponent_part);
-			value *= exponent_value;
-		}
-		value *= parsed_number->sign;
-		number.float_value = value;
-	}
-	return number;
-}
-
-static Result lexer_lex_number(Lexer *lexer, JSONToken *token) {
-	string value;
-	string_new(&value, "");
-	UCP chr;
-	Result r;
-
-	enum NumParseState state = NUM_STATE_START;
-	struct ParsedNumber parsed_number = {0};
-	parsed_number.has_fraction = false;
-	parsed_number.has_exponent = false;
-
-	while (1) {
-		r = lexer_peek(lexer, &chr);
-		if (r.type == ELexerEOF) {
-			// Reached end of file, return what we have
-			token->type = JSONTok_Number;
-			token->value = value;
-			// Build number
-			JSONNumber number = build_json_number(&parsed_number);
-			token->number = number;
-			error_free(r);
-			return new_success();
-		} else if (!r.success) {
-			string_free(&value);
-			return r;
-		}
-
-		bool was_epsilon_transition = false;
-		enum NumParseState next_state;
-		bool has_next = num_dfa_next_state(
-			state, chr, &next_state, &parsed_number, &was_epsilon_transition);
-		if (!has_next) {
-			// Reached end of number
-			token->type = JSONTok_Number;
-			token->value = value;
-			// Build number
-			JSONNumber number = build_json_number(&parsed_number);
-			token->number = number;
-			return new_success();
-		} else if (next_state == NUM_STATE_ERROR) {
-			string_free(&value);
-			return new_errorf("Invalid character \"%c\" in number at line %zu, column %zu",
-							  ELexerSyntaxError, chr, lexer->line, lexer->column);
-		} else if (next_state == NUM_STATE_ERROR_LEADING_ZERO) {
-			string_free(&value);
-			return new_errorf("Leading zeros are not allowed in numbers (found at line %zu, column %zu)",
-							  ELexerSyntaxError, lexer->line, lexer->column - 1);
-		} else {
-			if (!was_epsilon_transition) {
-				check(lexer_consume(lexer, &chr));
-				string_append_uchar(&value, chr);
-			}
-			state = next_state;
-			was_epsilon_transition = false;
-		}
-	}
-}
 
 void lexer_free_token(JSONToken *token) { string_free(&token->value); }
 

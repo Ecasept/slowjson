@@ -3,7 +3,7 @@
 #include "../deserialize.h"
 
 // Forward declaration
-static Result parse_json_value(json_token_list *tokens, size_t *position,
+static Result parse_json_value(Parser *parser,
 							   JSONValue *out_value);
 
 static Result get_tokens(Lexer *lexer, json_token_list *tokens) {
@@ -42,28 +42,26 @@ static Result parser_peek_token_count(json_token_list *tokens, size_t position,
 	return new_success();
 }
 
-static Result parser_peek_token(json_token_list *tokens, size_t position,
+static Result parser_peek_token(Parser *parser,
 								JSONToken *out_token) {
 	size_t count = 0;
-	return parser_peek_token_count(tokens, position, out_token, &count);
+	return parser_peek_token_count(parser->tokens, parser->position, out_token, &count);
 }
 
-static Result parser_consume_token(json_token_list *tokens, size_t *position,
-								   JSONToken *out_token) {
-
+static Result parser_consume_token(Parser *parser, JSONToken *out_token) {
 	size_t count = 0;
-	Result r = parser_peek_token_count(tokens, *position, out_token, &count);
+	Result r = parser_peek_token_count(parser->tokens, parser->position, out_token, &count);
 	if (!r.success) {
 		return r;
 	}
-	*position += count;
+	parser->position += count;
 	return new_success();
 }
-static Result parser_expect_token(json_token_list *tokens, size_t *position,
+static Result parser_expect_token(Parser *parser,
 								  JSONTokenType expected_type,
 								  JSONToken *out_token) {
 	JSONToken token;
-	Result r = parser_consume_token(tokens, position, &token);
+	Result r = parser_consume_token(parser, &token);
 	if (!r.success) {
 		return r;
 	}
@@ -77,19 +75,18 @@ static Result parser_expect_token(json_token_list *tokens, size_t *position,
 	return new_success();
 }
 
-static Result parse_json_array(json_token_list *tokens, size_t *position,
-							   JSONValue *out_value) {
+static Result parse_json_array(Parser *parser, JSONValue *out_value) {
 	Result r;
 	JSONToken token;
 	out_value->type = JSON_ARRAY;
 	json_value_list_init(&out_value->list, 0);
 
-	r = parser_peek_token(tokens, *position, &token);
+	r = parser_peek_token(parser, &token);
 	if (!r.success)
 		goto error;
 	if (token.type == JSONTok_RBracket) {
 		// Empty array
-		r = parser_consume_token(tokens, position, &token);
+		r = parser_consume_token(parser, &token);
 		if (!r.success)
 			goto error;
 		return new_success();
@@ -97,21 +94,21 @@ static Result parse_json_array(json_token_list *tokens, size_t *position,
 	// Parse elements
 	while (1) {
 		JSONValue element;
-		r = parse_json_value(tokens, position, &element);
+		r = parse_json_value(parser, &element);
 		if (!r.success)
 			goto error;
 		json_value_list_push(&out_value->list, element);
 
 		// Check for ',' or ']'
-		r = parser_peek_token(tokens, *position, &token);
+		r = parser_peek_token(parser, &token);
 		if (!r.success)
 			goto error;
 		if (token.type == JSONTok_Comma) {
-			r = parser_consume_token(tokens, position, &token);
+			r = parser_consume_token(parser, &token);
 			if (!r.success)
 				goto error;
 		} else if (token.type == JSONTok_RBracket) {
-			r = parser_consume_token(tokens, position, &token);
+			r = parser_consume_token(parser, &token);
 			if (!r.success)
 				goto error;
 			break;
@@ -130,19 +127,18 @@ error:
 	return r;
 }
 
-static Result parse_json_object(json_token_list *tokens, size_t *position,
-								JSONValue *out_value) {
+static Result parse_json_object(Parser *parser, JSONValue *out_value) {
 	JSONToken token;
 	Result r;
 	out_value->type = JSON_OBJECT;
 	json_value_hashmap_init(&out_value->hashmap);
 
-	r = parser_peek_token(tokens, *position, &token);
+	r = parser_peek_token(parser, &token);
 	if (!r.success)
 		goto error;
 	if (token.type == JSONTok_RBrace) {
 		// Empty object
-		r = parser_consume_token(tokens, position, &token);
+		r = parser_consume_token(parser, &token);
 		if (!r.success)
 			goto error;
 		return new_success();
@@ -151,14 +147,14 @@ static Result parse_json_object(json_token_list *tokens, size_t *position,
 	while (1) {
 		// Parse key-value pair
 		JSONToken key;
-		r = parser_expect_token(tokens, position, JSONTok_String, &key);
+		r = parser_expect_token(parser, JSONTok_String, &key);
 		if (!r.success)
 			goto error;
 		JSONValue value;
-		r = parser_expect_token(tokens, position, JSONTok_Colon, &token);
+		r = parser_expect_token(parser, JSONTok_Colon, &token);
 		if (!r.success)
 			goto error;
-		r = parse_json_value(tokens, position, &value);
+		r = parse_json_value(parser, &value);
 		if (!r.success)
 			goto error;
 
@@ -167,15 +163,15 @@ static Result parse_json_object(json_token_list *tokens, size_t *position,
 		json_value_hashmap_set(&out_value->hashmap, key_clone, value);
 
 		// Check for ',' or '}'
-		r = parser_peek_token(tokens, *position, &token);
+		r = parser_peek_token(parser, &token);
 		if (!r.success)
 			goto error;
 		if (token.type == JSONTok_Comma) {
-			r = parser_consume_token(tokens, position, &token);
+			r = parser_consume_token(parser, &token);
 			if (!r.success)
 				goto error;
 		} else if (token.type == JSONTok_RBrace) {
-			r = parser_consume_token(tokens, position, &token);
+			r = parser_consume_token(parser, &token);
 			if (!r.success)
 				goto error;
 			break;
@@ -194,10 +190,9 @@ error:
 	return r;
 }
 
-static Result parse_json_number(json_token_list *tokens, size_t *position,
-								JSONValue *out_value) {
+static Result parse_json_number(Parser *parser, JSONValue *out_value) {
 	JSONToken token;
-	Result r = parser_expect_token(tokens, position, JSONTok_Number, &token);
+	Result r = parser_expect_token(parser, JSONTok_Number, &token);
 	if (!r.success) {
 		return r;
 	}
@@ -206,39 +201,38 @@ static Result parse_json_number(json_token_list *tokens, size_t *position,
 	return new_success();
 }
 
-static Result parse_json_value(json_token_list *tokens, size_t *position,
-							   JSONValue *out_value) {
+static Result parse_json_value(Parser *parser, JSONValue *out_value) {
 	JSONToken token;
-	check(parser_peek_token(tokens, *position, &token));
+	check(parser_peek_token(parser, &token));
 	switch (token.type) {
 	case JSONTok_Number:
-		return parse_json_number(tokens, position, out_value);
+		return parse_json_number(parser, out_value);
 	case JSONTok_String:
 		out_value->type = JSON_STRING;
 		string_new(&out_value->str, "");
 		string_append(&out_value->str, &token.value);
-		check(parser_consume_token(tokens, position, &token));
+		check(parser_consume_token(parser, &token));
 		return new_success();
 	case JSONTok_True:
 		out_value->type = JSON_BOOL;
 		out_value->boolean = true;
-		check(parser_consume_token(tokens, position, &token));
+		check(parser_consume_token(parser, &token));
 		return new_success();
 	case JSONTok_False:
 		out_value->type = JSON_BOOL;
 		out_value->boolean = false;
-		check(parser_consume_token(tokens, position, &token));
+		check(parser_consume_token(parser, &token));
 		return new_success();
 	case JSONTok_Null:
 		out_value->type = JSON_NULL;
-		check(parser_consume_token(tokens, position, &token));
+		check(parser_consume_token(parser, &token));
 		return new_success();
 	case JSONTok_LBracket:
-		check(parser_consume_token(tokens, position, &token));
-		return parse_json_array(tokens, position, out_value);
+		check(parser_consume_token(parser, &token));
+		return parse_json_array(parser, out_value);
 	case JSONTok_LBrace:
-		check(parser_consume_token(tokens, position, &token));
-		return parse_json_object(tokens, position, out_value);
+		check(parser_consume_token(parser, &token));
+		return parse_json_object(parser, out_value);
 	default:
 		return new_errorf(
 			"Unexpected token %s at line %zu, column %zu (expected value)",
@@ -247,16 +241,14 @@ static Result parse_json_value(json_token_list *tokens, size_t *position,
 	}
 }
 
-static Result parse_json_value_top_level(json_token_list *tokens,
-										 size_t *position,
-										 JSONValue *out_value) {
-	Result r = parse_json_value(tokens, position, out_value);
+static Result parse_json_value_top_level(Parser *parser, JSONValue *out_value) {
+	Result r = parse_json_value(parser, out_value);
 	if (!r.success) {
 		return r;
 	}
 	// Expect EOF
 	JSONToken token;
-	r = parser_expect_token(tokens, position, JSONTok_EOF, &token);
+	r = parser_expect_token(parser, JSONTok_EOF, &token);
 	if (!r.success) {
 		json_value_free(out_value);
 		return r;
@@ -264,24 +256,30 @@ static Result parse_json_value_top_level(json_token_list *tokens,
 	return new_success();
 }
 
-Result json_deserialize(string *json, JSONValue *result) {
+Result json_deserialize(string *json, JSONValue *result, ParserConfig config) {
 	Lexer lexer;
-	lexer_init(&lexer, json);
+	lexer_init(&lexer, json, config);
 	json_token_list tokens;
 	json_token_list_init(&tokens, 0);
 	Result r = get_tokens(&lexer, &tokens);
 	if (!r.success) {
 		return r;
 	}
-	size_t position = 0;
-	r = parse_json_value_top_level(&tokens, &position, result);
+
+	Parser parser = {
+		.tokens = &tokens,
+		.position = 0,
+		.config = config,
+	};
+	r = parse_json_value_top_level(&parser, result);
+
 	// Free tokens
 	JSONToken token;
-	for (size_t i = 0; i < tokens.length; i++) {
-		json_token_list_get(&tokens, i, &token);
+	for (size_t i = 0; i < parser.tokens->length; i++) {
+		json_token_list_get(parser.tokens, i, &token);
 		lexer_free_token(&token);
 	}
-	json_token_list_free(&tokens);
+	json_token_list_free(parser.tokens);
 	return r;
 }
 

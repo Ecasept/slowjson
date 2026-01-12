@@ -1,12 +1,14 @@
 #include "utils/string/dstring.h"
 #include "internal/jsonvalue.h"
+#include "config.h"
 
 /**
  * @brief Deserializes a JSONValue from a string.
  * @param json Pointer to the string containing the JSON data
  * @param result Pointer to store the resulting JSONValue
+ * @param config Parser configuration
  */
-Result json_deserialize(string *json, struct JSONValue *result);
+Result json_deserialize(string *json, struct JSONValue *result, ParserConfig config);
 
 /**
  * @brief Gets a field from a json object and verifies its type.

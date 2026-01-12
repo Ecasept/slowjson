@@ -21,6 +21,8 @@ typedef struct string string;
 		macro(EHashmapKeyNotFound) \
 		macro(ESaveFormatError) 				 \
 		macro(EFileNotFound) 				 \
+		macro(ELexerNumberOverflow) \
+		macro(ESerializeError)
 
 #define DEFINE_ERROR_TYPE_ENUM(token) token,
 #define DECLARE_ERROR_TYPE_STRING(token) #token,

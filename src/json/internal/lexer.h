@@ -3,6 +3,7 @@
 #include "../utils/string/dstring.h"
 #include "../utils/unicode/unicode_types.h"
 #include "jsonvalue.h"
+#include "../config.h"
 
 // Apply `macro` to each JSONTokenType
 #define FOREACH_TOKEN(macro)                                                   \
@@ -33,8 +34,9 @@ typedef struct {
 	size_t position;
 	size_t line;
 	size_t column;
+	ParserConfig config;
 } Lexer;
 
-void lexer_init(Lexer *lexer, const string *source);
+void lexer_init(Lexer *lexer, const string *source, ParserConfig config);
 Result lexer_next_token(Lexer *lexer, JSONToken *token);
 void lexer_free_token(JSONToken *token);
