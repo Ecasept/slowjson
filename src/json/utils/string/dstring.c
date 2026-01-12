@@ -100,6 +100,12 @@ void string_clone(const string *str, string *out) {
 	out->arr.length = str->arr.length;
 }
 
+void string_from_view(string *out, string_view sv) {
+	uchar_list_init(&out->arr, sv.size);
+	memcpy(out->arr.data, sv.data, sv.size);
+	out->arr.length = sv.size;
+}
+
 bool string_eq_cstr(const string *str, const char *cstr) {
     size_t len = strlen(cstr);
     if (str->arr.length != len) return false;

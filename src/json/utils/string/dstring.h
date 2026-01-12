@@ -15,6 +15,7 @@ void string_eq(const string *str, const string *other, bool *res);
 Result string_substr(const string *str, string *out, size_t start,
 					 size_t length);
 void string_clone(const string *str, string *out);
+void string_from_view(string *out, string_view sv);
 
 void string_to_cstr(const string *str, char **cstr);
 
