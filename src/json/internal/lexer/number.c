@@ -279,6 +279,12 @@ static const double POWER_OF_10_TABLE[] = {
 	1e18, 1e19, 1e20, 1e21, 1e22
 };
 
+#define bit_count(literal) (sizeof(#literal) - 1)
+#define max(a, b) ((a) > (b) ? (a) : (b))
+
+// + 1 for the sign
+static const size_t MAXINT_MAX_DIGIT_COUNT = max(bit_count(INTMAX_MAX), bit_count(INTMAX_MIN) + 1);
+
 static Result build_json_number(Lexer *lexer, ParserConfig *config,
 								ParsedNumber *parsed_number,
 								JSONNumber *out_number) {
@@ -407,35 +413,52 @@ static Result build_json_number(Lexer *lexer, ParserConfig *config,
 		return new_success();
 	}
 
-	// Fallback to inaccurate version (i'm not interested in implementing the eisel-lemire algorithm)
-	double exp = pow(10.0, (double)exponent_value);
-	double result = (double)significant * exp;
+	// Use strtod as fallback (I'm not implementing the Eisel-Lemire algorithm myself)
 
-	if (result == INFINITY || result == -INFINITY) {
-		// Overflow
-		switch (config->double_overflow_behavior) {
-		case CONFIG_DOUBLE_OVERFLOW_CLAMP:
-			if (result == INFINITY) {
-				out_number->is_integer = false;
-				out_number->float_value = DBL_MAX;
+	// The significant, "e", exponent, and null terminator
+	char buffer[MAXINT_MAX_DIGIT_COUNT + 1 + MAXINT_MAX_DIGIT_COUNT + 1];
+	snprintf(buffer, sizeof(buffer), "%" PRIdMAX "e%" PRIdMAX, significant,
+			 exponent_value);
+	char *endptr;
+	errno = 0;
+	double result = strtod(buffer, &endptr);
+    if ((result == HUGE_VAL || result == -HUGE_VAL) && errno == ERANGE) {
+        switch (config->double_overflow_behavior) {
+        case CONFIG_DOUBLE_OVERFLOW_CLAMP:
+            if (result > 0) {
+                out_number->is_integer = false;
+                out_number->float_value = DBL_MAX;
+            } else {
+                out_number->is_integer = false;
+                out_number->float_value = -DBL_MAX;
+            }
+            return new_success();
+        case CONFIG_DOUBLE_OVERFLOW_INF:
+            out_number->is_integer = false;
+			if (result > 0) {
+				out_number->float_value = INFINITY;
 			} else {
-				out_number->is_integer = false;
-				out_number->float_value = -DBL_MAX;
+				out_number->float_value = -INFINITY;
 			}
-			return new_success();
-		case CONFIG_DOUBLE_OVERFLOW_INF:
-			out_number->is_integer = false;
-			out_number->float_value = result;
-			return new_success();
-		case CONFIG_DOUBLE_OVERFLOW_ERROR:
-			return new_errorf("Double value out of range at line %zu, column %zu",
-							  ELexerNumberOverflow, lexer->line, lexer->column);
-		}
+            return new_success();
+        case CONFIG_DOUBLE_OVERFLOW_ERROR:
+			return new_errorf("Double value out of range at line %zu, "
+							  "column %zu",
+							  ELexerNumberOverflow, lexer->line,
+							  lexer->column);
+		default:
+			panic("Unhandled ConfigDoubleOutOfRangeBehavior");
+        }
+    } else if (endptr != buffer) {
+        out_number->is_integer = false;
+        out_number->float_value = result;
+        return new_success();
+    } else {
+		return new_errorf("Could not convert number to double at line %zu, "
+						  "column %zu",
+						  ELexerSyntaxError, lexer->line,
+						  lexer->column);
 	}
-
-	out_number->is_integer = false;
-	out_number->float_value = result;
-	return new_success();
 }
 
 Result lexer_lex_number(Lexer *lexer, JSONToken *token) {
