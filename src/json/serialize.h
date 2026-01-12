@@ -4,8 +4,7 @@
 /**
  * @brief Serializes a JSONValue into a string.
  * @param val The JSON value to serialize
- * @param str Pointer to the string to write to. The string must be initialized.
- * The serialized data will be appended to it.
+ * @param str Pointer to the string to store the result. Will be allocated.
  */
-void json_serialize(struct JSONValue *val, string *str);
+Result json_serialize(struct JSONValue *val, string *str);
 

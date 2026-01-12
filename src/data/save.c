@@ -151,8 +151,11 @@ static Result serialize_save_data(struct Veranstaltung *v, size_t v_count,
 	if (!r.success) {
 		return r;
 	}
-	string_new(out, "");
-	json_serialize(&root, out);
+	r = json_serialize(&root, out);
+	if (!r.success) {
+		json_value_free(&root);
+		return r;
+	}
 	json_value_free(&root);
 	return new_success();
 }

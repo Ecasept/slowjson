@@ -1,7 +1,11 @@
 #include "../utils/hashmap/hashmap_node.h"
 #include "../serialize.h"
+#include <math.h>
 
-void json_serialize(JSONValue *val, string *str) {
+
+static Result json_serialize_rec(JSONValue *val, string *str);
+
+static Result json_serialize_rec(JSONValue *val, string *str) {
 	switch (val->type) {
 	case JSON_NULL:
 		string_append_cstr(str, "null");
@@ -15,7 +19,13 @@ void json_serialize(JSONValue *val, string *str) {
 			if (val->number.is_integer) {
 				sprintf(buf, "%lld", (long long)val->number.int_value);
 			} else {
-				sprintf(buf, "%f", val->number.float_value);
+				if (isnan(val->number.float_value)) {
+					return new_error("Cannot serialize NaN value", ESerializeError);
+				}
+				if (isinf(val->number.float_value)) {
+					return new_error("Cannot serialize infinite value", ESerializeError);
+				}
+				snprintf(buf, sizeof(buf), "%f", val->number.float_value);
 			}
 			string_append_cstr(str, buf);
 		}
@@ -66,7 +76,8 @@ void json_serialize(JSONValue *val, string *str) {
 		string_append_uchar(str, '[');
 		for (size_t i = 0; i < val->list.length; i++) {
 			if (i > 0) {string_append_uchar(str, ',');}
-			json_serialize(&val->list.data[i], str);
+			Result r = json_serialize_rec(&val->list.data[i], str);
+			if (!r.success) return r;
 		}
 		string_append_uchar(str, ']');
 		break;
@@ -80,7 +91,8 @@ void json_serialize(JSONValue *val, string *str) {
 				string_append_uchar(str, '"');
 				string_append(str, &node->key);
 				string_append_cstr(str, "\":");
-				json_serialize(&node->value, str);
+				Result r = json_serialize_rec(&node->value, str);
+				if (!r.success) return r;
 				first = false;
 				node = node->next;
 			}
@@ -88,4 +100,15 @@ void json_serialize(JSONValue *val, string *str) {
 		string_append_uchar(str, '}');
 		break;
 	}
+	return new_success();
+}
+
+Result json_serialize(struct JSONValue *val, string *str) {
+	string_new(str, "");
+	Result r = json_serialize_rec(val, str);
+	if (!r.success) {
+		string_free(str);
+		return r;
+	}
+	return new_success();
 }
