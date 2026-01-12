@@ -24,3 +24,4 @@ static inline string_view as_svc(const char cstr[]) {
 }
 uchar sv_at_unchecked(string_view sv, size_t index);
 Result sv_at_checked(string_view sv, size_t index, uchar *out);
+bool string_eq_sv(const string *str, string_view sv);

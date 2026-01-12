@@ -105,3 +105,47 @@ bool string_eq_cstr(const string *str, const char *cstr) {
     if (str->arr.length != len) return false;
     return memcmp(str->arr.data, cstr, len) == 0;
 }
+
+void string_split_iterator_init(StringSplitIterator *iterator, string_view source, uchar delimiter) {
+	iterator->source = source;
+	iterator->current_idx = 0;
+	iterator->delimiter = delimiter;
+	iterator->done = false;
+	iterator->current_part.data = NULL;
+	iterator->current_part.size = 0;
+}
+
+Result string_split_iterator_next(StringSplitIterator *iterator, bool *has_part) {
+	if (iterator->done) {
+		*has_part = false;
+		return new_success();
+	}
+
+	size_t start_idx = iterator->current_idx;
+	size_t length = 0;
+	bool found_delimiter = false;
+
+	while (iterator->current_idx < iterator->source.size) {
+		uchar ch = iterator->source.data[iterator->current_idx];
+		
+		if (ch == iterator->delimiter) {
+			found_delimiter = true;
+			// Advance past delimiter for next call
+			iterator->current_idx++;
+			break;
+		}
+
+		length++;
+		iterator->current_idx++;
+	}
+
+	iterator->current_part.data = iterator->source.data + start_idx;
+	iterator->current_part.size = length;
+
+	if (!found_delimiter && iterator->current_idx >= iterator->source.size) {
+		iterator->done = true;
+	}
+
+	*has_part = true;
+	return new_success();
+}
