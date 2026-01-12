@@ -42,6 +42,8 @@ typedef struct {
 Result new_error(const char message[], ErrorType type);
 Result new_success(void);
 void print_error(Result r);
+void error_prependf(Result *r, const char *format, ...)
+	__attribute__((format(printf, 2, 3)));
 string format_error(Result r);
 wchar_t *format_error_wchar(Result r);
 Result new_errorf(const char *format, ErrorType type, ...)

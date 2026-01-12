@@ -43,6 +43,53 @@ void print_error(Result r) {
     }
 }
 
+void error_prependf(Result *r, const char *format, ...) {
+	if (r->success) {
+		return;
+	}
+
+	va_list args;
+	va_start(args, format);
+
+	va_list args_copy;
+	va_copy(args_copy, args);
+
+	// Measure the length of the formatted string
+	int len = vsnprintf(NULL, 0, format, args_copy);
+	va_end(args_copy);
+
+	if (len < 0) {
+		va_end(args);
+		panic("Failed to format error message");
+	}
+
+	char *prefix = malloc(len + 1);
+	if (prefix == NULL) {
+		va_end(args);
+		panic("Failed to allocate memory");
+	}
+
+	vsnprintf(prefix, len + 1, format, args); // + 1 for null terminator
+	va_end(args);
+
+	// Create new message
+	size_t old_len = r->message ? strlen(r->message) : 0;
+	char *new_message = malloc(len + old_len + 1);
+	if (new_message == NULL) {
+		free(prefix);
+		panic("Failed to allocate memory");
+	}
+
+	strcpy(new_message, prefix);
+	if (r->message) {
+		strcat(new_message, r->message);
+		free(r->message);
+	}
+
+	free(prefix);
+	r->message = new_message;
+}
+
 string format_error(Result r) {
 	if (r.success) {
 		return string_newr("No error occurred.");
