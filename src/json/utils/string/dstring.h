@@ -2,21 +2,7 @@
 
 #include "../custom_error.h"
 #include "../unicode/unicode_types.h"
-
-#define TYPE uchar
-#define TYPED_NAME(name) uchar_##name
-#define LIST_DECLARATION
-#include "../list.h"
-#undef LIST_DECLARATION
-#undef TYPE
-#undef TYPED_NAME
-
-struct string {
-	uchar_list arr;
-};
-typedef struct string string;
-
-typedef struct string_view string_view;
+#include "string_view.h"
 
 void string_free(string *str);
 void string_new(string *str, const char *source);

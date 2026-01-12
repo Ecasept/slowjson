@@ -1,7 +1,7 @@
 #pragma once
 #include "../unicode/unicode_types.h"
 #include "stdlib.h"
-#include "dstring.h"
+#include "string_struct.h"
 
 struct string_view {
 	const uchar* data;
