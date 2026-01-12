@@ -78,3 +78,75 @@ Result write_string_to_file(const char *filename, const string *str) {
     }
 	return new_success();
 }
+
+
+Result read_lines(const char *filename, FileLineIterator *out_iterator) {
+	FILE *fptr = fopen(filename, "rb");
+	if (fptr == NULL) {
+        ErrorType type = (errno == ENOENT) ? EFileNotFound : EFileOperationFailed;
+        return new_errorf("Could not open file \"%s\": %s", type,
+                          filename, strerror(errno));
+	}
+
+	out_iterator->fptr = fptr;
+	out_iterator->eof_reached = false;
+	string_new(&out_iterator->current_line, "");
+
+	return new_success();
+}
+
+
+
+Result file_line_iterator_close(FileLineIterator *iterator) {
+	if (iterator->fptr != NULL) {
+		if (fclose(iterator->fptr) == EOF) {
+			int err = errno;
+			string_free(&iterator->current_line);
+			return new_errorf("Could not close file: %s",
+							  EFileOperationFailed,
+							  (err != 0) ? strerror(err) : "unknown close error");
+		}
+		iterator->fptr = NULL;
+	}
+	string_free(&iterator->current_line);
+	return new_success();
+}
+
+
+Result file_line_iterator_next(FileLineIterator *iterator, bool *has_line) {
+	if (iterator->eof_reached) {
+		*has_line = false;
+		return new_success();
+	}
+
+	// Clear current line (keep capacity to avoid reallocations)
+	iterator->current_line.arr.length = 0;
+
+	while (1) {
+		int ch = fgetc(iterator->fptr);
+		if (ch == EOF) {
+			if (ferror(iterator->fptr)) {
+				int err = errno;
+				return new_errorf("Could not read from file: %s",
+								  EFileOperationFailed,
+								  (err != 0) ? strerror(err) : "unknown I/O error");
+			}
+			// EOF reached
+			iterator->eof_reached = true;
+			if (iterator->current_line.arr.length == 0) {
+				*has_line = false;
+				return new_success();
+			} else {
+				break;
+			}
+		}
+		if (ch == '\n') {
+			// End of line
+			break;
+		}
+		string_append_uchar(&iterator->current_line, (uchar)ch);
+	}
+
+	*has_line = true;
+	return new_success();
+}
