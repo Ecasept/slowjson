@@ -51,9 +51,13 @@ else
 	./$(BUILD_DIR)/$(TARGET) $(arg1)
 endif
 
+profile: CFLAGS := $(CFLAGS) -g -DDEBUG
+profile: rebuild
+	valgrind --tool=callgrind --dump-instr=yes ./$(BUILD_DIR)/$(TARGET) $(arg1)
+
 valgrind: CFLAGS := $(CFLAGS) -g -DDEBUG
 valgrind: rebuild
-	valgrind --tool=callgrind --dump-instr=yes ./$(BUILD_DIR)/$(TARGET) $(arg1)
+	valgrind --leak-check=full --show-leak-kinds=all ./$(BUILD_DIR)/$(TARGET) $(arg1)
 
 $(BUILD_DIR)/$(TARGET): $(OBJS)
 	$(call MKDIR,$(dir $@))
