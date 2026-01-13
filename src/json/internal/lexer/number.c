@@ -474,8 +474,6 @@ static Result build_json_number(Lexer *lexer, ParserConfig *config,
 }
 
 Result lexer_lex_number(Lexer *lexer, JSONToken *token) {
-	string value;
-	string_new(&value, "");
 	UCP chr;
 	Result r;
 
@@ -503,19 +501,16 @@ Result lexer_lex_number(Lexer *lexer, JSONToken *token) {
 			}
 			
 			token->type = JSONTok_Number;
-			token->value = value;
 			// Build number
 			JSONNumber number;
 			Result r = build_json_number(lexer, &lexer->config, &parsed_number, &number);
 			if (!r.success) {
-				string_free(&value);
 				return r;
 			}
 			token->number = number;
 			error_free(r);
 			return new_success();
 		} else if (!r.success) {
-			string_free(&value);
 			return r;
 		}
 
@@ -538,18 +533,15 @@ Result lexer_lex_number(Lexer *lexer, JSONToken *token) {
 			&expected_history_size	 // Size of the expected tokens array
 		);
 		if (!r.success) {
-			string_free(&value);
 			return r;
 		}
 		if (!has_next) {
 			// Reached end of number
 			token->type = JSONTok_Number;
-			token->value = value;
 			// Build number
 			JSONNumber number;
 			Result r = build_json_number(lexer, &lexer->config, &parsed_number, &number);
 			if (!r.success) {
-				string_free(&value);
 				return r;
 			}
 			token->number = number;
@@ -557,7 +549,6 @@ Result lexer_lex_number(Lexer *lexer, JSONToken *token) {
 		} else {
 			if (!was_epsilon_transition) {
 				check(lexer_consume(lexer, &chr));
-				string_append_uchar(&value, chr);
 			}
 			state = next_state;
 			was_epsilon_transition = false;

@@ -6,7 +6,6 @@
 #define LIST_DECLARATION
 #include "list.h"
 #undef LIST_DECLARATION
-
 #undef LIST_IMPLEMENTATION
 #undef TYPE
 #undef TYPED_NAME

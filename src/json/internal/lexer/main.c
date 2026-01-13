@@ -46,7 +46,6 @@ Result lexer_next_token(Lexer *lexer, JSONToken *token) {
 	Result r = lexer_peek(lexer, &current_char);
 	if (r.type == ELexerEOF) {
 		token->type = JSONTok_EOF;
-		string_new(&token->value, "");
 		error_free(r);
 		return new_success();
 	}
@@ -121,8 +120,6 @@ static Result lexer_lex_structural(Lexer *lexer, JSONToken *token) {
 						  lexer->column - 1);
 	}
 
-	string_new(&token->value, "");
-	string_append_uchar(&token->value, current_char);
 	return new_success();
 }
 
@@ -184,7 +181,6 @@ static bool lexer_lex_specific_literal(Lexer *lexer, JSONToken *token,
 								  JSONTokenType type) {
 	if (lexer_test_literal(lexer, literal)) {
 		token->type = type;
-		string_from_view(&(token->value), literal);
 		lexer->position += literal.size;
 		lexer->column += literal.size;
 		return true;
@@ -361,7 +357,11 @@ static Result lexer_lex_string(Lexer *lexer, JSONToken *token) {
 }
 
 
-void lexer_free_token(JSONToken *token) { string_free(&token->value); }
+void lexer_free_token(JSONToken *token) {
+	if (token->type == JSONTok_String || token->type == JSONTok_Whitespace) {
+		string_free(&token->value);
+	}
+}
 
 const char *tk_as_str(JSONTokenType type) {
 	if (type < 0 || type >= sizeof(JSONTokenTypeStrings) / sizeof(char *)) {
