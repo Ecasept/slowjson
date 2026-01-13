@@ -123,6 +123,9 @@ static Result parse_json_array(Parser *parser, JSONValue *out_value, size_t dept
 	return new_success();
 
 error:
+	for (size_t i = 0; i < out_value->list.length; i++) {
+		json_value_free(&out_value->list.data[i]);
+	}
 	json_value_list_free(&out_value->list);
 	return r;
 }
