@@ -30,8 +30,8 @@ const char *JSONTokenTypeStrings[] = {FOREACH_TOKEN(DECLARE_TOKEN_STRING)};
 void lexer_init(Lexer *lexer, const string *source, ParserConfig config) {
 	lexer->source = source;
 	lexer->position = 0;
-	lexer->line = 0;
-	lexer->column = 0;
+	lexer->line = 1;
+	lexer->column = 1;
 	lexer->config = config;
 }
 
@@ -153,7 +153,7 @@ static Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token) {
 		case ' ':
 			check(lexer_consume(lexer, &current_char));
 			if (current_char == '\n') {
-				lexer->column = 0;
+				lexer->column = 1;
 				lexer->line++;
 			}
 
