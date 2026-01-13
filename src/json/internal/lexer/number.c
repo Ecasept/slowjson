@@ -489,6 +489,7 @@ Result lexer_lex_number(Lexer *lexer, JSONToken *token) {
 	while (1) {
 		r = lexer_peek(lexer, &chr);
 		if (r.type == ELexerEOF) {
+			error_free(r);
 			// Reached end of file
 			// Check if we are in an accepting state
 			if (state != NUM_STATE_PARSING_INT &&
