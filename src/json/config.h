@@ -1,4 +1,5 @@
 #pragma once
+#include <stddef.h>
 
 enum ConfigExponentOutOfRangeBehavior {
 	// Throws an error when an integer is out of range
@@ -34,6 +35,14 @@ enum ConfigDoubleOutOfRangeBehavior {
 };
 typedef enum ConfigDoubleOutOfRangeBehavior ConfigDoubleOutOfRangeBehavior;
 
+
+struct ParserLimits {
+	// Maximum depth of nested objects/arrays
+	size_t max_nesting_depth;
+};
+typedef struct ParserLimits ParserLimits;
+
+
 /**
  * @brief Configuration options for the JSON parser
  * @note A note on number parsing:
@@ -57,6 +66,8 @@ struct ParserConfig {
 	* range of a double, the behavior specified here is applied.
 	*/
 	ConfigDoubleOutOfRangeBehavior double_overflow_behavior;
+	// Limits for the parser
+	ParserLimits limits;
 };
 typedef struct ParserConfig ParserConfig;
 

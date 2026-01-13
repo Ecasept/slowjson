@@ -4,7 +4,7 @@
 
 // Forward declaration
 static Result parse_json_value(Parser *parser,
-							   JSONValue *out_value);
+							   JSONValue *out_value, size_t depth);
 
 static Result get_tokens(Lexer *lexer, json_token_list *tokens) {
 	JSONToken token;
@@ -75,7 +75,7 @@ static Result parser_expect_token(Parser *parser,
 	return new_success();
 }
 
-static Result parse_json_array(Parser *parser, JSONValue *out_value) {
+static Result parse_json_array(Parser *parser, JSONValue *out_value, size_t depth) {
 	Result r;
 	JSONToken token;
 	out_value->type = JSON_ARRAY;
@@ -94,7 +94,7 @@ static Result parse_json_array(Parser *parser, JSONValue *out_value) {
 	// Parse elements
 	while (1) {
 		JSONValue element;
-		r = parse_json_value(parser, &element);
+		r = parse_json_value(parser, &element, depth + 1);
 		if (!r.success)
 			goto error;
 		json_value_list_push(&out_value->list, element);
@@ -127,7 +127,7 @@ error:
 	return r;
 }
 
-static Result parse_json_object(Parser *parser, JSONValue *out_value) {
+static Result parse_json_object(Parser *parser, JSONValue *out_value, size_t depth) {
 	JSONToken token;
 	Result r;
 	out_value->type = JSON_OBJECT;
@@ -154,7 +154,7 @@ static Result parse_json_object(Parser *parser, JSONValue *out_value) {
 		r = parser_expect_token(parser, JSONTok_Colon, &token);
 		if (!r.success)
 			goto error;
-		r = parse_json_value(parser, &value);
+		r = parse_json_value(parser, &value, depth + 1);
 		if (!r.success)
 			goto error;
 
@@ -201,7 +201,13 @@ static Result parse_json_number(Parser *parser, JSONValue *out_value) {
 	return new_success();
 }
 
-static Result parse_json_value(Parser *parser, JSONValue *out_value) {
+static Result parse_json_value(Parser *parser, JSONValue *out_value, size_t depth) {
+	if (depth > parser->config.limits.max_nesting_depth) {
+		return new_errorf(
+			"Exceeded maximum nesting depth of %zu",
+			EDepthLimitExceeded, parser->config.limits.max_nesting_depth);
+	}
+	
 	JSONToken token;
 	check(parser_peek_token(parser, &token));
 	switch (token.type) {
@@ -229,10 +235,10 @@ static Result parse_json_value(Parser *parser, JSONValue *out_value) {
 		return new_success();
 	case JSONTok_LBracket:
 		check(parser_consume_token(parser, &token));
-		return parse_json_array(parser, out_value);
+		return parse_json_array(parser, out_value, depth);
 	case JSONTok_LBrace:
 		check(parser_consume_token(parser, &token));
-		return parse_json_object(parser, out_value);
+		return parse_json_object(parser, out_value, depth);
 	default:
 		return new_errorf(
 			"Unexpected token %s at line %zu, column %zu (expected value)",
@@ -242,7 +248,7 @@ static Result parse_json_value(Parser *parser, JSONValue *out_value) {
 }
 
 static Result parse_json_value_top_level(Parser *parser, JSONValue *out_value) {
-	Result r = parse_json_value(parser, out_value);
+	Result r = parse_json_value(parser, out_value, 0);
 	if (!r.success) {
 		return r;
 	}
