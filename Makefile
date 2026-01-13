@@ -1,10 +1,22 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -pedantic -std=c11 -g -DDEBUG -O2
-DEBUG_CFLAGS = -g -fsanitize=address,undefined
 LDFLAGS = -lm
-DEBUG_LDFLAGS = -fsanitize=address,undefined
 TARGET = gradeviewer
 BUILD_DIR = build
+
+test = 0
+run = 0
+debug = 0
+arg1 =
+
+ifneq ($(test),0)
+	CFLAGS += -DRUN_TESTS
+	TARGET := gradeviewer_tests
+endif
+ifneq ($(debug),0)
+	CFLAGS += -DDEBUG -g -fsanitize=address,undefined
+	LDFLAGS += -fsanitize=address,undefined
+endif
 
 # Platform detection
 ifeq ($(OS),Windows_NT)
@@ -36,19 +48,12 @@ run: all
 ifeq ($(OS),Windows_NT)
 	$(call FIX_PATH,$(BUILD_DIR)/$(TARGET))
 else
-	./$(BUILD_DIR)/$(TARGET)
+	./$(BUILD_DIR)/$(TARGET) $(arg1)
 endif
-
-debug: CFLAGS := $(CFLAGS) $(DEBUG_CFLAGS)
-debug: LDFLAGS := $(LDFLAGS) $(DEBUG_LDFLAGS)
-debug: rebuild all
-
-test: CFLAGS := $(CFLAGS) -DRUN_TESTS
-test: rebuild all
 
 valgrind: CFLAGS := $(CFLAGS) -g -DDEBUG
 valgrind: rebuild
-	valgrind --tool=callgrind --dump-instr=yes ./$(BUILD_DIR)/$(TARGET)
+	valgrind --tool=callgrind --dump-instr=yes ./$(BUILD_DIR)/$(TARGET) $(arg1)
 
 $(BUILD_DIR)/$(TARGET): $(OBJS)
 	$(call MKDIR,$(dir $@))

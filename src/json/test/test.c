@@ -4,9 +4,24 @@
 #include "fxx_test.h"
 
 #ifdef RUN_TESTS
-int main() {
-	run_jsontestsuite();
-	run_fxx_test();
+int main(int argc, char **argv) {
+	if (argc < 2) {
+		// Run all tests
+		run_jsontestsuite();
+		run_fxx_test();
+	} else {
+		// Run a specific test
+		const char *test_name = argv[1];
+		if (strcmp(test_name, "jsontestsuite") == 0) {
+			run_jsontestsuite();
+		} else if (strcmp(test_name, "fxx_test") == 0) {
+			run_fxx_test();
+		} else {
+			printf("Unknown test: %s\n", test_name);
+			return 1;
+		}
+	}
+	return 0;
 }
 #endif
 

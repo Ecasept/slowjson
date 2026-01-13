@@ -6,6 +6,7 @@
 #include "../config.h"
 #include <inttypes.h>
 #include <stdlib.h>
+#include <time.h>
 
 struct Test {
 	const char *filename;
@@ -134,6 +135,13 @@ Result run_fxx_test_file(const char *filename) {
 			file_line_iterator_close(&iterator);
 			return r;
 		}
+
+		// Exclude some tests
+		if (json_input.arr.length > 0 && json_input.arr.data[0] == '.') {
+			// Not allowed for json grammar
+			string_free(&json_input);
+			continue;
+		}
 		
 		r = run_single_fxx_test(expected, &json_input);
 		
@@ -154,12 +162,16 @@ void run_fxx_test(void) {
 	size_t test_count = sizeof(fxx_tests) / sizeof(Test);
 	for (size_t i = 0; i < test_count; i++) {
 		Test test = fxx_tests[i];
+		clock_t start = clock();
 		Result r = run_fxx_test_file(test.filename);
+		clock_t end = clock();
+		double time_taken = ((double)(end - start)) / CLOCKS_PER_SEC;
+
 		if (!r.success) {
 			fprintf(stderr, "FXX Test '%s' failed: %s\n", test.name, r.message);
 			exit(EXIT_FAILURE);
 		} else {
-			printf("FXX Test '%s' passed.\n", test.name);
+			printf("FXX Test '%s' passed (%.6fs).\n", test.name, time_taken);
 		}
 	}
 }

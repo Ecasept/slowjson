@@ -346,7 +346,42 @@ Test y_tests[] = {
 	TESTP("y_structure_whitespace_array"),
 };
 
+const char *ANSI_UNDERLINE = "\033[4m";
+const char *ANSI_BOLD = "\033[1m";
+const char *ANSI_RESET = "\033[0m";
+const char *ANSI_RED = "\033[31m";
+const char *ANSI_GREEN = "\033[32m";
 
+static Result format_test_input(string *input, const char *filename) {
+	string json;
+	Result r = read_file_to_string(filename, &json);
+	if (!r.success) return r;
+
+	string_new(input, "");
+	for (size_t i = 0; i < json.arr.length; i++) {
+		uchar c = json.arr.data[i];
+		if (c >= 0x20 && c <= 126) {
+			string_append_cstr(input, (const char[]){(char)c, '\0'});
+		} else {
+			string_append_cstr(input, ANSI_UNDERLINE);
+			string_append_cstr(input, "0x");
+			char buf[3];
+			snprintf(buf, sizeof(buf), "%02X", c);
+			string_append_cstr(input, buf);
+			string_append_cstr(input, ANSI_RESET);
+		}
+	}
+	return new_success();
+}
+
+static void format_test_input_internal(string *input, const char *filename) {
+	Result r = format_test_input(input, filename);
+	if (!r.success) {
+		fprintf(stderr, "Error formatting test input from %s: %s\n", filename, r.message);
+		exit(EXIT_FAILURE);
+	}
+	error_free(r);
+}
 
 void run_jsontestsuite() {
 	size_t n_n_tests = sizeof(n_tests) / sizeof(n_tests[0]);
@@ -356,12 +391,20 @@ void run_jsontestsuite() {
 		   n_n_tests);
 	for (size_t i = 0; i < n_n_tests; i++) {
 		Result r = run_once(n_tests[i].filename);
+		string input;
+		format_test_input_internal(&input, n_tests[i].filename);
 		if (r.success) {
-			printf("Test %s: FAILED (expected failure, got success)\n",
-				   n_tests[i].name);
+			printf("Test %s%s%s (%.*s): %sFAILED%s\n",
+				   ANSI_BOLD, n_tests[i].name, ANSI_RESET,
+				   (int)input.arr.length, input.arr.data, ANSI_RED, ANSI_RESET);
+			printf("Expected error, got success.\n");
 			exit(EXIT_FAILURE);
 		} else {
-			printf("Test %s: passed (error: %s)\n", n_tests[i].name, r.message);
+			printf("Test %s%s%s (%.*s): %sSUCCESS%s\n",
+				   ANSI_BOLD, n_tests[i].name, ANSI_RESET,
+				   (int)input.arr.length, input.arr.data, ANSI_GREEN, ANSI_RESET);
+			printf("Expected error, got error: %s\n", r.message);
+			string_free(&input);
 		}
 		error_free(r);
 	}
@@ -370,12 +413,20 @@ void run_jsontestsuite() {
 		   n_y_tests);
 	for (size_t i = 0; i < n_y_tests; i++) {
 		Result r = run_once(y_tests[i].filename);
+		string input;
+		format_test_input_internal(&input, y_tests[i].filename);
 		if (!r.success) {
-			printf("Test %s: FAILED (expected success, got error: %s)\n",
-				   y_tests[i].name, r.message);
+			printf("Test %s%s%s (%.*s): %sFAILED%s\n",
+				   ANSI_BOLD, y_tests[i].name, ANSI_RESET,
+				   (int)input.arr.length, input.arr.data, ANSI_RED, ANSI_RESET);
+			printf("Expected success, got error: %s\n", r.message);
 			exit(EXIT_FAILURE);
 		} else {
-			printf("Test %s: passed\n", y_tests[i].name);
+			printf("Test %s%s%s (%.*s): %sSUCCESS%s\n",
+				   ANSI_BOLD, y_tests[i].name, ANSI_RESET,
+				   (int)input.arr.length, input.arr.data, ANSI_GREEN, ANSI_RESET);
+			printf("Expected success, got success.\n");
+			string_free(&input);
 		}
 		error_free(r);
 	}
