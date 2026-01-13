@@ -23,7 +23,6 @@ static Result lexer_lex_structural(Lexer *lexer, JSONToken *token);
 static Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token);
 static Result lexer_lex_string(Lexer *lexer, JSONToken *token);
 static Result lexer_lex_literal(Lexer *lexer, JSONToken *token);
-static Result lexer_test_literal(Lexer *lexer, string *string, bool *res);
 
 const char *JSONTokenTypeStrings[] = {FOREACH_TOKEN(DECLARE_TOKEN_STRING)};
 
@@ -170,70 +169,40 @@ static Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token) {
 	}
 }
 
-static Result lexer_test_literal(Lexer *lexer, string *expect, bool *res) {
-	string substr;
-	Result r = string_substr(lexer->source, &substr, lexer->position,
-							 expect->arr.length);
-	if (r.type == ESubstrOutOfRange) {
-		*res = false;
-		error_free(r);
-		return new_success();
-	} else if (!r.success) {
-		return r;
+static bool lexer_test_literal(Lexer *lexer, string_view expect) {
+	if (lexer->position + expect.size > lexer->source->arr.length) {
+		return false;
 	}
+	string_view substr = sv_substr_unchecked(
+		as_sv(*lexer->source), lexer->position, expect.size);
 
-	string_eq(&substr, expect, res);
-
-	string_free(&substr);
-
-	return new_success();
+	return sv_eq(substr, expect);
 }
 
-static Result lexer_lex_specific_literal(Lexer *lexer, JSONToken *token,
-								  string *literal, bool *matched,
+static bool lexer_lex_specific_literal(Lexer *lexer, JSONToken *token,
+								  string_view literal,
 								  JSONTokenType type) {
-	bool matches;
-	check(lexer_test_literal(lexer, literal, &matches));
-	if (matches) {
+	if (lexer_test_literal(lexer, literal)) {
 		token->type = type;
-		token->value = *literal;
-		lexer->position += literal->arr.length;
-		lexer->column += literal->arr.length;
-		*matched = true;
-		return new_success();
+		string_from_view(&(token->value), literal);
+		lexer->position += literal.size;
+		lexer->column += literal.size;
+		return true;
 	}
-	*matched = false;
-	return new_success();
+	return false;
 }
 
 static Result lexer_lex_literal(Lexer *lexer, JSONToken *token) {
-	string true_str;
-	string_new(&true_str, "true");
-	bool matches;
-	check(lexer_lex_specific_literal(lexer, token, &true_str, &matches,
-								   JSONTok_True));
-	if (matches) {
+	if (lexer_lex_specific_literal(lexer, token, svl("true"), JSONTok_True)) {
 		return new_success();
 	}
-	string_free(&true_str);
 
-	string false_str;
-	string_new(&false_str, "false");
-	check(lexer_lex_specific_literal(lexer, token, &false_str, &matches,
-								   JSONTok_False));
-	if (matches) {
+	if (lexer_lex_specific_literal(lexer, token, svl("false"), JSONTok_False)) {
 		return new_success();
 	}
-	string_free(&false_str);
-
-	string null_str;
-	string_new(&null_str, "null");
-	check(lexer_lex_specific_literal(lexer, token, &null_str, &matches,
-								   JSONTok_Null));
-	if (matches) {
+	if (lexer_lex_specific_literal(lexer, token, svl("null"), JSONTok_Null)) {
 		return new_success();
 	}
-	string_free(&null_str);
 
 	return new_errorf("Unexpected literal at line %zu, column %zu",
 					  ELexerSyntaxError, lexer->line, lexer->column);
