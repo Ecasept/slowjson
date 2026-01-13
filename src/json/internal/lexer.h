@@ -13,8 +13,25 @@
 				macro(JSONTok_True) macro(JSONTok_False) macro(JSONTok_Null)   \
 					macro(JSONTok_Whitespace) macro(JSONTok_Unknown)
 
+
+#undef DECLARE_TOKEN_STRING
+#define FRIENDLY_NAME_JSONTok_EOF "end of input"
+#define FRIENDLY_NAME_JSONTok_LBrace "'{'"
+#define FRIENDLY_NAME_JSONTok_RBrace "'}'"
+#define FRIENDLY_NAME_JSONTok_LBracket "'['"
+#define FRIENDLY_NAME_JSONTok_RBracket "']'"
+#define FRIENDLY_NAME_JSONTok_Colon "':'"
+#define FRIENDLY_NAME_JSONTok_Comma "','"
+#define FRIENDLY_NAME_JSONTok_String "string"
+#define FRIENDLY_NAME_JSONTok_Number "number"
+#define FRIENDLY_NAME_JSONTok_True "'true'"
+#define FRIENDLY_NAME_JSONTok_False "'false'"
+#define FRIENDLY_NAME_JSONTok_Null "'null'"
+#define FRIENDLY_NAME_JSONTok_Whitespace "whitespace"
+#define FRIENDLY_NAME_JSONTok_Unknown "unknown token"
+
+#define DECLARE_TOKEN_STRING(token) FRIENDLY_NAME_##token,
 #define DEFINE_TOKEN_ENUM(token) token,
-#define DECLARE_TOKEN_STRING(token) #token,
 
 typedef enum { FOREACH_TOKEN(DEFINE_TOKEN_ENUM) } JSONTokenType;
 extern const char *JSONTokenTypeStrings[];

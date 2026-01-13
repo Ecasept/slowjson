@@ -67,7 +67,7 @@ static Result parser_expect_token(Parser *parser,
 	}
 	if (token.type != expected_type) {
 		return new_errorf(
-			"Expected token %s but got %s at line %zu, column %zu",
+			"Unexpected token: expected %s but got %s at line %zu, column %zu",
 			EParserSyntaxError, tk_as_str(expected_type), tk_as_str(token.type),
 			token.line, token.column);
 	}
@@ -241,7 +241,7 @@ static Result parse_json_value(Parser *parser, JSONValue *out_value, size_t dept
 		return parse_json_object(parser, out_value, depth);
 	default:
 		return new_errorf(
-			"Unexpected token %s at line %zu, column %zu (expected value)",
+			"Unexpected token: encountered %s at line %zu, column %zu (expected value)",
 			EParserSyntaxError, tk_as_str(token.type), token.line,
 			token.column);
 	}
