@@ -489,7 +489,18 @@ Result lexer_lex_number(Lexer *lexer, JSONToken *token) {
 	while (1) {
 		r = lexer_peek(lexer, &chr);
 		if (r.type == ELexerEOF) {
-			// Reached end of file, return what we have
+			// Reached end of file
+			// Check if we are in an accepting state
+			if (state != NUM_STATE_PARSING_INT &&
+				state != NUM_STATE_AFTER_INT &&
+				state != NUM_STATE_PARSING_FRACTION &&
+				state != NUM_STATE_AFTER_FRACTION &&
+				state != NUM_STATE_PARSING_EXPONENT &&
+				state != NUM_STATE_AFTER_EXPONENT) {
+				return new_errorf("Unexpected end of input in number at line %zu, column %zu",
+								  ELexerSyntaxError, lexer->line, lexer->column);
+			}
+			
 			token->type = JSONTok_Number;
 			token->value = value;
 			// Build number
