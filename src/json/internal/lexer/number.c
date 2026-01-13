@@ -193,7 +193,8 @@ typedef enum OverflowError OverflowError;
 
 /**
  * @brief Takes two strings and a number of how many digits to look at, and
- * turns it into an integer
+ * turns it into an integer. If `steps` is larger than the combined length of
+ * both strings, the remaining digits are treated as zeros.
  */
 static OverflowError join_to_int(size_t steps, string_view first,
 								 string_view second, int sign,
@@ -204,7 +205,12 @@ static OverflowError join_to_int(size_t steps, string_view first,
 			digit = first.data[i] - '0';
 		} else {
 			size_t index_int_second_part = i - first.size;
-			digit = second.data[index_int_second_part] - '0';
+			if (index_int_second_part < second.size) {
+				digit = second.data[index_int_second_part] - '0';
+			} else {
+				// Pad with zeros
+				digit = 0;
+			}
 		}
 		if (sign == 1) {
 			if (*integer > (INTMAX_MAX - digit) / 10) {
