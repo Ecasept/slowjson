@@ -22,7 +22,8 @@ typedef struct string string;
 		macro(ESaveFormatError) 				 \
 		macro(EFileNotFound) 				 \
 		macro(ELexerNumberOverflow) \
-		macro(ESerializeError)
+		macro(ESerializeError) \
+		macro(EDepthLimitExceeded)
 
 #define DEFINE_ERROR_TYPE_ENUM(token) token,
 #define DECLARE_ERROR_TYPE_STRING(token) #token,
