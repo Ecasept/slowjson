@@ -103,8 +103,6 @@ Result utf8_get_next_codepoint(string_view str, size_t *index,
 						"Invalid continuation byte 0x%2X (will result in an overlong encoding)",
 						EUnicodeError, c2);
 				}
-			} else {
-				return r;
 			}
 			break;
 		case 0xED:
@@ -115,8 +113,6 @@ Result utf8_get_next_codepoint(string_view str, size_t *index,
 					return new_errorf(
 						"Invalid continuation byte 0x%2X in (will result in a surrogate codepoint)",
 						EUnicodeError, c2);
-				} else {
-					return r;
 				}
 			}
 			break;
@@ -141,8 +137,6 @@ Result utf8_get_next_codepoint(string_view str, size_t *index,
 						"Invalid continuation byte 0x%2X (will result in an overlong encoding)",
 						EUnicodeError, c2);
 				}
-			} else {
-				return r;
 			}
 			break;
 		case 0xF4:
