@@ -231,7 +231,7 @@ static OverflowError join_to_int(size_t steps, string_view first,
 
 static Result convert_exponent(ParserConfig *config,
 							   ParsedNumber *parsed_number,
-							   intmax_t *exponent_value, Lexer *lexer) {
+							   intmax_t *exponent_value, Lexer *lexer, bool *double_fallback) {
 	*exponent_value = 0;
 	if (parsed_number->has_exponent) {
 		if (parsed_number->exponent_sign == 1) {
@@ -249,6 +249,9 @@ static Result convert_exponent(ParserConfig *config,
 										  " at line %zu, column %zu",
 										  ELexerNumberOverflow, INTMAX_MAX,
 										  lexer->line, lexer->column);
+					case CONFIG_EXPONENT_OVERFLOW_DOUBLE_FALLBACK:
+						*double_fallback = true;
+						return new_success();
 					}
 				}
 				*exponent_value = *exponent_value * 10 + digit;
@@ -268,6 +271,9 @@ static Result convert_exponent(ParserConfig *config,
 										  " at line %zu, column %zu",
 										  ELexerNumberOverflow, INTMAX_MIN,
 										  lexer->line, lexer->column);
+					case CONFIG_EXPONENT_OVERFLOW_DOUBLE_FALLBACK:
+						*double_fallback = true;
+						return new_success();
 					}
 				}
 				*exponent_value = *exponent_value * 10 - digit;
@@ -277,157 +283,117 @@ static Result convert_exponent(ParserConfig *config,
 	return new_success();
 }
 
-#define POWER_OF_2(n) (1ULL << (n))
-static const double POWER_OF_10_TABLE[] = {
-	1e0,  1e1,  1e2,  1e3,  1e4,  1e5,
-	1e6,  1e7,  1e8,  1e9,  1e10, 1e11,
-	1e12, 1e13, 1e14, 1e15, 1e16, 1e17,
-	1e18, 1e19, 1e20, 1e21, 1e22
-};
-
-#define bit_count(literal) (sizeof(#literal) - 1)
-#define max(a, b) ((a) > (b) ? (a) : (b))
-
-// + 1 for the sign
-static const size_t MAXINT_MAX_DIGIT_COUNT = max(bit_count(INTMAX_MAX), bit_count(INTMAX_MIN) + 1);
-
 static Result build_json_number(Lexer *lexer, ParserConfig *config,
 								ParsedNumber *parsed_number,
 								JSONNumber *out_number) {
 	intmax_t exponent_value = 0;
-	Result r = convert_exponent(config, parsed_number, &exponent_value, lexer);
+	bool double_fallback = false;
+	Result r = convert_exponent(config, parsed_number, &exponent_value, lexer, &double_fallback);
 	if (!r.success) {
 		return r;
 	}
 
-	// Needed left shift in order for the number to be able to be represented as
-	// integer (ie. no fractional part). Can be negative (meaning we can right
-	// shift that many times while keeping integer representation)
-	size_t needed_shift = parsed_number->fraction_length;
-	if (needed_shift == 0) {
-		// There is no fractional part. We have extra leeway depending on how
-		// many zeros are at the end of the integer part
-		needed_shift =
-			-(parsed_number->integer_part.size - parsed_number->integer_length);
-	}
-	bool can_be_integer = (exponent_value >= (intmax_t)needed_shift);
-	if (can_be_integer) {
-		intmax_t integer = 0;
-		size_t steps = parsed_number->integer_part.size + exponent_value;
-		OverflowError integer_overflow_error = join_to_int(
-			steps, parsed_number->integer_part, parsed_number->fractional_part,
-			parsed_number->sign, &integer);
-		if (integer_overflow_error == NO_OVERFLOW) {
-			// Successfully turned into integer
-			out_number->is_integer = true;
-			out_number->int_value = integer;
-			return new_success();
-		} else {
-			// Could not turn into integer without overflow
-			switch (config->integer_overflow_behavior) {
-			case CONFIG_INTEGER_OVERFLOW_CLAMP:
-				if (integer_overflow_error == TOO_LARGE) {
-					out_number->is_integer = true;
-					out_number->int_value = INTMAX_MAX;
-				} else {
-					out_number->is_integer = true;
-					out_number->int_value = INTMAX_MIN;
-				}
+	if (!double_fallback) {
+		// Needed left shift in order for the number to be able to be represented as
+		// integer (ie. no fractional part). Can be negative (meaning we can right
+		// shift that many times while keeping integer representation)
+		size_t needed_shift = parsed_number->fraction_length;
+		if (needed_shift == 0) {
+			// There is no fractional part. We have extra leeway depending on how
+			// many zeros are at the end of the integer part
+			needed_shift =
+				-(parsed_number->integer_part.size - parsed_number->integer_length);
+		}
+		bool can_be_integer = (exponent_value >= (intmax_t)needed_shift);
+		if (can_be_integer) {
+			intmax_t integer = 0;
+			size_t steps = parsed_number->integer_part.size + exponent_value;
+			OverflowError integer_overflow_error = join_to_int(
+				steps, parsed_number->integer_part, parsed_number->fractional_part,
+				parsed_number->sign, &integer);
+			if (integer_overflow_error == NO_OVERFLOW) {
+				// Successfully turned into integer
+				out_number->is_integer = true;
+				out_number->int_value = integer;
 				return new_success();
-			case CONFIG_INTEGER_OVERFLOW_DOUBLE_FALLBACK:
-				// Fall back to double representation
-				break;
-			case CONFIG_INTEGER_OVERFLOW_ERROR:
-				if (integer_overflow_error == TOO_LARGE) {
-					return new_errorf("Integer value larger than maximum "
-									  "supported value %" PRIdMAX
-									  " at line %zu, column %zu",
-									  ELexerNumberOverflow, INTMAX_MAX,
-									  lexer->line, lexer->column);
-				} else {
-					return new_errorf("Integer value smaller than minimum "
-									  "supported value %" PRIdMAX
-									  " at line %zu, column %zu",
-									  ELexerNumberOverflow, INTMAX_MIN,
-									  lexer->line, lexer->column);
+			} else {
+				// Could not turn into integer without overflow
+				switch (config->integer_overflow_behavior) {
+				case CONFIG_INTEGER_OVERFLOW_CLAMP:
+					if (integer_overflow_error == TOO_LARGE) {
+						out_number->is_integer = true;
+						out_number->int_value = INTMAX_MAX;
+					} else {
+						out_number->is_integer = true;
+						out_number->int_value = INTMAX_MIN;
+					}
+					return new_success();
+				case CONFIG_INTEGER_OVERFLOW_DOUBLE_FALLBACK:
+					// Fall back to double representation
+					break;
+				case CONFIG_INTEGER_OVERFLOW_ERROR:
+					if (integer_overflow_error == TOO_LARGE) {
+						return new_errorf("Integer value larger than maximum "
+										"supported value %" PRIdMAX
+										" at line %zu, column %zu",
+										ELexerNumberOverflow, INTMAX_MAX,
+										lexer->line, lexer->column);
+					} else {
+						return new_errorf("Integer value smaller than minimum "
+										"supported value %" PRIdMAX
+										" at line %zu, column %zu",
+										ELexerNumberOverflow, INTMAX_MIN,
+										lexer->line, lexer->column);
+					}
 				}
 			}
 		}
 	}
 
-	// Convert to double
-	// First step: normalize into significant and exponent
-	// Example: 123.456e2 -> 123456e-1
-	// Example: 12000.0000e2 -> 12e5
-	exponent_value -= needed_shift;
-	size_t significant_length = parsed_number->integer_part.size + needed_shift;
-	intmax_t significant = 0;
-	OverflowError significant_overflow_error = join_to_int(
-		significant_length, parsed_number->integer_part,
-		parsed_number->fractional_part, parsed_number->sign, &significant);
-	if (significant_overflow_error != NO_OVERFLOW) {
-		switch (config->double_overflow_behavior) {
-		case CONFIG_DOUBLE_OVERFLOW_CLAMP:
-			if (significant_overflow_error == TOO_LARGE) {
-				out_number->is_integer = false;
-				out_number->float_value = DBL_MAX;
-			} else {
-				out_number->is_integer = false;
-				out_number->float_value = -DBL_MAX;
-			}
-			return new_success();
-		case CONFIG_DOUBLE_OVERFLOW_INF:
-			if (significant_overflow_error == TOO_LARGE) {
-				out_number->is_integer = false;
-				out_number->float_value = INFINITY;
-			} else {
-				out_number->is_integer = false;
-				out_number->float_value = -INFINITY;
-			}
-			return new_success();
-		case CONFIG_DOUBLE_OVERFLOW_ERROR:
-			if (significant_overflow_error == TOO_LARGE) {
-				return new_errorf("Significant larger than maximum "
-								  "supported value %" PRIdMAX " at line %zu, column %zu",
-								  ELexerNumberOverflow, INTMAX_MAX,
-								  lexer->line, lexer->column);
-			} else {
-				return new_errorf("Significant smaller than minimum "
-								  "supported value %" PRIdMAX " at line %zu, column %zu",
-								  ELexerNumberOverflow, INTMAX_MIN,
-								  lexer->line, lexer->column);
-			}
-			return new_success();
-		}
-	}
+	// Build string representation of the number
+	// With variable array size
+	#ifdef __STDC_NO_VLA__
+	#error "Variable Length Arrays are required for this function"
+	#endif
 
-	// Try Clinger's fast path
-	bool can_represent_exponent_exact =
-		(exponent_value >= -22 && exponent_value <= 22);
-	bool can_represent_significant_exact =
-		(significant >= -(intmax_t)POWER_OF_2(53) && significant <= (intmax_t)POWER_OF_2(53));
-	if (can_represent_exponent_exact && can_represent_significant_exact) {
-		double result;
-		if (exponent_value < 0) {
-			result = (double)significant /
-					 POWER_OF_10_TABLE[-exponent_value];
+	const size_t sign_space = (parsed_number->sign == -1 ? 1 : 0);
+	const size_t int_space = parsed_number->integer_part.size;
+	const size_t decimal_point_space = (parsed_number->fractional_part.size > 0 ? 1 : 0);
+	const size_t frac_space = parsed_number->fractional_part.size;
+	const size_t exponent_space = (parsed_number->has_exponent ? 2 : 0);
+	const size_t exp_part_space = parsed_number->exponent_part.size;
+	const size_t buffer_size = sign_space + int_space + decimal_point_space +
+							   frac_space + exponent_space + exp_part_space + 1;
+	uchar buffer[buffer_size];
+	size_t buffer_index = 0;
+	if (parsed_number->sign == -1) {
+		buffer[buffer_index++] = '-';
+	}
+	memcpy(buffer + buffer_index, parsed_number->integer_part.data,
+		   parsed_number->integer_part.size);
+	buffer_index += parsed_number->integer_part.size;
+	if (parsed_number->fractional_part.size > 0) {
+		buffer[buffer_index++] = '.';
+		memcpy(buffer + buffer_index, parsed_number->fractional_part.data,
+			   parsed_number->fractional_part.size);
+		buffer_index += parsed_number->fractional_part.size;
+	}
+	if (parsed_number->has_exponent) {
+		buffer[buffer_index++] = 'e';
+		if (parsed_number->exponent_sign == -1) {
+			buffer[buffer_index++] = '-';
 		} else {
-			result = (double)significant * POWER_OF_10_TABLE[exponent_value];
+			buffer[buffer_index++] = '+';
 		}
-		out_number->is_integer = false;
-		out_number->float_value = result;
-		return new_success();
+		memcpy(buffer + buffer_index, parsed_number->exponent_part.data,
+			   parsed_number->exponent_part.size);
+		buffer_index += parsed_number->exponent_part.size;
 	}
+	buffer[buffer_index] = '\0';
 
-	// Use strtod as fallback (I'm not implementing the Eisel-Lemire algorithm myself)
-
-	// The significant, "e", exponent, and null terminator
-	char buffer[MAXINT_MAX_DIGIT_COUNT + 1 + MAXINT_MAX_DIGIT_COUNT + 1];
-	snprintf(buffer, sizeof(buffer), "%" PRIdMAX "e%" PRIdMAX, significant,
-			 exponent_value);
 	char *endptr;
 	errno = 0;
-	double result = strtod(buffer, &endptr);
+	double result = strtod((char*)buffer, &endptr);
     if ((result == HUGE_VAL || result == -HUGE_VAL) && errno == ERANGE) {
         switch (config->double_overflow_behavior) {
         case CONFIG_DOUBLE_OVERFLOW_CLAMP:
@@ -455,7 +421,7 @@ static Result build_json_number(Lexer *lexer, ParserConfig *config,
 		default:
 			panic("Unhandled ConfigDoubleOutOfRangeBehavior");
         }
-    } else if (endptr != buffer) {
+    } else if (endptr != (char*)buffer) {
         out_number->is_integer = false;
         out_number->float_value = result;
         return new_success();

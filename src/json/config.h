@@ -5,6 +5,8 @@ enum ConfigExponentOutOfRangeBehavior {
 	CONFIG_EXPONENT_OVERFLOW_ERROR,
 	// Clamps the integer to its maximum/minimum value when out of range
 	CONFIG_EXPONENT_OVERFLOW_CLAMP,
+	// Falls back to double representation when exponent is out of range
+	CONFIG_EXPONENT_OVERFLOW_DOUBLE_FALLBACK
 };
 typedef enum ConfigExponentOutOfRangeBehavior ConfigExponentOutOfRangeBehavior;
 
@@ -52,8 +54,8 @@ struct ParserConfig {
 	ConfigIntegerOutOfRangeBehavior integer_overflow_behavior;
 	/**
 	 * @brief If a number is decoded as a double but is outside the representable
-	 * range of a double, the behavior specified here is applied.
-	 */
+	* range of a double, the behavior specified here is applied.
+	*/
 	ConfigDoubleOutOfRangeBehavior double_overflow_behavior;
 };
 typedef struct ParserConfig ParserConfig;
