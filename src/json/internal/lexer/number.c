@@ -9,14 +9,14 @@
 enum NumParseState {
 	NUM_STATE_START,
 	NUM_STATE_AFTER_SIGN,
-	NUM_STATE_AFTER_ONE_INT_DIGIT,
+	NUM_STATE_PARSING_INT,
 	NUM_STATE_AFTER_INT,
 	NUM_STATE_AFTER_DECIMAL_POINT,
-	NUM_STATE_AFTER_ONE_FRACTION_DIGIT,
+	NUM_STATE_PARSING_FRACTION,
 	NUM_STATE_AFTER_FRACTION,
 	NUM_STATE_AFTER_EXPONENT_SYMBOL,
 	NUM_STATE_AFTER_EXPONENT_SIGN,
-	NUM_STATE_AFTER_ONE_EXPONENT_DIGIT,
+	NUM_STATE_PARSING_EXPONENT,
 	NUM_STATE_AFTER_EXPONENT
 };
 typedef enum NumParseState NumParseState;
@@ -86,7 +86,7 @@ static Result num_dfa_next_state(NumParseState current_state, UCP chr,
 		} else if (chr >= '1' && chr <= '9') {
 			parsed_number->integer_part =
 				(string_view){.data = chr_ptr, .size = 1};
-			*next_state = NUM_STATE_AFTER_ONE_INT_DIGIT;
+			*next_state = NUM_STATE_PARSING_INT;
 			parsed_number->integer_length = 1;
 		} else {
 			expected_history[(*expected_history_size)++] = "digit";
@@ -94,14 +94,14 @@ static Result num_dfa_next_state(NumParseState current_state, UCP chr,
 								  expected_history, *expected_history_size);
 		}
 		break;
-	case NUM_STATE_AFTER_ONE_INT_DIGIT:
+	case NUM_STATE_PARSING_INT:
 		if (chr >= '0' && chr <= '9') {
 			parsed_number->integer_part.size++;
 			if (chr != '0') {
 				parsed_number->integer_length =
 					parsed_number->integer_part.size;
 			}
-			*next_state = NUM_STATE_AFTER_ONE_INT_DIGIT;
+			*next_state = NUM_STATE_PARSING_INT;
 		} else {
 			*next_state = NUM_STATE_AFTER_INT;
 			*was_epsilon_transition = true;
@@ -138,7 +138,7 @@ static Result num_dfa_next_state(NumParseState current_state, UCP chr,
 			} else {
 				parsed_number->fraction_length = 0;
 			}
-			*next_state = NUM_STATE_AFTER_ONE_FRACTION_DIGIT;
+			*next_state = NUM_STATE_PARSING_FRACTION;
 		} else {
 			// return new_errorf(
 			// 	"Invalid character '%c' in number: expected digit after "
@@ -149,10 +149,10 @@ static Result num_dfa_next_state(NumParseState current_state, UCP chr,
 								  expected_history, *expected_history_size);
 		}
 		break;
-	case NUM_STATE_AFTER_ONE_FRACTION_DIGIT:
+	case NUM_STATE_PARSING_FRACTION:
 		if (chr >= '0' && chr <= '9') {
 			parsed_number->fractional_part.size++;
-			*next_state = NUM_STATE_AFTER_ONE_FRACTION_DIGIT;
+			*next_state = NUM_STATE_PARSING_FRACTION;
 			if (chr != '0') {
 				parsed_number->fraction_length =
 					parsed_number->fractional_part.size;
@@ -193,7 +193,7 @@ static Result num_dfa_next_state(NumParseState current_state, UCP chr,
 		if (chr >= '0' && chr <= '9') {
 			parsed_number->exponent_part =
 				(string_view){.data = chr_ptr, .size = 1};
-			*next_state = NUM_STATE_AFTER_ONE_EXPONENT_DIGIT;
+			*next_state = NUM_STATE_PARSING_EXPONENT;
 		} else {
 			// return new_errorf(
 			// 	"Invalid character '%c' in number: expected digit after "
@@ -204,10 +204,10 @@ static Result num_dfa_next_state(NumParseState current_state, UCP chr,
 								  expected_history, *expected_history_size);
 		}
 		break;
-	case NUM_STATE_AFTER_ONE_EXPONENT_DIGIT:
+	case NUM_STATE_PARSING_EXPONENT:
 		if (chr >= '0' && chr <= '9') {
 			parsed_number->exponent_part.size++;
-			*next_state = NUM_STATE_AFTER_ONE_EXPONENT_DIGIT;
+			*next_state = NUM_STATE_PARSING_EXPONENT;
 		} else {
 			*next_state = NUM_STATE_AFTER_EXPONENT;
 			*was_epsilon_transition = true;
