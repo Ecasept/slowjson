@@ -246,6 +246,10 @@ static OverflowError join_to_int(size_t steps, string_view first,
 			} else {
 				// Pad with zeros
 				digit = 0;
+				if (*integer == 0) {
+					// Integer is zero so no amount of padding will change it
+					return NO_OVERFLOW;
+				}
 			}
 		}
 		if (sign == 1) {
