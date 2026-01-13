@@ -18,15 +18,15 @@
 
 
 #ifndef RUN_TESTS
-int actual_main();
-int main() {
+int actual_main(void);
+int main(void) {
 	return actual_main();
 }
 #endif
 
   
   
-int actual_main() {
+int actual_main(void) {
 	setlocale(LC_ALL, "");
 	setlocale(LC_NUMERIC, "C");
 	
