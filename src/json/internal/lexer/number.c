@@ -41,11 +41,30 @@ struct ParsedNumber {
 };
 typedef struct ParsedNumber ParsedNumber;
 
+Result expected_error(const char *position, char c, size_t line, size_t column,
+					  const char *expected_history[], size_t expected_history_size) {
+	string expected_str;
+	string_new(&expected_str, "");
+	for (size_t i = 0; i < expected_history_size; i++) {
+		if (i > 0) {
+			string_append_cstr(&expected_str, ", ");
+		}
+		string_append_cstr(&expected_str, expected_history[i]);
+	}
+
+	Result r = new_errorf(
+		"Invalid character '%c'%s: expected one of: %.*s (at line %zu, column %zu)", ELexerSyntaxError,
+		c, position, (int)expected_str.arr.length, expected_str.arr.data, line, column);
+	string_free(&expected_str);
+	return r;
+}
+
 static Result num_dfa_next_state(NumParseState current_state, UCP chr,
 								 NumParseState *next_state, uchar *chr_ptr,
 								 ParsedNumber *parsed_number,
 								 bool *was_epsilon_transition, bool *has_next,
-								 size_t line, size_t column) {
+								 size_t line, size_t column,
+								 const char *expected_history[5], size_t *expected_history_size) {
 	switch (current_state) {
 	case NUM_STATE_START:
 		if (chr == '-') {
@@ -55,6 +74,7 @@ static Result num_dfa_next_state(NumParseState current_state, UCP chr,
 			parsed_number->sign = 1;
 			*next_state = NUM_STATE_AFTER_SIGN;
 			*was_epsilon_transition = true;
+			expected_history[(*expected_history_size)++] = "'-'";
 		}
 		break;
 	case NUM_STATE_AFTER_SIGN:
@@ -62,15 +82,16 @@ static Result num_dfa_next_state(NumParseState current_state, UCP chr,
 			parsed_number->integer_part =
 				(string_view){.data = chr_ptr, .size = 1};
 			*next_state = NUM_STATE_AFTER_INT;
+			*expected_history_size = 0;
 		} else if (chr >= '1' && chr <= '9') {
 			parsed_number->integer_part =
 				(string_view){.data = chr_ptr, .size = 1};
 			*next_state = NUM_STATE_AFTER_ONE_INT_DIGIT;
 			parsed_number->integer_length = 1;
 		} else {
-			return new_errorf("Invalid character '%c' in number: expected "
-							  "digit or '-' at line %zu, column %zu",
-							  ELexerSyntaxError, chr, line, column);
+			expected_history[(*expected_history_size)++] = "digit";
+			return expected_error(" in number", chr, line, column,
+								  expected_history, *expected_history_size);
 		}
 		break;
 	case NUM_STATE_AFTER_ONE_INT_DIGIT:
@@ -84,6 +105,7 @@ static Result num_dfa_next_state(NumParseState current_state, UCP chr,
 		} else {
 			*next_state = NUM_STATE_AFTER_INT;
 			*was_epsilon_transition = true;
+			expected_history[(*expected_history_size)++] = "digit";
 		}
 		break;
 	case NUM_STATE_AFTER_INT:
@@ -104,6 +126,7 @@ static Result num_dfa_next_state(NumParseState current_state, UCP chr,
 		} else {
 			*next_state = NUM_STATE_AFTER_FRACTION;
 			*was_epsilon_transition = true;
+			expected_history[(*expected_history_size)++] = "'.'";
 		}
 		break;
 	case NUM_STATE_AFTER_DECIMAL_POINT:
@@ -117,10 +140,13 @@ static Result num_dfa_next_state(NumParseState current_state, UCP chr,
 			}
 			*next_state = NUM_STATE_AFTER_ONE_FRACTION_DIGIT;
 		} else {
-			return new_errorf(
-				"Invalid character '%c' in number: expected digit after "
-				"decimal point at line %zu, column %zu",
-				ELexerSyntaxError, chr, line, column);
+			// return new_errorf(
+			// 	"Invalid character '%c' in number: expected digit after "
+			// 	"decimal point at line %zu, column %zu",
+			// 	ELexerSyntaxError, chr, line, column);
+			expected_history[(*expected_history_size)++] = "digit";
+			return expected_error(" in number after decimal point", chr, line, column,
+								  expected_history, *expected_history_size);
 		}
 		break;
 	case NUM_STATE_AFTER_ONE_FRACTION_DIGIT:
@@ -134,6 +160,7 @@ static Result num_dfa_next_state(NumParseState current_state, UCP chr,
 		} else {
 			*next_state = NUM_STATE_AFTER_FRACTION;
 			*was_epsilon_transition = true;
+			expected_history[(*expected_history_size)++] = "digit";
 		}
 		break;
 	case NUM_STATE_AFTER_FRACTION:
@@ -142,6 +169,7 @@ static Result num_dfa_next_state(NumParseState current_state, UCP chr,
 		} else {
 			*next_state = NUM_STATE_AFTER_EXPONENT;
 			*was_epsilon_transition = true;
+			expected_history[(*expected_history_size)++] = "'e' or 'E'";
 		}
 		break;
 	case NUM_STATE_AFTER_EXPONENT_SYMBOL:
@@ -158,6 +186,7 @@ static Result num_dfa_next_state(NumParseState current_state, UCP chr,
 			parsed_number->exponent_sign = 1;
 			*next_state = NUM_STATE_AFTER_EXPONENT_SIGN;
 			*was_epsilon_transition = true;
+			expected_history[(*expected_history_size)++] = "'+' or '-'";
 		}
 		break;
 	case NUM_STATE_AFTER_EXPONENT_SIGN:
@@ -166,10 +195,13 @@ static Result num_dfa_next_state(NumParseState current_state, UCP chr,
 				(string_view){.data = chr_ptr, .size = 1};
 			*next_state = NUM_STATE_AFTER_ONE_EXPONENT_DIGIT;
 		} else {
-			return new_errorf(
-				"Invalid character '%c' in number: expected digit after "
-				"exponent sign at line %zu, column %zu",
-				ELexerSyntaxError, chr, line, column);
+			// return new_errorf(
+			// 	"Invalid character '%c' in number: expected digit after "
+			// 	"exponent sign at line %zu, column %zu",
+			// 	ELexerSyntaxError, chr, line, column);
+			expected_history[(*expected_history_size)++] = "digit";
+			return expected_error(" in number after exponent sign", chr, line, column,
+								  expected_history, *expected_history_size);
 		}
 		break;
 	case NUM_STATE_AFTER_ONE_EXPONENT_DIGIT:
@@ -179,11 +211,15 @@ static Result num_dfa_next_state(NumParseState current_state, UCP chr,
 		} else {
 			*next_state = NUM_STATE_AFTER_EXPONENT;
 			*was_epsilon_transition = true;
+			expected_history[(*expected_history_size)++] = "digit";
 		}
 		break;
 	case NUM_STATE_AFTER_EXPONENT:
 		*has_next = false;
 		break;
+	}
+	if (!*was_epsilon_transition) {
+		*expected_history_size = 0;
 	}
 	return new_success();
 }
@@ -443,6 +479,9 @@ Result lexer_lex_number(Lexer *lexer, JSONToken *token) {
 	ParsedNumber parsed_number = {0};
 	parsed_number.has_exponent = false;
 
+	const char *expected_history[5];
+	size_t expected_history_size = 0;
+
 	while (1) {
 		r = lexer_peek(lexer, &chr);
 		if (r.type == ELexerEOF) {
@@ -478,7 +517,9 @@ Result lexer_lex_number(Lexer *lexer, JSONToken *token) {
 			&was_epsilon_transition, // Whether the transition is epsilon
 			&has_next,				 // Whether there is a next character
 			lexer->line,			 // Current line for error reporting
-			lexer->column			 // Current column for error reporting
+			lexer->column,			 // Current column for error reporting
+			expected_history,		 // Array of expected tokens for error reporting
+			&expected_history_size	 // Size of the expected tokens array
 		);
 		if (!r.success) {
 			string_free(&value);
