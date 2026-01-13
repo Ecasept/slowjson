@@ -87,6 +87,8 @@ void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver)
         struct Semester last_time;
         last_time.jahr = -1;
         last_time.jahreszeit = -1;
+        int sum_lp = 0;
+        int first_call = -1;
 
                
 
@@ -101,6 +103,12 @@ void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver)
 
                 
                         if (ver[i].semester.jahr != last_time.jahr || ver[i].semester.jahreszeit != last_time.jahreszeit) {
+
+                                if (first_call != -1) {
+                                        wprintf(L"\n");
+                                        wprintf(L"Summe der erreichten LP: %i\n", sum_lp);
+                                }
+                                sum_lp = 0;
                                 
                                 if (ver[i].semester.jahreszeit == Winter) {
                                         wprintf(L"\n\n%ls WS %i/%i %ls\n", TXT_INVERSE, ver[i].semester.jahr, ver[i].semester.jahr + 1, END_STYLE);
@@ -160,7 +168,16 @@ void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver)
                                         wprintf(L"        %ls%15ls%ls     %i    %ls/%ls\n", TXT_YELLOW, AUSSTEHEND, END_STYLE, ver[i].lp, TXT_YELLOW, END_STYLE);
                                         break;
                         }
+
+                        if (ver[i].state == Bestanden) {
+                                sum_lp += ver[i].lp;
+                        }
                 }
+
+                for (int b = 0; b < 90; ++b) {
+                        wprintf(L" ");
+                }
+                wprintf(L"\nSumme der erreichten LP: %i\n", sum_lp);
         }
 }
 
@@ -189,7 +206,7 @@ void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Mo
 
                                 if (last_index != -1) {
                                         wprintf(L"\n");
-                                        wprintf(L"Summe: %i/%i\n", sum, mod[a].lp_todo);
+                                        wprintf(L"Summe der erreichten LP: %i/%i\n", sum, mod[a].lp_todo);
                                 }
 
                                 a = 0;
@@ -259,7 +276,7 @@ void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Mo
                 for (int b = 0; b < 90; ++b) {
                         wprintf(L" ");
                 }
-                wprintf(L"\nSumme: %i/%i\n", sum, mod[a].lp_todo);
+                wprintf(L"\nSumme der erreichten LP: %i/%i\n", sum, mod[a].lp_todo);
         }
                         
 
