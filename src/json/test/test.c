@@ -40,3 +40,16 @@ Result run_once(const char *filename) {
 	json_value_free(&root);
 	return new_success();
 }
+
+Result run_string(string *json, JSONValue *out_root) {
+	JSONValue root;
+	Result r = json_deserialize(json, &root, config_default_parser_config());
+	if (r.success) {
+		if (out_root != NULL) {
+			*out_root = root;
+		} else {
+			json_value_free(&root);
+		}
+	}
+	return r;
+}

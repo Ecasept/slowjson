@@ -352,25 +352,32 @@ const char *ANSI_RESET = "\033[0m";
 const char *ANSI_RED = "\033[31m";
 const char *ANSI_GREEN = "\033[32m";
 
+static string format_string(string_view sv) {
+	string result;
+	string_new(&result, "");
+	for (size_t i = 0; i < sv.size; i++) {
+		uchar c = sv.data[i];
+		if (c >= 0x20 && c <= 126) {
+			string_append_cstr(&result, (const char[]){(char)c, '\0'});
+		} else {
+			string_append_cstr(&result, ANSI_UNDERLINE);
+			string_append_cstr(&result, "0x");
+			char buf[3];
+			snprintf(buf, sizeof(buf), "%02X", c);
+			string_append_cstr(&result, buf);
+			string_append_cstr(&result, ANSI_RESET);
+		}
+	}
+	return result;
+}
+
 static Result format_test_input(string *input, const char *filename) {
 	string json;
 	Result r = read_file_to_string(filename, &json);
 	if (!r.success) return r;
 
-	string_new(input, "");
-	for (size_t i = 0; i < json.arr.length; i++) {
-		uchar c = json.arr.data[i];
-		if (c >= 0x20 && c <= 126) {
-			string_append_cstr(input, (const char[]){(char)c, '\0'});
-		} else {
-			string_append_cstr(input, ANSI_UNDERLINE);
-			string_append_cstr(input, "0x");
-			char buf[3];
-			snprintf(buf, sizeof(buf), "%02X", c);
-			string_append_cstr(input, buf);
-			string_append_cstr(input, ANSI_RESET);
-		}
-	}
+	*input = format_string(as_sv(json));
+	string_free(&json);
 	return new_success();
 }
 
@@ -383,6 +390,99 @@ static void format_test_input_internal(string *input, const char *filename) {
 	error_free(r);
 }
 
+static void expect_error(Result r, const char *test_name, string_view context) {
+	size_t len = context.size > 100 ? 100 : context.size;
+	const char *ellipsis = len < context.size ? "..." : "";
+
+	if (r.success) {
+		printf("Test %s%s%s (%.*s%s): %sFAILED%s\n",
+				ANSI_BOLD, test_name, ANSI_RESET, (int)len, context.data, ellipsis, ANSI_RED, ANSI_RESET);
+		printf("Expected error, got success.\n");
+		exit(EXIT_FAILURE);
+	} else {
+		printf("Test %s%s%s (%.*s%s): %sSUCCESS%s\n",
+				ANSI_BOLD, test_name, ANSI_RESET, (int)len, context.data, ellipsis, ANSI_GREEN, ANSI_RESET);
+		printf("Expected error, got error: %s\n", r.message);
+	}
+}
+
+static void expect_success(Result r, const char *test_name, string_view context) {
+	size_t len = context.size > 100 ? 100 : context.size;
+	const char *ellipsis = len < context.size ? "..." : "";
+
+	if (!r.success) {
+		printf("Test %s%s%s (%.*s%s): %sFAILED%s\n",
+				ANSI_BOLD, test_name, ANSI_RESET, (int)len, context.data, ellipsis, ANSI_RED, ANSI_RESET);
+		printf("Expected success, got error: %s\n", r.message);
+		exit(EXIT_FAILURE);
+	} else {
+		printf("Test %s%s%s (%.*s%s): %sSUCCESS%s\n",
+				ANSI_BOLD, test_name, ANSI_RESET, (int)len, context.data, ellipsis, ANSI_GREEN, ANSI_RESET);
+		printf("Expected success, got success.\n");
+	}
+}
+
+static void run_n_test_once(Test t) {
+	Result r = run_once(t.filename);
+	string input;
+	format_test_input_internal(&input, t.filename);
+	expect_error(r, t.name, as_sv(input));
+	string_free(&input);
+	error_free(r);
+
+	if (sv_startswith(as_svc(t.name), svl("n_string")) || sv_startswith(as_svc(t.name), svl("n_number"))) {
+		string file_content;
+		Result r = read_file_to_string(t.filename, &file_content);
+		if (!r.success) {
+			fprintf(stderr, "Error reading file %s: %s\n", t.filename, r.message);
+			exit(EXIT_FAILURE);
+		}
+		if (sv_startswith(as_sv(file_content), svl("[")) &&
+			sv_endswith(as_sv(file_content), svl("]"))) {
+			
+			string stripped;
+			string_from_view(&stripped, sv_substr_unchecked(as_sv(file_content), 1, file_content.arr.length - 2));
+
+			Result r2 = run_string(&stripped, NULL);
+
+
+			string stripped_formatted = format_string(as_sv(stripped));
+
+			expect_error(r2, t.name, as_sv(stripped_formatted));
+			string_free(&stripped_formatted);
+			error_free(r2);
+			string_free(&stripped);
+		}
+		string_free(&file_content);
+	}
+}
+
+static void run_y_test_once(Test t) {
+	Result r = run_once(t.filename);
+	string input;
+	format_test_input_internal(&input, t.filename);
+	expect_success(r, t.name, as_sv(input));
+	string_free(&input);
+	error_free(r);
+
+	if (sv_startswith(as_svc(t.name), svl("y_string")) || sv_startswith(as_svc(t.name), svl("y_number"))) {
+		string file_content;
+		read_file_to_string(t.filename, &file_content);
+		if (sv_startswith(as_sv(file_content), svl("[")) &&
+			sv_endswith(as_sv(file_content), svl("]"))) {
+			
+			string stripped;
+			string_from_view(&stripped, sv_substr_unchecked(as_sv(file_content), 1, file_content.arr.length - 2));
+
+			Result r2 = run_string(&stripped, NULL);
+			expect_success(r2, t.name, svl("stripped"));
+			error_free(r2);
+			string_free(&stripped);
+		}
+		string_free(&file_content);
+	}
+}
+
 void run_jsontestsuite() {
 	size_t n_n_tests = sizeof(n_tests) / sizeof(n_tests[0]);
 	size_t n_y_tests = sizeof(y_tests) / sizeof(y_tests[0]);
@@ -390,44 +490,12 @@ void run_jsontestsuite() {
 	printf("Running JSON Test Suite - Negative Tests (%zu tests)\n",
 		   n_n_tests);
 	for (size_t i = 0; i < n_n_tests; i++) {
-		Result r = run_once(n_tests[i].filename);
-		string input;
-		format_test_input_internal(&input, n_tests[i].filename);
-		if (r.success) {
-			printf("Test %s%s%s (%.*s): %sFAILED%s\n",
-				   ANSI_BOLD, n_tests[i].name, ANSI_RESET,
-				   (int)input.arr.length, input.arr.data, ANSI_RED, ANSI_RESET);
-			printf("Expected error, got success.\n");
-			exit(EXIT_FAILURE);
-		} else {
-			printf("Test %s%s%s (%.*s): %sSUCCESS%s\n",
-				   ANSI_BOLD, n_tests[i].name, ANSI_RESET,
-				   (int)input.arr.length, input.arr.data, ANSI_GREEN, ANSI_RESET);
-			printf("Expected error, got error: %s\n", r.message);
-			string_free(&input);
-		}
-		error_free(r);
+		run_n_test_once(n_tests[i]);
 	}
 
 	printf("Running JSON Test Suite - Positive Tests (%zu tests)\n",
 		   n_y_tests);
 	for (size_t i = 0; i < n_y_tests; i++) {
-		Result r = run_once(y_tests[i].filename);
-		string input;
-		format_test_input_internal(&input, y_tests[i].filename);
-		if (!r.success) {
-			printf("Test %s%s%s (%.*s): %sFAILED%s\n",
-				   ANSI_BOLD, y_tests[i].name, ANSI_RESET,
-				   (int)input.arr.length, input.arr.data, ANSI_RED, ANSI_RESET);
-			printf("Expected success, got error: %s\n", r.message);
-			exit(EXIT_FAILURE);
-		} else {
-			printf("Test %s%s%s (%.*s): %sSUCCESS%s\n",
-				   ANSI_BOLD, y_tests[i].name, ANSI_RESET,
-				   (int)input.arr.length, input.arr.data, ANSI_GREEN, ANSI_RESET);
-			printf("Expected success, got success.\n");
-			string_free(&input);
-		}
-		error_free(r);
+		run_y_test_once(y_tests[i]);
 	}
 }

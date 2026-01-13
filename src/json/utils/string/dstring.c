@@ -66,16 +66,6 @@ void string_eq(const string *str, const string *other, bool *res) {
 	}
 	*res = memcmp(str->arr.data, other->arr.data, str->arr.length) == 0;
 }
-Result string_substr(const string *str, string *out, size_t start,
-					 size_t length) {
-	if (start + length > str->arr.length) {
-		return new_error("Substring out of range", ESubstrOutOfRange);
-	}
-	uchar_list_init(&out->arr, length);
-	memcpy(out->arr.data, &str->arr.data[start], length);
-	out->arr.length = length;
-	return new_success();
-}
 
 void string_to_cstr(const string *str, char **cstr) {
 	*cstr = (char *)malloc(sizeof(char) * (str->arr.length + 1));

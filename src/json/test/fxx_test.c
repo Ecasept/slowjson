@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <time.h>
+#include "test.h"
 
 struct Test {
 	const char *filename;
@@ -16,6 +17,8 @@ typedef struct Test Test;
 
 #define TEST_DIR "src/json/test/files/parse-number-fxx-test-data/data/"
 #define TEST(test_name) { .filename = TEST_DIR test_name ".txt", .name = test_name }
+
+#define ANSI_CLEAR_LINE "\033[2K\r"
 
 Test fxx_tests[] = {
 	TEST("exhaustive-float16"),
@@ -34,7 +37,6 @@ Test fxx_tests[] = {
 	TEST("ulfjack-ryu"),
 };
 
-// ...existing code...
 static Result get_fxx_test_data(string *line, double *expected, string *json_input) {
 	StringSplitIterator it;
 	string_split_iterator_init(&it, as_sv(*line), ' ');
@@ -82,8 +84,7 @@ static Result get_fxx_test_data(string *line, double *expected, string *json_inp
 
 static Result run_single_fxx_test(double expected, string *json_input) {
 	JSONValue val;
-	ParserConfig config = config_default_parser_config();
-	Result r = json_deserialize(json_input, &val, config);
+	Result r = run_string(json_input, &val);
 	if (!r.success) {
 		return r;
 	}
@@ -118,7 +119,12 @@ Result run_fxx_test_file(const char *filename) {
 	if (!r.success) return r;
 
 	bool has_line;
+	size_t i = 0;
 	while (1) {
+		if (i % 1000 == 0) {
+			printf("Processed %zu lines...\r", i);
+			fflush(stdout);
+		}
 		r = file_line_iterator_next(&iterator, &has_line);
 		if (!r.success) {
 			file_line_iterator_close(&iterator);
@@ -136,9 +142,16 @@ Result run_fxx_test_file(const char *filename) {
 			return r;
 		}
 
-		// Exclude some tests
+		// Exclude some tests that are not valid json
 		if (json_input.arr.length > 0 && json_input.arr.data[0] == '.') {
-			// Not allowed for json grammar
+			// decimal point without zero in front
+			printf("Skipping invalid JSON input: %.*s\n", (int)json_input.arr.length, json_input.arr.data);
+			string_free(&json_input);
+			continue;
+		}
+		if (sv_find(as_sv(json_input), svl(".e")) != -1) {
+			// exponent after decimal point without number
+			printf("Skipping invalid JSON input: %.*s\n", (int)json_input.arr.length, json_input.arr.data);
 			string_free(&json_input);
 			continue;
 		}
@@ -152,8 +165,10 @@ Result run_fxx_test_file(const char *filename) {
 			return r;
 		}
 		string_free(&json_input);
+		i++;
 	}
 
+	printf(ANSI_CLEAR_LINE);
 	file_line_iterator_close(&iterator);
 	return new_success();
 }
