@@ -288,8 +288,8 @@ void print_selected_ver(struct Veranstaltung *ver, struct Modulgruppe *mod, size
 void print_options_editver(void)
 {
         wprintf(L"\n\n\n  %lsOptionen%ls                        %lsTaste%ls                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
-        wprintf(L"  Veranstaltung löschen             [l]           Zurück zur Veranstaltungsübersicht:          [v]\n");
-        wprintf(L"  Note ändern/hinzufügen            [n]           Andere Veranstaltung wählen:                 [c]\n");
+        wprintf(L"  Veranstaltung löschen             [l]           Zurück zur Veranstaltungsübersicht           [v]\n");
+        wprintf(L"  Note ändern/hinzufügen            [n]           Andere Veranstaltung wählen                  [c]\n");
         wprintf(L"  Modulgruppe ändern                [m]\n");
         wprintf(L"\n");
         wprintf(L"  Hilfe                             [h]                    \n");
@@ -463,7 +463,7 @@ int change_modscreen(struct Veranstaltung **ver, struct Modulgruppe **mod, size_
                         wprintf(L"\n\nNummer der Modulgruppe:\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
                         status_changemodscreen = read_number_in_bound(0, (int) ((*size_mod) - 1), &new_mod);
                         STANDARD_ERROR_HANDLING(status_changemodscreen);
-                        (*ver)[selected_ver].modulgruppenindex = new_mod;
+                        (*ver)[selected_ver].modulgruppenindex = (*mod)[new_mod].modulgruppenindex;
                         return CHANGES_SAVED;
                 case L'b':
                         return VALID_USER_INPUT;

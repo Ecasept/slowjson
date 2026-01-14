@@ -99,14 +99,16 @@ void print_overview_by_time(struct Veranstaltung *ver, size_t size_ver)
                 // Sortierung der Veranstaltungen nach Semester
                 sort_by_time(ver, size_ver);
                 wprintf(L"\nSortierung: Semester, aufsteigend\n");
-                for (size_t i = 0; i < size_ver; ++i) {
 
-                
+                for (size_t i = 0; i < size_ver; ++i) {
                         if (ver[i].semester.jahr != last_time.jahr || ver[i].semester.jahreszeit != last_time.jahreszeit) {
 
                                 if (first_call != -1) {
                                         wprintf(L"\n");
                                         wprintf(L"Summe der erreichten LP: %i\n", sum_lp);
+                                } 
+                                if (first_call == -1) {
+                                        first_call = 0;
                                 }
                                 sum_lp = 0;
                                 
@@ -396,6 +398,7 @@ void clear_display(void)
         wprintf(L"\033[0;0H\n\n\n");
         #endif
         #ifdef _WIN32
+        
         wprintf(L"\033[H\033[J");
         #endif
 }
@@ -541,7 +544,7 @@ int print_addverscreen(struct Veranstaltung **ver, size_t *size_ver, struct Modu
                                                 wprintf(L"      ╰──────────────────────────────────────────────────────────────────────────────╯\n\n\n\n");
 
 
-                                                new_ver.modulgruppenindex = zahl;
+                                                new_ver.modulgruppenindex = (*mod)[zahl].modulgruppenindex;
                                                 break;
                                         case INVALID_USER_INPUT:
                                                 return INVALID_USER_INPUT;
