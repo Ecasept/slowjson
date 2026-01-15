@@ -2,6 +2,7 @@
 #include "../utils/string/file.h"
 #include "jsontestsuite.h"
 #include "fxx_test.h"
+#include "jsonperf.h"
 
 #ifdef RUN_TESTS
 int main(int argc, char **argv) {
@@ -9,6 +10,7 @@ int main(int argc, char **argv) {
 		// Run all tests
 		run_jsontestsuite();
 		run_fxx_test();
+		run_jsonperf();
 	} else {
 		// Run a specific test
 		const char *test_name = argv[1];
@@ -16,6 +18,8 @@ int main(int argc, char **argv) {
 			run_jsontestsuite();
 		} else if (strcmp(test_name, "fxx_test") == 0) {
 			run_fxx_test();
+		} else if (strcmp(test_name, "jsonperf") == 0) {
+			run_jsonperf();
 		} else {
 			printf("Unknown test: %s\n", test_name);
 			return 1;
