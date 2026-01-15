@@ -402,7 +402,9 @@ static void expect_error(Result r, const char *test_name, string_view context) {
 	} else {
 		printf("Test %s%s%s (%.*s%s): %sSUCCESS%s\n",
 				ANSI_BOLD, test_name, ANSI_RESET, (int)len, context.data, ellipsis, ANSI_GREEN, ANSI_RESET);
-		printf("Expected error, got error: %s\n", r.message);
+		string msg = format_error(r);
+		printf("Expected error, got %.*s\n", (int)msg.arr.length, (char *)msg.arr.data);
+		string_free(&msg);
 	}
 }
 
@@ -413,7 +415,9 @@ static void expect_success(Result r, const char *test_name, string_view context)
 	if (!r.success) {
 		printf("Test %s%s%s (%.*s%s): %sFAILED%s\n",
 				ANSI_BOLD, test_name, ANSI_RESET, (int)len, context.data, ellipsis, ANSI_RED, ANSI_RESET);
-		printf("Expected success, got error: %s\n", r.message);
+		string msg = format_error(r);
+		printf("Expected success, got %.*s\n", (int)msg.arr.length, (char *)msg.arr.data);
+		string_free(&msg);
 		exit(EXIT_FAILURE);
 	} else {
 		printf("Test %s%s%s (%.*s%s): %sSUCCESS%s\n",
