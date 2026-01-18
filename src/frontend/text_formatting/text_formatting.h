@@ -55,7 +55,7 @@
 
 
 // PO für Notendurchschnitt
-#define PO_2018 L"FPO Bachelor Informatik 2018"
+#define PO_2018 L"FPO 2018 Bachelor Informatik"
 
 
 // Anzeige der Veranstaltungen

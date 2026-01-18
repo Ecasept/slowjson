@@ -73,7 +73,7 @@ int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modu
         wprintf(L"\n\n\n  %lsOptionen%ls                        %lsTaste%ls                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
         wprintf(L"  Ansicht ändern                    [a]                    Veranstaltung hinzufügen          [n]\n");
         wprintf(L"                                                           Modulgruppe hinzufügen            [m]\n");
-        wprintf(L"  Notendurchschnitt anzeigen        [d]                    Veranstaltung bearbeiten          [b]\n");
+        wprintf(L"  Leistungsstand anzeigen           [d]                    Veranstaltung bearbeiten          [b]\n");
         wprintf(L"\n");
         wprintf(L"  Hilfe                             [h]                    \n");
         wprintf(L"  Programm beenden                  [q]                    \n");
@@ -303,14 +303,38 @@ void print_helpscreen(void)
 
         wprintf(L"\n%lsAllgemeines%ls\n", TXT_UNDERLINED, END_STYLE);
         wprintf(L"- An jedem Seitenende werden die aktuell verfügbaren \"%lsOptionen%ls\" angezeigt.\n", TXT_UNDERLINED, END_STYLE);
-        wprintf(L"- Auf jeder Seite werden nur die jeweils angezeigten Tasten als Eingabe unterstützt.\n");
+        wprintf(L"- Es werden nur die unter \"%lsOptionen%ls\" angezeigten Tasten als Eingabe unterstützt.\n", TXT_UNDERLINED, END_STYLE);
+        wprintf(L"- Auf jeder Seite, mit Ausnahme der Eingabedialoge, kann über %ls[h]%ls die %lsHilfe%ls aufgerufen werden.\n", TXT_BOLD, END_STYLE, TXT_INVERSE, END_STYLE);
+        wprintf(L"- Auf jeder Seite, mit Ausnahme der Eingabedialoge, kann das Programm über %ls[q]%ls beendet werden.\n", TXT_BOLD, END_STYLE);
         wprintf(L"- Wird viermal hintereinander eine ungültige Eingabe getätigt wird automatisch die %lsHilfe%ls aufgerufen.\n", TXT_INVERSE, END_STYLE);
         wprintf(L"- Wird bei angezeigter %lsHilfe%ls viermal hintereinander eine ungültige Eingabe getätigt wird das Programm automatisch beendet.\n", TXT_INVERSE, END_STYLE);
         wprintf(L"\n");
 
         
+
+
+        wprintf(L"\n%lsVeranstaltungsübersicht%ls\n", TXT_UNDERLINED, END_STYLE);
+        wprintf(L"Die Veranstaltungsübersicht zeigt alle gespeicherten Veranstaltungen an.\n");
+        wprintf(L"Über %ls[a]%ls kann zwischen der Sortierung der Veranstaltungen nach Semester und der Sortierung nach Modulgruppen gewechselt werden.\n", TXT_BOLD, END_STYLE);
+        wprintf(L"Zu jeder Veranstaltung werden der \"Name\", der \"Status\", die Anzahl der \"Leistungspunkte\" und die \"Note\" angezeigt.\n");
+        wprintf(L"Bei der Sortierung nach Semester wird zusätzlich die Summe der Leistungspunkte angezeigt die pro Semester erbracht wurden.\n");
+        wprintf(L"Bei der Sortierung nach Modulgruppe wird pro Modulgruppe angezeigt, wie viele Leistungspunkte bereits\nin der Modulgruppe erbracht wurden und wie viele Leistungspunkte insgesamt in der Modulgruppe zu erbringen sind.\n");
+        wprintf(L"\n");
+
+
+        wprintf(L"\n%lsLeistungsstand%ls\n", TXT_UNDERLINED, END_STYLE);
+        wprintf(L"Die Seite %lsLeistungsstand%ls zeigt aktuelle Kennzahlen zum Studienfortschritt an.\n", TXT_INVERSE, END_STYLE);
+        wprintf(L"Es werden folgende Informationen angezeigt:\n");
+        wprintf(L"     - Aktueller Notendurschnitt (Berechnung nach FPO 2018, B. Sc. Informatik)\n");
+        wprintf(L"     - Summe der bereits erbrachten Leistungspunkte\n");
+        wprintf(L"\n");
+
+
+
+
+        
         wprintf(L"\n%lsHinzufügen von Veranstaltungen%ls\n", TXT_UNDERLINED, END_STYLE);
-        wprintf(L"- Eine neue Veranstaltung kann von der %lsVeranstaltungsübersicht%ls oder der Anzeige des aktuelle %lsNotendurschnitts%ls aus hinzugefügt werden.\n", TXT_INVERSE, END_STYLE, TXT_INVERSE, END_STYLE);
+        wprintf(L"- Eine neue Veranstaltung kann von der %lsVeranstaltungsübersicht%ls oder der Seite %lsLeistungsstand%ls aus hinzugefügt werden.\n", TXT_INVERSE, END_STYLE, TXT_INVERSE, END_STYLE);
         wprintf(L"- Es %lsmüssen%ls folgende Daten eingegeben werden:\n", TXT_BOLD, END_STYLE);
         wprintf(L"     - Name der Veranstaltung\n");
         wprintf(L"     - Modulgruppe\n");
@@ -321,17 +345,29 @@ void print_helpscreen(void)
 
 
         wprintf(L"\n%lsHinzufügen von Modulgruppen%ls\n", TXT_UNDERLINED, END_STYLE);
-        wprintf(L"- Eine neue Veranstaltung kann von der %lsVeranstaltungsübersicht%ls oder der Anzeige des aktuelle %lsNotendurschnitts%ls aus hinzugefügt werden.\n", TXT_INVERSE, END_STYLE, TXT_INVERSE, END_STYLE);
+        wprintf(L"- Eine neue Veranstaltung kann von der %lsVeranstaltungsübersicht%ls oder der Anzeige des aktuelle %lsLeistungsstands%ls aus hinzugefügt werden.\n", TXT_INVERSE, END_STYLE, TXT_INVERSE, END_STYLE);
         wprintf(L"- Es %lsmüssen%ls folgende Daten eingegeben werden:\n", TXT_BOLD, END_STYLE);
         wprintf(L"     - Name der Modulgruppe\n");
         wprintf(L"     - Innerhalb der Modulgruppe zu erreichende Leistungspunkte\n");
         wprintf(L"\n");
 
 
+        wprintf(L"\n%lsVeranstaltung bearbeiten%ls\n", TXT_UNDERLINED, END_STYLE);
+        wprintf(L"- Eine Veranstaltung kann von der %lsVeranstaltungsübersicht%ls oder der Seite %lsLeistungsstand%ls aus bearbeitet werden.\n", TXT_INVERSE, END_STYLE, TXT_INVERSE, END_STYLE);
+        wprintf(L"- Zunächst muss eine Veranstaltung ausgewählt werden, deren Eigenschaften bearbeitet werden sollen\n");
+        wprintf(L"  Es stehen folgende Bearbeitungsoptionen zu Verfügung:\n");
+        wprintf(L"    - %ls[l]%ls: Veranstaltung löschen\n", TXT_BOLD, END_STYLE);
+        wprintf(L"    - %ls[n]%ls: Note ändern (es kann eine neue Note eingegeben oder der Status auf \"ausstehend\" gesetzt werden)\n", TXT_BOLD, END_STYLE);
+        wprintf(L"    - %ls[m]%ls: Modulgruppe ändern\n", TXT_BOLD, END_STYLE);
+        wprintf(L"  Alternativ kann über %ls[c]%ls eine andere Veranstaltung ausgewählt werden\n", TXT_BOLD, END_STYLE);
+        wprintf(L"- %lsBeachte:%ls Die Option zum bearbeiten einer Veranstaltung steht %lsnicht%ls zu Verfügung, wenn noch keine Veranstaltung gespeichert wurde\n", TXT_INVERSE, END_STYLE, TXT_RED, END_STYLE);
+        wprintf(L"\n");
+
+
         wprintf(L"\n\n");
         wprintf(L"  %lsOptionen%ls                        %lsTaste%ls                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
         wprintf(L"  Veranstaltungsübersicht           [v]\n");
-        wprintf(L"  Notendurchschnitt anzeigen        [d]\n");
+        wprintf(L"  Leistungsstand anzeigen           [d]\n");
         wprintf(L"\n");
         wprintf(L"  Programm beenden                  [q]                    \n");
         wprintf(L"\n%ls>>>%ls ", TXT_INVERSE, END_STYLE);
@@ -364,10 +400,29 @@ int print_averagescreen(int new_entry, struct Veranstaltung *ver, size_t size_ve
         // Berechnung des aktuellen Notendurchschnitts
         double average_grade = notendurchschnitt_po(ver, size_ver, mod, size_mod);
 
-        wprintf(L"\n%ls Notendurchschnitt %ls\n\n", TXT_INVERSE, END_STYLE);
-        wprintf(L"Berechnung nach PO: %ls\n\n", PO_2018);
+        // Berechnung Summer erzielte LP
+        int sum_lp = 0;
+        for (int i = 0; i < (int) size_ver; ++i) {
+                if (ver[i].state == Bestanden) {
+                        sum_lp += ver[i].lp;
+                }
+        }
+
+        wprintf(L"\n%ls Leistungsstand %ls\n\n", TXT_INVERSE, END_STYLE);
         wprintf(L"      ╭───────────────────────────────────────────────────────╮\n");
         wprintf(L"      │         %lsAktueller Notendurchschnitt:%ls %ls%.1f%ls              │\n", TXT_GREEN, END_STYLE, TXT_UNDERLINED, average_grade, END_STYLE);
+        wprintf(L"      │                                                       │\n");
+        wprintf(L"      │    Berechnung nach: %ls      │   \n", PO_2018);
+        wprintf(L"      ╰───────────────────────────────────────────────────────╯\n");
+        wprintf(L"      ╭───────────────────────────────────────────────────────╮\n");
+        wprintf(L"      │      %lsSummer der erreichten Leistungspunkte:%ls %ls%i%ls       ", TXT_GREEN, END_STYLE, TXT_UNDERLINED, sum_lp, END_STYLE);
+        if (sum_lp >= 100) {
+                wprintf(L"│\n");
+        } else if(sum_lp >= 10 && sum_lp <= 99) {
+                wprintf(L" │\n");
+        } else {
+               wprintf(L"  │\n"); 
+        }
         wprintf(L"      ╰───────────────────────────────────────────────────────╯\n\n\n");
 
         wprintf(L"  %lsOptionen%ls                        %lsTaste%ls                  \n", TXT_UNDERLINED, END_STYLE, TXT_UNDERLINED, END_STYLE);
