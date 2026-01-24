@@ -64,9 +64,12 @@ static void rehash(json_value_hashmap *map, size_t new_bucket_count) {
 			continue;
 		}
 		json_value_hashmap_set_internal(map, node.key, node.value, false);
-		while (node.next != NULL) {
-			node = *node.next;
-			json_value_hashmap_set_internal(map, node.key, node.value, false);
+		json_value_hashmap_node *curr = node.next;
+		while (curr != NULL) {
+			json_value_hashmap_set_internal(map, curr->key, curr->value, false);
+			json_value_hashmap_node *next = curr->next;
+			free(curr);
+			curr = next;
 		}
 	}
 	json_value_hashmap_node_list_free(&old_buckets);
