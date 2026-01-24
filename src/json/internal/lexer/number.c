@@ -6,20 +6,7 @@
 #include <math.h>
 #include <errno.h>
 
-enum NumParseState {
-	NUM_STATE_START,
-	NUM_STATE_AFTER_SIGN,
-	NUM_STATE_PARSING_INT,
-	NUM_STATE_AFTER_INT,
-	NUM_STATE_AFTER_DECIMAL_POINT,
-	NUM_STATE_PARSING_FRACTION,
-	NUM_STATE_AFTER_FRACTION,
-	NUM_STATE_AFTER_EXPONENT_SYMBOL,
-	NUM_STATE_AFTER_EXPONENT_SIGN,
-	NUM_STATE_PARSING_EXPONENT,
-	NUM_STATE_AFTER_EXPONENT
-};
-typedef enum NumParseState NumParseState;
+
 
 struct ParsedNumber {
 	// The sign of the number: 1 for positive, -1 for negative
@@ -41,188 +28,9 @@ struct ParsedNumber {
 };
 typedef struct ParsedNumber ParsedNumber;
 
-Result expected_error(const char *position, char c, size_t line, size_t column,
-					  const char *expected_history[], size_t expected_history_size) {
-	string expected_str;
-	string_new(&expected_str, "");
-	for (size_t i = 0; i < expected_history_size; i++) {
-		if (i > 0) {
-			string_append_cstr(&expected_str, ", ");
-		}
-		string_append_cstr(&expected_str, expected_history[i]);
-	}
 
-	Result r = new_errorf(
-		"Invalid character '%c'%s: expected one of: %.*s (at line %zu, column %zu)", ELexerSyntaxError,
-		c, position, (int)expected_str.arr.length, expected_str.arr.data, line, column);
-	string_free(&expected_str);
-	return r;
-}
 
-static Result num_dfa_next_state(NumParseState current_state, UCP chr,
-								 NumParseState *next_state, const uchar *chr_ptr,
-								 ParsedNumber *parsed_number,
-								 bool *was_epsilon_transition, bool *has_next,
-								 size_t line, size_t column,
-								 const char *expected_history[5], size_t *expected_history_size) {
-	switch (current_state) {
-	case NUM_STATE_START:
-		if (chr == '-') {
-			parsed_number->sign = -1;
-			*next_state = NUM_STATE_AFTER_SIGN;
-		} else {
-			parsed_number->sign = 1;
-			*next_state = NUM_STATE_AFTER_SIGN;
-			*was_epsilon_transition = true;
-			expected_history[(*expected_history_size)++] = "'-'";
-		}
-		break;
-	case NUM_STATE_AFTER_SIGN:
-		if (chr == '0') {
-			parsed_number->integer_part =
-				(string_view){.data = chr_ptr, .size = 1};
-			*next_state = NUM_STATE_AFTER_INT;
-			*expected_history_size = 0;
-		} else if (chr >= '1' && chr <= '9') {
-			parsed_number->integer_part =
-				(string_view){.data = chr_ptr, .size = 1};
-			*next_state = NUM_STATE_PARSING_INT;
-			parsed_number->integer_length = 1;
-		} else {
-			expected_history[(*expected_history_size)++] = "digit";
-			return expected_error(" in number", chr, line, column,
-								  expected_history, *expected_history_size);
-		}
-		break;
-	case NUM_STATE_PARSING_INT:
-		if (chr >= '0' && chr <= '9') {
-			parsed_number->integer_part.size++;
-			if (chr != '0') {
-				parsed_number->integer_length =
-					parsed_number->integer_part.size;
-			}
-			*next_state = NUM_STATE_PARSING_INT;
-		} else {
-			*next_state = NUM_STATE_AFTER_INT;
-			*was_epsilon_transition = true;
-			expected_history[(*expected_history_size)++] = "digit";
-		}
-		break;
-	case NUM_STATE_AFTER_INT:
-		if (chr == '.') {
-			*next_state = NUM_STATE_AFTER_DECIMAL_POINT;
-		} else if (parsed_number->integer_part.size == 1 &&
-				   parsed_number->integer_part.data[0] == '0' && chr >= '0' &&
-				   chr <= '9') {
-			// This is a "leading zero" (the current integer part is 0, and the
-			// next character is a digit) If we would not catch this here, the
-			// lexer would lex something like 01 as two separate numbers: 0 and
-			// 1 Which then would be rejected by the parser, as two numbers
-			// can't follow each other. In order to provide better error
-			// messages, we catch this case here
-			return new_errorf("Invalid character '%c' in number: leading zeros "
-							  "are not allowed at line %zu, column %zu",
-							  ELexerSyntaxError, chr, line, column);
-		} else {
-			*next_state = NUM_STATE_AFTER_FRACTION;
-			*was_epsilon_transition = true;
-			expected_history[(*expected_history_size)++] = "'.'";
-		}
-		break;
-	case NUM_STATE_AFTER_DECIMAL_POINT:
-		if (chr >= '0' && chr <= '9') {
-			parsed_number->fractional_part =
-				(string_view){.data = chr_ptr, .size = 1};
-			if (chr != '0') {
-				parsed_number->fraction_length = 1;
-			} else {
-				parsed_number->fraction_length = 0;
-			}
-			*next_state = NUM_STATE_PARSING_FRACTION;
-		} else {
-			// return new_errorf(
-			// 	"Invalid character '%c' in number: expected digit after "
-			// 	"decimal point at line %zu, column %zu",
-			// 	ELexerSyntaxError, chr, line, column);
-			expected_history[(*expected_history_size)++] = "digit";
-			return expected_error(" in number after decimal point", chr, line, column,
-								  expected_history, *expected_history_size);
-		}
-		break;
-	case NUM_STATE_PARSING_FRACTION:
-		if (chr >= '0' && chr <= '9') {
-			parsed_number->fractional_part.size++;
-			*next_state = NUM_STATE_PARSING_FRACTION;
-			if (chr != '0') {
-				parsed_number->fraction_length =
-					parsed_number->fractional_part.size;
-			}
-		} else {
-			*next_state = NUM_STATE_AFTER_FRACTION;
-			*was_epsilon_transition = true;
-			expected_history[(*expected_history_size)++] = "digit";
-		}
-		break;
-	case NUM_STATE_AFTER_FRACTION:
-		if (chr == 'e' || chr == 'E') {
-			*next_state = NUM_STATE_AFTER_EXPONENT_SYMBOL;
-		} else {
-			*next_state = NUM_STATE_AFTER_EXPONENT;
-			*was_epsilon_transition = true;
-			expected_history[(*expected_history_size)++] = "'e' or 'E'";
-		}
-		break;
-	case NUM_STATE_AFTER_EXPONENT_SYMBOL:
-		if (chr == '+' || chr == '-') {
-			parsed_number->has_exponent = true;
-			*next_state = NUM_STATE_AFTER_EXPONENT_SIGN;
-			if (chr == '-') {
-				parsed_number->exponent_sign = -1;
-			} else {
-				parsed_number->exponent_sign = 1;
-			}
-		} else {
-			parsed_number->has_exponent = true;
-			parsed_number->exponent_sign = 1;
-			*next_state = NUM_STATE_AFTER_EXPONENT_SIGN;
-			*was_epsilon_transition = true;
-			expected_history[(*expected_history_size)++] = "'+' or '-'";
-		}
-		break;
-	case NUM_STATE_AFTER_EXPONENT_SIGN:
-		if (chr >= '0' && chr <= '9') {
-			parsed_number->exponent_part =
-				(string_view){.data = chr_ptr, .size = 1};
-			*next_state = NUM_STATE_PARSING_EXPONENT;
-		} else {
-			// return new_errorf(
-			// 	"Invalid character '%c' in number: expected digit after "
-			// 	"exponent sign at line %zu, column %zu",
-			// 	ELexerSyntaxError, chr, line, column);
-			expected_history[(*expected_history_size)++] = "digit";
-			return expected_error(" in number after exponent sign", chr, line, column,
-								  expected_history, *expected_history_size);
-		}
-		break;
-	case NUM_STATE_PARSING_EXPONENT:
-		if (chr >= '0' && chr <= '9') {
-			parsed_number->exponent_part.size++;
-			*next_state = NUM_STATE_PARSING_EXPONENT;
-		} else {
-			*next_state = NUM_STATE_AFTER_EXPONENT;
-			*was_epsilon_transition = true;
-			expected_history[(*expected_history_size)++] = "digit";
-		}
-		break;
-	case NUM_STATE_AFTER_EXPONENT:
-		*has_next = false;
-		break;
-	}
-	if (!*was_epsilon_transition) {
-		*expected_history_size = 0;
-	}
-	return new_success();
-}
+
 
 enum OverflowError { TOO_LARGE, TOO_SMALL, NO_OVERFLOW };
 typedef enum OverflowError OverflowError;
@@ -325,6 +133,7 @@ static Result convert_exponent(ParserConfig *config,
 
 static Result build_json_number(Lexer *lexer, ParserConfig *config,
 								ParsedNumber *parsed_number,
+								size_t start_index, size_t end_index,
 								JSONNumber *out_number) {
 	intmax_t exponent_value = 0;
 	bool double_fallback = false;
@@ -390,50 +199,13 @@ static Result build_json_number(Lexer *lexer, ParserConfig *config,
 		}
 	}
 
-	// Build string representation of the number
-	// With variable array size
-	#ifdef __STDC_NO_VLA__
-	#error "Variable Length Arrays are required for this function"
-	#endif
-
-	const size_t sign_space = (parsed_number->sign == -1 ? 1 : 0);
-	const size_t int_space = parsed_number->integer_part.size;
-	const size_t decimal_point_space = (parsed_number->fractional_part.size > 0 ? 1 : 0);
-	const size_t frac_space = parsed_number->fractional_part.size;
-	const size_t exponent_space = (parsed_number->has_exponent ? 2 : 0);
-	const size_t exp_part_space = parsed_number->exponent_part.size;
-	const size_t buffer_size = sign_space + int_space + decimal_point_space +
-							   frac_space + exponent_space + exp_part_space + 1;
-	uchar buffer[buffer_size];
-	size_t buffer_index = 0;
-	if (parsed_number->sign == -1) {
-		buffer[buffer_index++] = '-';
-	}
-	memcpy(buffer + buffer_index, parsed_number->integer_part.data,
-		   parsed_number->integer_part.size);
-	buffer_index += parsed_number->integer_part.size;
-	if (parsed_number->fractional_part.size > 0) {
-		buffer[buffer_index++] = '.';
-		memcpy(buffer + buffer_index, parsed_number->fractional_part.data,
-			   parsed_number->fractional_part.size);
-		buffer_index += parsed_number->fractional_part.size;
-	}
-	if (parsed_number->has_exponent) {
-		buffer[buffer_index++] = 'e';
-		if (parsed_number->exponent_sign == -1) {
-			buffer[buffer_index++] = '-';
-		} else {
-			buffer[buffer_index++] = '+';
-		}
-		memcpy(buffer + buffer_index, parsed_number->exponent_part.data,
-			   parsed_number->exponent_part.size);
-		buffer_index += parsed_number->exponent_part.size;
-	}
-	buffer[buffer_index] = '\0';
-
 	char *endptr;
 	errno = 0;
-	double result = strtod((char*)buffer, &endptr);
+	// Use the original source buffer with start index
+	const char *start_ptr = (const char *)(lexer->decoder.source.data + start_index);
+	
+	double result = strtod(start_ptr, &endptr);
+	
     if ((result == HUGE_VAL || result == -HUGE_VAL) && errno == ERANGE) {
         switch (config->double_overflow_behavior) {
         case CONFIG_DOUBLE_OVERFLOW_CLAMP:
@@ -461,98 +233,144 @@ static Result build_json_number(Lexer *lexer, ParserConfig *config,
 		default:
 			panic("Unhandled ConfigDoubleOutOfRangeBehavior");
         }
-    } else if (endptr != (char*)buffer) {
+    } else {
+		// Valid double.
         out_number->is_integer = false;
         out_number->float_value = result;
         return new_success();
-    } else {
-		return new_errorf("Could not convert number to double at line %zu, "
-						  "column %zu",
-						  ELexerSyntaxError, lexer->line,
-						  lexer->column);
-	}
+    }
 }
 
-Result lexer_lex_number(Lexer *lexer, JSONToken *token, uchar start) {
-	uchar chr;
+#define next_or_end do { \
+	/* Skip previous peeked uchar */ \
+	lexer_skip(lexer, 1); \
+	/* Get next uchar */ \
+	Result r = lexer_peek_uchar(lexer, &chr); \
+	if (!r.success) { \
+		error_free(r); \
+		goto end_of_number; \
+	} \
+} while(0)
+
+#define next_or_error do { \
+	/* Skip previous peeked uchar */ \
+	lexer_skip(lexer, 1); \
+	/* Get next uchar */ \
+	Result r = lexer_peek_uchar(lexer, &chr); \
+	if (!r.success) { \
+		if (cerrno.type == ELexerEOF) { \
+			error_free(r); \
+			return new_errorf("Unexpected end of input in number at " \
+								  "line %zu, column %zu", \
+								  ELexerSyntaxError, lexer->line, \
+								  lexer->column); \
+		} else { \
+			return r; \
+		} \
+	} \
+} while(0)
+
+Result lexer_lex_number(Lexer *lexer, JSONToken *token, uchar chr) {
 	Result r;
-
-	NumParseState state = NUM_STATE_START;
 	ParsedNumber parsed_number = {0};
-	parsed_number.has_exponent = false;
 
-	const char *expected_history[5];
-	size_t expected_history_size = 0;
+	size_t start_index = utf8_decoder_pos(&lexer->decoder);
 
-	while (1) {
-		r = lexer_peek_uchar(lexer, &chr);
-		if (!r.success && cerrno.type == ELexerEOF) {
-			error_free(r);
-			// Reached end of file
-			// Check if we are in an accepting state
-			if (state != NUM_STATE_PARSING_INT &&
-				state != NUM_STATE_AFTER_INT &&
-				state != NUM_STATE_PARSING_FRACTION &&
-				state != NUM_STATE_AFTER_FRACTION &&
-				state != NUM_STATE_PARSING_EXPONENT &&
-				state != NUM_STATE_AFTER_EXPONENT) {
-				return new_errorf("Unexpected end of input in number at line %zu, column %zu",
-								  ELexerSyntaxError, lexer->line, lexer->column);
+	// Parse sign
+	if (chr == '-') {
+		parsed_number.sign = -1;
+		next_or_error;
+	} else {
+		parsed_number.sign = 1;
+	}
+
+	// Parse integer part
+	if (chr >= '0' && chr <= '9') {
+		parsed_number.integer_part.data =
+			lexer->decoder.source.data + utf8_decoder_pos(&lexer->decoder);
+		parsed_number.integer_part.size = 0;
+		
+		// Leading zero means that no other digits are allowed in the integer part
+		if (chr == '0') {
+			parsed_number.integer_part.size = 1;
+			next_or_end;
+
+			// If the next character is a digit, this is a leading zero error
+			if (chr >= '0' && chr <= '9') {
+				return new_errorf("Invalid character '%c' in number: leading zeros "
+                                  "are not allowed at line %zu, column %zu",
+                                  ELexerSyntaxError, chr, lexer->line, lexer->column);
 			}
-			
-			token->type = JSONTok_Number;
-			// Build number
-			JSONNumber number;
-			Result r = build_json_number(lexer, &lexer->config, &parsed_number, &number);
-			if (!r.success) {
-				return r;
-			}
-			token->number = number;
-			error_free(r);
-			return new_success();
-		} else if (!r.success) {
-			return r;
-		}
+			parsed_number.integer_length = 0;
 
-		bool was_epsilon_transition = false;
-		NumParseState next_state;
-		bool has_next = true;
-
-		r = num_dfa_next_state(
-			state,		 // Current state of the DFA
-			chr,		 // Current character
-			&next_state, // Next state of the DFA
-			lexer->decoder.source.data
-				+ utf8_decoder_pos(&lexer->decoder),	 // Pointer to current character
-			&parsed_number,			 // Parsed number being built
-			&was_epsilon_transition, // Whether the transition is epsilon
-			&has_next,				 // Whether there is a next character
-			lexer->line,			 // Current line for error reporting
-			lexer->column,			 // Current column for error reporting
-			expected_history,		 // Array of expected tokens for error reporting
-			&expected_history_size	 // Size of the expected tokens array
-		);
-		if (!r.success) {
-			return r;
-		}
-		if (!has_next) {
-			// Reached end of number
-			token->type = JSONTok_Number;
-			// Build number
-			JSONNumber number;
-			Result r = build_json_number(lexer, &lexer->config, &parsed_number, &number);
-			if (!r.success) {
-				return r;
-			}
-			token->number = number;
-			return new_success();
 		} else {
-			if (!was_epsilon_transition) {
-				// Consume character (every character inside a number is 1 byte in UTF-8)
-				lexer_skip(lexer, 1);
+			// Normal number
+			while (chr >= '0' && chr <= '9') {
+				parsed_number.integer_part.size++;
+				// Update integer_length (strip trailing zeros)
+				if (chr != '0') {
+					parsed_number.integer_length = parsed_number.integer_part.size;
+				}
+				next_or_end;
 			}
-			state = next_state;
-			was_epsilon_transition = false;
+		}
+	} else {
+		return new_errorf("Invalid character '%c' in number at line %zu, column %zu",
+						  ELexerSyntaxError, chr, lexer->line, lexer->column);
+	}
+
+	// Parse fractional part
+	if (chr == '.') {
+		next_or_error;
+		parsed_number.fractional_part.data =
+			lexer->decoder.source.data + utf8_decoder_pos(&lexer->decoder);
+		parsed_number.fractional_part.size = 0;
+		if (chr >= '0' && chr <= '9') {
+			while (chr >= '0' && chr <= '9') {
+				parsed_number.fractional_part.size++;
+				if (chr != '0') {
+					parsed_number.fraction_length =
+						parsed_number.fractional_part.size;
+				}
+				next_or_end;
+			}
+		} else {
+			return new_errorf("Invalid character '%c' in number: expected digit after "
+							  "decimal point at line %zu, column %zu",
+							  ELexerSyntaxError, chr, lexer->line, lexer->column);
 		}
 	}
+
+	// Parse exponent part
+	if (chr == 'e' || chr == 'E') {
+		next_or_error;
+		parsed_number.has_exponent = true;
+		
+		if (chr == '+' || chr == '-') {
+			parsed_number.exponent_sign = (chr == '-') ? -1 : 1;
+			next_or_error;
+		} else {
+			parsed_number.exponent_sign = 1;
+		}
+
+		if (chr >= '0' && chr <= '9') {
+			parsed_number.exponent_part.data =
+				lexer->decoder.source.data + utf8_decoder_pos(&lexer->decoder);
+			parsed_number.exponent_part.size = 0;
+
+			while (chr >= '0' && chr <= '9') {
+				parsed_number.exponent_part.size++;
+				next_or_end;
+			}
+		} else {
+			return new_errorf("Invalid character '%c' in number: expected digit after "
+							  "exponent sign at line %zu, column %zu",
+							  ELexerSyntaxError, chr, lexer->line, lexer->column);
+		}
+	}
+end_of_number:;
+	size_t end_index = utf8_decoder_pos(&lexer->decoder);
+	
+	token->type = JSONTok_Number;
+	return build_json_number(lexer, &lexer->config, &parsed_number, start_index, end_index, &token->number);
 }
