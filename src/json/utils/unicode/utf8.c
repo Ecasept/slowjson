@@ -9,24 +9,46 @@
 // Well-Formed Byte Sequences:
 // https://www.unicode.org/versions/Unicode17.0.0/core-spec/chapter-3/#G27506
 
+
+UTF8Decoder utf8_decoder_new(string_view source) {
+	return (UTF8Decoder) {
+		.index = 0,
+		.source = source
+	};
+}
+
+/**
+ * @brief Returns the next uchar from a string, or an IndexOutOfBounds Error
+ */
+static inline Result get_next_uchar(string_view str, size_t index, uchar *out) {
+	if (index >= str.size) {
+		return new_error(
+			"Unexpected end of unicode string while reading codepoint",
+			EUnicodeUnexpectedEndOfString);
+	}
+	*out = sv_at_unchecked(str, index);
+	return new_success();
+}
+
+#define continuation_error(lower, byte, upper) \
+	new_errorf( \
+		"Invalid continuation byte 0x%2X. Expected between 0x%2X and 0x%2X", \
+		EUnicodeError, byte, lower, upper)
+
 /**
  * @brief Ensures the passed continuation bytes is in its valid range and
  * returns an appropriate error if not
  */
-static Result ensure(uchar lower, uchar c, uchar upper) {
-	if (!between(lower, c, upper)) {
-		return new_errorf(
-			"Invalid continuation byte 0x%2X. Expected between 0x%2X and 0x%2X",
-			EUnicodeError, c, lower, upper);
-	}
-	return new_success();
-}
+#define ensure(lower, c, upper) \
+	if (!between(lower, c, upper)) { \
+		return continuation_error(lower, c, upper); \
+	} \
 
 /**
  * @brief Ensure the unicode byte is in the default valid range for most
  * continuation bytes
  */
-static Result ensure_default(uchar c) { return ensure(0x80, c, 0xBF); }
+#define ensure_default(c) ensure(0x80, c, 0xBF)
 
 /**
  * @brief Removes the 0b10 marking at the beginning of every continuation byte
@@ -66,90 +88,117 @@ static void decode_quadruple_byte(uchar c1, uchar c2, uchar c3, uchar c4,
 	*out = c1_contrib + c2_contrib + c3_contrib + c4_contrib;
 }
 
-/**
- * @brief Reads the next UTF-8 encoded codepoint from a string
- * @param str The string to read from
- * @param index Pointer to the current index in the string. Will be updated to
- * the next codepoint's index after reading.
- * @param out Pointer to store the resulting codepoint
- */
 Result utf8_get_next_codepoint(string_view str, size_t *index,
 							   UnicodeCodePoint *out) {
-	size_t index_cpy = *index;
-	uchar c1;
-	Result r;
-	check(get_next_uchar(str, &index_cpy, &c1));
+	if (*index >= str.size) {
+		return new_error(
+			"Unexpected end of unicode string while reading codepoint",
+			EUnicodeUnexpectedEndOfString);
+	}
+	uchar c1 = sv_at_unchecked(str, *index);
 	if (between(0x00, c1, 0x7F)) {
 		// One byte
 		decode_single_byte(c1, out);
-	} else if (between(0xC2, c1, 0xDF)) {
+		*index += 1;
+		return new_success();
+	}
+
+	if (between(0xC2, c1, 0xDF)) {
 		// Two bytes
-		uchar c2;
-		check(get_next_uchar(str, &index_cpy, &c2));
-		check(ensure_default(c2));
+		if (*index + 1 >= str.size) {
+			return new_error(
+				"Unexpected end of unicode string while reading codepoint: expected 2 bytes but found 1",
+				EUnicodeError);
+		}
+		uchar c2 = sv_at_unchecked(str, *index + 1);
+		ensure_default(c2);
 		decode_double_byte(c1, c2, out);
+		*index += 2;
 	} else if (between(0xE0, c1, 0xEF)) {
 		// Three bytes
-		uchar c2, c3;
-		check(get_next_uchar(str, &index_cpy, &c2));
-		check(get_next_uchar(str, &index_cpy, &c3));
+		if (*index + 2 >= str.size) {
+			return new_errorf(
+				"Unexpected end of unicode string while reading codepoint: expected 3 bytes but found %zu",
+				EUnicodeError, str.size - *index);
+		}
+		uchar c2 = sv_at_unchecked(str, *index + 1);
+		uchar c3 = sv_at_unchecked(str, *index + 2);
 		switch (c1) {
 		case 0xE0:
 			// Overlong Encoding
-			r = ensure(0xA0, c2, 0xBF);
-			if (!r.success) {
+			if (!between(0xA0, c2, 0xBF)) {
 				if (between(0x80, c2, 0x9F)) {
 					return new_errorf(
 						"Invalid continuation byte 0x%2X (will result in an overlong encoding)",
 						EUnicodeError, c2);
+				} else {
+					return continuation_error(0xA0, c2, 0xBF);
 				}
 			}
 			break;
 		case 0xED:
 			// Surrogates
-			r = ensure(0x80, c2, 0x9F);
-			if (!r.success) {
+			if (!between(0x80, c2, 0x9F)) {
 				if (between(0xA0, c2, 0xBF)) {
 					return new_errorf(
-						"Invalid continuation byte 0x%2X in (will result in a surrogate codepoint)",
+						"Invalid continuation byte 0x%2X (will result in a surrogate codepoint)",
 						EUnicodeError, c2);
+				} else {
+					return continuation_error(0x80, c2, 0x9F);
 				}
 			}
 			break;
+
 		default:
-			check(ensure_default(c2));
+			ensure_default(c2);
 			break;
 		}
-		check(ensure_default(c3));
+		ensure_default(c3);
 		decode_triple_byte(c1, c2, c3, out);
+		*index += 3;
 	} else if (between(0xF0, c1, 0xF4)) {
+		if (*index + 3 >= str.size) {
+			return new_errorf(
+				"Unexpected end of unicode string while reading codepoint: expected 4 bytes but found %zu",
+				EUnicodeError, str.size - *index);
+		}
 		// Four bytes
 		uchar c2, c3, c4;
-		check(get_next_uchar(str, &index_cpy, &c2));
-		check(get_next_uchar(str, &index_cpy, &c3));
-		check(get_next_uchar(str, &index_cpy, &c4));
+		check(get_next_uchar(str, *index + 1, &c2));
+		check(get_next_uchar(str, *index + 2, &c3));
+		check(get_next_uchar(str, *index + 3, &c4));
 		switch (c1) {
 		case 0xF0:
-			r = ensure(0x90, c2, 0xBF);
-			if (!r.success) {
+			if (!between(0x90, c2, 0xBF)) {
 				if (between(0x80, c2, 0x8F)) {
 					return new_errorf(
 						"Invalid continuation byte 0x%2X (will result in an overlong encoding)",
 						EUnicodeError, c2);
+				} else {
+					return continuation_error(0x90, c2, 0xBF);
 				}
 			}
 			break;
 		case 0xF4:
 			// Out of Bounds
-			check(ensure(0x80, c2, 0x8F));
+			if (!between(0x80, c2, 0x8F)) {
+				if (between(0x90, c2, 0xBF)) {
+					return new_errorf(
+						"Invalid continuation byte 0x%2X (codepoint out of Unicode range)",
+						EUnicodeError, c2);
+				} else {
+					return continuation_error(0x80, c2, 0x8F);
+				}
+			}
 			break;
 		default:
-			check(ensure_default(c2));
+			ensure_default(c2);
 			break;
 		}
-		check(ensure_default(c3));
-		check(ensure_default(c4));
+		ensure_default(c3);
+		ensure_default(c4);
 		decode_quadruple_byte(c1, c2, c3, c4, out);
+		*index += 4;
 	} else if (between(0xC0, c1, 0xC1)) {
 		return new_errorf(
 			"Invalid first byte 0x%2X (will result in an overlong encoding)",
@@ -163,7 +212,6 @@ Result utf8_get_next_codepoint(string_view str, size_t *index,
 			"Invalid value for first byte of unicode codepoint 0x%2X (expected 0x00-0x7F, 0xC2-0xF4)",
 			EUnicodeError, c1);
 	}
-	*index = index_cpy;
 	return new_success();
 }
 

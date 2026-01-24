@@ -2,6 +2,7 @@
 #include "../utils/custom_error.h"
 #include "../utils/string/dstring.h"
 #include "../utils/unicode/unicode_types.h"
+#include "../utils/unicode/utf8.h"
 #include "jsonvalue.h"
 #include "../config.h"
 
@@ -48,10 +49,10 @@ typedef struct {
 
 typedef struct {
 	const string *source;
-	size_t position;
 	size_t line;
 	size_t column;
 	ParserConfig config;
+	UTF8Decoder decoder;
 } Lexer;
 
 void lexer_init(Lexer *lexer, const string *source, ParserConfig config);

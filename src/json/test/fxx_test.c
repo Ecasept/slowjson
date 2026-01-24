@@ -183,7 +183,11 @@ void run_fxx_test(void) {
 		double time_taken = ((double)(end - start)) / CLOCKS_PER_SEC;
 
 		if (!r.success) {
-			fprintf(stderr, "FXX Test '%s' failed: %s\n", test.name, r.message);
+			string err_msg = format_error(r);
+			fprintf(stderr, "FXX Test '%s' failed: %.*s\n", test.name,
+					(int)err_msg.arr.length, err_msg.arr.data);
+			string_free(&err_msg);
+			error_free(r);
 			exit(EXIT_FAILURE);
 		} else {
 			printf("FXX Test '%s' passed (%.6fs).\n", test.name, time_taken);

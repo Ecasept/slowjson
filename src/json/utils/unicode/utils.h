@@ -18,7 +18,6 @@ static inline bool btwcp(UnicodeCodePoint lower, UnicodeCodePoint cp,
 	return cp >= lower && cp <= upper;
 }
 
-Result get_next_uchar(string_view str, size_t *index, uchar *out);
 
 /**
  * @brief Returns the first digit of a decimal number

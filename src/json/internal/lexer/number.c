@@ -60,7 +60,7 @@ Result expected_error(const char *position, char c, size_t line, size_t column,
 }
 
 static Result num_dfa_next_state(NumParseState current_state, UCP chr,
-								 NumParseState *next_state, uchar *chr_ptr,
+								 NumParseState *next_state, const uchar *chr_ptr,
 								 ParsedNumber *parsed_number,
 								 bool *was_epsilon_transition, bool *has_next,
 								 size_t line, size_t column,
@@ -473,8 +473,8 @@ static Result build_json_number(Lexer *lexer, ParserConfig *config,
 	}
 }
 
-Result lexer_lex_number(Lexer *lexer, JSONToken *token) {
-	UCP chr;
+Result lexer_lex_number(Lexer *lexer, JSONToken *token, uchar start) {
+	uchar chr;
 	Result r;
 
 	NumParseState state = NUM_STATE_START;
@@ -485,8 +485,8 @@ Result lexer_lex_number(Lexer *lexer, JSONToken *token) {
 	size_t expected_history_size = 0;
 
 	while (1) {
-		r = lexer_peek(lexer, &chr);
-		if (r.type == ELexerEOF) {
+		r = lexer_peek_uchar(lexer, &chr);
+		if (!r.success && cerrno.type == ELexerEOF) {
 			error_free(r);
 			// Reached end of file
 			// Check if we are in an accepting state
@@ -522,8 +522,8 @@ Result lexer_lex_number(Lexer *lexer, JSONToken *token) {
 			state,		 // Current state of the DFA
 			chr,		 // Current character
 			&next_state, // Next state of the DFA
-			lexer->source->arr.data +
-				lexer->position,	 // Pointer to current character
+			lexer->decoder.source.data
+				+ utf8_decoder_pos(&lexer->decoder),	 // Pointer to current character
 			&parsed_number,			 // Parsed number being built
 			&was_epsilon_transition, // Whether the transition is epsilon
 			&has_next,				 // Whether there is a next character
@@ -548,7 +548,8 @@ Result lexer_lex_number(Lexer *lexer, JSONToken *token) {
 			return new_success();
 		} else {
 			if (!was_epsilon_transition) {
-				check(lexer_consume(lexer, &chr));
+				// Consume character (every character inside a number is 1 byte in UTF-8)
+				lexer_skip(lexer, 1);
 			}
 			state = next_state;
 			was_epsilon_transition = false;

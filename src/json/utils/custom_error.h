@@ -1,6 +1,7 @@
 #pragma once
 #include <stdbool.h>
 #include "wchar.h"
+#include <threads.h>
 #define check(code) do {Result _r = (code); if (!_r.success) return _r;} while(0)
 
 struct string;
@@ -34,14 +35,35 @@ typedef enum {
 
 const char* etostr(ErrorType type);
 
-typedef struct {
+struct cerrno_t {
 	char *message;
-	bool success;
 	ErrorType type;
-} Result;
+};
+typedef struct cerrno_t cerrno_t;
+
+struct Result {
+	bool success;
+};
+typedef struct Result Result;
+
+struct RealResult {
+	bool success;
+	cerrno_t error;
+};
+typedef struct RealResult RealResult;
+
+extern thread_local cerrno_t cerrno;
+
+RealResult cerrno_store(Result r);
+void real_result_free(RealResult rr);
+string format_real_result(RealResult rr);
+void cerrno_free(cerrno_t err);
+string format_cerrno(Result r, cerrno_t err);
 
 Result new_error(const char message[], ErrorType type);
-Result new_success(void);
+static inline Result new_success(void) {
+	return (Result){ .success = true };
+}
 void print_error(Result r);
 void error_prependf(Result *r, const char *format, ...)
 	__attribute__((format(printf, 2, 3)));

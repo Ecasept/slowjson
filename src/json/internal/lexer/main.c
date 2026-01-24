@@ -19,8 +19,7 @@
 // https://www.ietf.org/rfc/rfc3629.txt
 
 // ==== Forward Declarations ====
-static Result lexer_lex_structural(Lexer *lexer, JSONToken *token);
-static Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token);
+static Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token, uchar start);
 static Result lexer_lex_string(Lexer *lexer, JSONToken *token);
 static Result lexer_lex_literal(Lexer *lexer, JSONToken *token);
 
@@ -28,74 +27,14 @@ const char *JSONTokenTypeStrings[] = {FOREACH_TOKEN(DECLARE_TOKEN_STRING)};
 
 void lexer_init(Lexer *lexer, const string *source, ParserConfig config) {
 	lexer->source = source;
-	lexer->position = 0;
 	lexer->line = 1;
 	lexer->column = 1;
 	lexer->config = config;
+	lexer->decoder = utf8_decoder_new(as_sv(*source));
 }
 
-
-
-Result lexer_next_token(Lexer *lexer, JSONToken *token) {
-	token->column = lexer->column;
-	token->line = lexer->line;
-	token->type = JSONTok_Unknown;
-
-
-	UCP current_char;
-	Result r = lexer_peek(lexer, &current_char);
-	if (r.type == ELexerEOF) {
-		token->type = JSONTok_EOF;
-		error_free(r);
-		return new_success();
-	}
-	check(r);
-
-	switch (current_char) {
-	case '{':
-	case '}':
-	case '[':
-	case ']':
-	case ':':
-	case ',':
-		return lexer_lex_structural(lexer, token);
-	case '\n':
-	case '\r':
-	case '\t':
-	case ' ':
-		return lexer_lex_whitespace(lexer, token);
-	case '"':
-		check(lexer_consume(lexer, &current_char));
-		return lexer_lex_string(lexer, token);
-	case '-':
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':
-		return lexer_lex_number(lexer, token);
-	default:
-		if (isalpha(current_char)) {
-			return lexer_lex_literal(lexer, token);
-		} else {
-			return new_errorf("Unexpected character \"%c\" at line %zu, column %zu (expected start of new token)",
-							  ELexerSyntaxError, current_char, lexer->line,
-							  lexer->column);
-		}
-	}
-}
-
-static Result lexer_lex_structural(Lexer *lexer, JSONToken *token) {
-	// Implementation for lexing structural characters
-	UCP current_char;
-	check(lexer_consume(lexer, &current_char));
-
-	switch (current_char) {
+static inline void lexer_lex_structural(JSONToken *token, uchar start) {
+	switch (start) {
 	case '{':
 		token->type = JSONTok_LBrace;
 		break;
@@ -114,24 +53,81 @@ static Result lexer_lex_structural(Lexer *lexer, JSONToken *token) {
 	case ',':
 		token->type = JSONTok_Comma;
 		break;
-	default:
-		return new_errorf("Unexpected character \"%c\" at line %zu, column %zu (expected start of structural token)",
-						  ELexerSyntaxError, current_char, lexer->line,
-						  lexer->column - 1);
 	}
-
-	return new_success();
 }
 
-static Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token) {
-	UCP current_char;
+Result lexer_next_token(Lexer *lexer, JSONToken *token) {
+	token->column = lexer->column;
+	token->line = lexer->line;
+	token->type = JSONTok_Unknown;
+
+
+	uchar current_char;
+	Result r = lexer_peek_uchar(lexer, &current_char);
+	if (!r.success && cerrno.type == ELexerEOF) {
+		token->type = JSONTok_EOF;
+		error_free(r);
+		return new_success();
+	}
+	check(r);
+
+	switch (current_char) {
+	case '{':
+	case '}':
+	case '[':
+	case ']':
+	case ':':
+	case ',':
+		lexer_skip(lexer, 1); // Consume structural character
+		lexer_lex_structural(token, current_char);
+		return new_success();
+	case '\n':
+	case '\r':
+	case '\t':
+	case ' ':
+		lexer_skip(lexer, 1); // Consume whitespace character
+		return lexer_lex_whitespace(lexer, token, current_char);
+	case '"':
+		lexer_skip(lexer, 1); // Consume opening quote
+		return lexer_lex_string(lexer, token);
+	case '-':
+	case '0':
+	case '1':
+	case '2':
+	case '3':
+	case '4':
+	case '5':
+	case '6':
+	case '7':
+	case '8':
+	case '9':
+		return lexer_lex_number(lexer, token, current_char);
+	default:
+		// Get codepoint
+		UCP codepoint;
+		check(lexer_peek(lexer, &codepoint));
+		if (isalpha(codepoint)) {
+			return lexer_lex_literal(lexer, token);
+		} else {
+			return new_errorf("Unexpected character \"%c\" at line %zu, column %zu (expected start of new token)",
+							  ELexerSyntaxError, codepoint, lexer->line,
+							  lexer->column);
+		}
+	}
+}
+
+
+
+static Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token, uchar start) {
+	uchar current_char;
 
 	string whitespace;
 	string_new(&whitespace, "");
+	string_append_uchar(&whitespace, start);
 
 	while (1) {
-		Result r = lexer_peek(lexer, &current_char);
-		if (r.type == ELexerEOF) {
+		Result r = lexer_peek_uchar(lexer, &current_char);
+		if (!r.success && cerrno.type == ELexerEOF) {
 			// Reached end of file, return what we have
 			token->type = JSONTok_Whitespace;
 			token->value = whitespace;
@@ -147,7 +143,7 @@ static Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token) {
 		case '\r':
 		case '\t':
 		case ' ':
-			check(lexer_consume(lexer, &current_char));
+			lexer_skip(lexer, 1); // Consume whitespace character
 			if (current_char == '\n') {
 				lexer->column = 1;
 				lexer->line++;
@@ -167,11 +163,12 @@ static Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token) {
 }
 
 static bool lexer_test_literal(Lexer *lexer, string_view expect) {
-	if (lexer->position + expect.size > lexer->source->arr.length) {
+	size_t current_pos = utf8_decoder_pos(&lexer->decoder);
+	if (current_pos + expect.size > lexer->source->arr.length) {
 		return false;
 	}
 	string_view substr = sv_substr_unchecked(
-		as_sv(*lexer->source), lexer->position, expect.size);
+		as_sv(*lexer->source), current_pos, expect.size);
 
 	return sv_eq(substr, expect);
 }
@@ -181,8 +178,7 @@ static bool lexer_lex_specific_literal(Lexer *lexer, JSONToken *token,
 								  JSONTokenType type) {
 	if (lexer_test_literal(lexer, literal)) {
 		token->type = type;
-		lexer->position += literal.size;
-		lexer->column += literal.size;
+		lexer_skip(lexer, literal.size);
 		return true;
 	}
 	return false;
@@ -232,14 +228,22 @@ static Result lexer_lex_unicode_literal(Lexer *lexer, UCP *out) {
 		UCP u;
 		Result r1 = lexer_consume(lexer, &backslash);
 		Result r2 = lexer_consume(lexer, &u);
-		if (r1.type == ELexerEOF || r2.type == ELexerEOF) {
-			return new_error(
-				"Unexpected end of file after high surrogate in unicode escape",
-				ELexerSyntaxError);
-		} else if (!r1.success) {
-			return r1;
+		if (!r1.success) {
+			if (cerrno.type == ELexerEOF) {
+				return new_error(
+					"Unexpected end of file after high surrogate in unicode escape",
+					ELexerSyntaxError);
+			} else {
+				return r1;
+			}
 		} else if (!r2.success) {
-			return r2;
+			if (cerrno.type == ELexerEOF) {
+				return new_error(
+					"Unexpected end of file after high surrogate in unicode escape",
+					ELexerSyntaxError);
+			} else {
+				return r2;
+			}
 		}
 		if (backslash != '\\' || u != 'u') {
 			return new_errorf("Expected \\u after high surrogate, got \"%c%c\" at line %zu, column %zu",

@@ -3,16 +3,6 @@
 #include <stdlib.h>
 #include <limits.h>
 
-uchar sv_at_unchecked(string_view sv, size_t index) {
-	#ifdef DEBUG
-	if (index >= sv.size) {
-		panicf("Tried to access string_view of size %zu at index %zu",
-			   sv.size, index);
-	}
-	#endif
-	return sv.data[index];
-}
-
 Result sv_at_checked(string_view sv, size_t index, uchar *out) {
 	if (index >= sv.size) {
 		return new_errorf("Index %zu out of bounds for string_view of size %zu",

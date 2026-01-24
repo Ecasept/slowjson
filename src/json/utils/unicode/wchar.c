@@ -79,6 +79,7 @@ Result utf8_string_to_wchar(string_view src, wchar_t **dest) {
 
 	wchar_list out;
 	wchar_list_init(&out, 0);
+	UTF8Decoder decoder = utf8_decoder_new(src);
 
 	if (sizeof(wchar_t) == 2) {
 		// UTF-16
@@ -86,7 +87,7 @@ Result utf8_string_to_wchar(string_view src, wchar_t **dest) {
 		Result r;
 		UnicodeCodePoint cp;
 		while (index < src.size) {
-			r = utf8_get_next_codepoint(src, &index, &cp);
+			r = utf8_decoder_next(&decoder, &cp);
 			if (!r.success) {
 				wchar_list_free(&out);
 				return r;
@@ -110,7 +111,7 @@ Result utf8_string_to_wchar(string_view src, wchar_t **dest) {
 		size_t index = 0;
 
 		while (index < src.size) {
-			r = utf8_get_next_codepoint(src, &index, &cp);
+			r = utf8_decoder_next(&decoder, &cp);
 			if (!r.success) {
 				wchar_list_free(&out);
 				return r;

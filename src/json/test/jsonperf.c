@@ -26,7 +26,10 @@ void run_perf_on_test(Test test) {
 	string json;
 	Result r = read_file_to_string(test.filename, &json);
 	if (!r.success) {
-		printf("Failed to read file: %s (%s)\n", test.filename, r.message);
+		string err_msg = format_error(r);
+		printf("Failed to read file: %s (%.*s)\n", test.filename,
+				(int)err_msg.arr.length, err_msg.arr.data);
+		string_free(&err_msg);
 		return;
 	}
 
@@ -38,7 +41,9 @@ void run_perf_on_test(Test test) {
 	clock_t end = clock();
 
 	if (!r.success) {
-		printf("Failed to parse JSON: %s\n", r.message);
+		string err_msg = format_error(r);
+		printf("Failed to parse JSON: %.*s\n", (int)err_msg.arr.length, err_msg.arr.data);
+		string_free(&err_msg);
 		string_free(&json);
 		error_free(r);
 		return;
