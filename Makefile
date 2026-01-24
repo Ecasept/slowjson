@@ -4,10 +4,16 @@ LDFLAGS = -lm
 TARGET = gradeviewer
 BUILD_DIR = build
 
+rebuild = 0
 test = 0
 run = 0
 debug = 0
 arg1 =
+
+
+ifneq ($(rebuild),0)
+	CLEAN_DEPENDENCY = clean
+endif
 
 ifneq ($(test),0)
 	CFLAGS += -DRUN_TESTS
@@ -41,10 +47,7 @@ OBJS = $(SRCS:%.c=$(BUILD_DIR)/%.o)
 # Builds normally
 all: $(BUILD_DIR)/$(TARGET)
 
-# Cleans and builds everything from scratch
-rebuild: clean all
-
-run: all
+run: $(CLEAN_DEPENDENCY) all
 ifeq ($(OS),Windows_NT)
 	$(call FIX_PATH,$(BUILD_DIR)/$(TARGET))
 else
@@ -52,12 +55,12 @@ else
 endif
 
 profile: CFLAGS := $(CFLAGS) -g -DDEBUG
-profile: rebuild
+profile: $(CLEAN_DEPENDENCY)
 	valgrind --tool=callgrind --dump-instr=yes ./$(BUILD_DIR)/$(TARGET) $(arg1)
 
 valgrind: CFLAGS := $(CFLAGS) -g -DDEBUG
-valgrind: rebuild
-	valgrind --leak-check=full --show-leak-kinds=all ./$(BUILD_DIR)/$(TARGET) $(arg1)
+valgrind: $(CLEAN_DEPENDENCY)
+	valgrind --leak-check=full --show-leak-kinds=all --main-stacksize=1000000 ./$(BUILD_DIR)/$(TARGET) $(arg1)
 
 $(BUILD_DIR)/$(TARGET): $(OBJS)
 	$(call MKDIR,$(dir $@))
