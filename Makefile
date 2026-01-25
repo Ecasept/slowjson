@@ -19,7 +19,7 @@ arg3 =
 
 
 ifneq ($(rebuild),0)
-	REBUILD_DEPENDENCY = clean all
+	CLEAN_DEPENDENCY = clean
 endif
 
 ifneq ($(test),0)
@@ -52,7 +52,7 @@ endif
 OBJS = $(SRCS:%.c=$(BUILD_DIR)/%.o)
 
 # Builds normally
-all: $(REBUILD_DEPENDENCY) $(BUILD_DIR)/$(TARGET)
+all: $(CLEAN_DEPENDENCY) $(BUILD_DIR)/$(TARGET)
 
 run: all
 ifeq ($(OS),Windows_NT)
@@ -62,11 +62,11 @@ else
 endif
 
 profile: CFLAGS := $(CFLAGS) -g -DDEBUG
-profile: $(REBUILD_DEPENDENCY)
+profile: all
 	valgrind --tool=callgrind --dump-instr=yes ./$(BUILD_DIR)/$(TARGET) $(arg1) $(arg2) $(arg3)
 
 valgrind: CFLAGS := $(CFLAGS) -g -DDEBUG
-valgrind: $(REBUILD_DEPENDENCY)
+valgrind: all
 	valgrind --leak-check=full --show-leak-kinds=all --main-stacksize=1000000 ./$(BUILD_DIR)/$(TARGET) $(arg1) $(arg2) $(arg3)
 
 $(BUILD_DIR)/$(TARGET): $(OBJS)
