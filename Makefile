@@ -1,6 +1,12 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -std=c11 -g -DDEBUG -O2
-LDFLAGS = -lm
+
+DEBUG_FLAGS = -g -DDEBUG
+OPT_FLAGS = -O2 # -flto -march=native
+CFLAGS = -Wall -Wextra -pedantic -std=c11 $(DEBUG_FLAGS) $(OPT_FLAGS)
+
+OPT_LD_FLAGS = # -flto
+LDFLAGS = -lm $(OPT_LD_FLAGS)
+
 TARGET = gradeviewer
 BUILD_DIR = build
 
