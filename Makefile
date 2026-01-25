@@ -51,9 +51,9 @@ endif
 OBJS = $(SRCS:%.c=$(BUILD_DIR)/%.o)
 
 # Builds normally
-all: $(BUILD_DIR)/$(TARGET)
+all: $(REBUILD_DEPENDENCY) $(BUILD_DIR)/$(TARGET)
 
-run: $(REBUILD_DEPENDENCY) all
+run: all
 ifeq ($(OS),Windows_NT)
 	$(call FIX_PATH,$(BUILD_DIR)/$(TARGET))
 else
