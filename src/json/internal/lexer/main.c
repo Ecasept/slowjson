@@ -62,7 +62,7 @@ Result lexer_next_token(Lexer *lexer, JSONToken *token) {
 	token->type = JSONTok_Unknown;
 
 
-	uchar current_char;
+	uchar current_char = 0;
 	Result r = lexer_peek_uchar(lexer, &current_char);
 	if (!r.success && cerrno.type == ELexerEOF) {
 		token->type = JSONTok_EOF;
