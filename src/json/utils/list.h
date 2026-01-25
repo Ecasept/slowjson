@@ -27,18 +27,12 @@ void TYPED_NAME(list_init)(TYPED_NAME(list) * arr, size_t cap);
 void TYPED_NAME(list_resize)(TYPED_NAME(list) * arr, size_t new_capacity);
 void TYPED_NAME(list_ensure_resize)(TYPED_NAME(list) * arr, size_t capacity);
 void TYPED_NAME(list_push)(TYPED_NAME(list) * arr, TYPE element);
-void TYPED_NAME(list_get)(const TYPED_NAME(list) * arr, size_t index,
-						  TYPE *element);
-Result TYPED_NAME(list_get_err)(const TYPED_NAME(list) * arr, size_t index,
-								TYPE *element);
 void TYPED_NAME(list_ensure_index)(const TYPED_NAME(list) * arr, size_t index);
-void TYPED_NAME(list_get_ref)(const TYPED_NAME(list) * arr, size_t index,
-
-							  TYPE **element);
 void TYPED_NAME(list_set)(TYPED_NAME(list) * arr, size_t index, TYPE element);
-void TYPED_NAME(list_extend)(TYPED_NAME(list) * arr,
-							 const TYPED_NAME(list) * other);
+void TYPED_NAME(list_extend)(TYPED_NAME(list) * arr, const TYPED_NAME(list) * other);
 void TYPED_NAME(list_free)(TYPED_NAME(list) * arr);
+TYPE TYPED_NAME(list_get_unchecked)(const TYPED_NAME(list) * arr, size_t index);
+TYPE *TYPED_NAME(list_get_ref_unchecked)(const TYPED_NAME(list) * arr, size_t index);
 
 /**
  * @brief Returns whether `index` points to a valid location in `arr`
@@ -120,25 +114,11 @@ void TYPED_NAME(list_push)(TYPED_NAME(list) * arr, TYPE element) {
 /**
  * @brief Writes a copy of the element at `index` to the location of `element`
  */
-void TYPED_NAME(list_get)(const TYPED_NAME(list) * arr, size_t index,
-						  TYPE *element) {
+TYPE TYPED_NAME(list_get_unchecked)(const TYPED_NAME(list) * arr, size_t index) {
+	#ifdef DEBUG
 	TYPED_NAME(list_ensure_index)(arr, index);
-	*element = arr->data[index];
-}
-
-/**
- * @brief Writes a copy of the element at `index` to the location of `element`.
- * Returns an `EIndexOutOfBounds` exception if the index is not covered by the
- * array instead of panicking.
- */
-Result TYPED_NAME(list_get_err)(const TYPED_NAME(list) * arr, size_t index,
-								TYPE *element) {
-	if (!TYPED_NAME(list_check_index)(arr, index)) {
-		return new_errorf("Index %zu out of bounds for array of length %zu",
-						  EIndexOutOfBounds, index, arr->length);
-	}
-	*element = arr->data[index];
-	return new_success();
+	#endif
+	return arr->data[index];
 }
 
 /**
@@ -155,10 +135,11 @@ void TYPED_NAME(list_ensure_index)(const TYPED_NAME(list) * arr, size_t index) {
  * @brief Writes a reference to the element at `index` to the location of
  * `element`
  */
-void TYPED_NAME(list_get_ref)(const TYPED_NAME(list) * arr, size_t index,
-							  TYPE **element) {
+TYPE *TYPED_NAME(list_get_ref_unchecked)(const TYPED_NAME(list) * arr, size_t index) {
+	#ifdef DEBUG
 	TYPED_NAME(list_ensure_index)(arr, index);
-	*element = &(arr->data[index]);
+	#endif
+	return &(arr->data[index]);
 }
 
 /**

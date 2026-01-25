@@ -14,7 +14,7 @@ static Result get_tokens(Lexer *lexer, json_token_list *tokens) {
 		if (!r.success) {
 			// Free previously allocated tokens
 			for (size_t i = 0; i < tokens->length; i++) {
-				json_token_list_get(tokens, i, &token);
+				token = json_token_list_get_unchecked(tokens, i);
 				lexer_free_token(&token);
 			}
 			json_token_list_free(tokens);
@@ -34,7 +34,7 @@ static Result parser_peek_token_count(json_token_list *tokens, size_t position,
 		return new_error("Unexpected end of input", EParserUnexpectedEOF);
 	}
 	(*count)++;
-	json_token_list_get(tokens, position, out_token);
+	*out_token = json_token_list_get_unchecked(tokens, position);
 	if (out_token->type == JSONTok_Whitespace) {
 		// Skip whitespace
 		return parser_peek_token_count(tokens, position + 1, out_token, count);
@@ -283,9 +283,8 @@ Result json_deserialize(string *json, JSONValue *result, ParserConfig config) {
 	r = parse_json_value_top_level(&parser, result);
 
 	// Free tokens
-	JSONToken token;
 	for (size_t i = 0; i < parser.tokens->length; i++) {
-		json_token_list_get(parser.tokens, i, &token);
+		JSONToken token = json_token_list_get_unchecked(parser.tokens, i);
 		lexer_free_token(&token);
 	}
 	json_token_list_free(parser.tokens);

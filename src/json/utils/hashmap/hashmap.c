@@ -36,7 +36,7 @@ Result json_value_hashmap_get(const json_value_hashmap *map, string_view key,
 							  JSONValue *out) {
 	size_t node_index = string_hash(key, map->buckets.length);
 	json_value_hashmap_node node;
-	json_value_hashmap_node_list_get(&map->buckets, node_index, &node);
+	node = json_value_hashmap_node_list_get_unchecked(&map->buckets, node_index);
 	if (node.key.arr.data == NULL) {
 		Result r = new_errorf("Key not found in hashmap: \"%.*s\"",
 			EHashmapKeyNotFound,
@@ -59,7 +59,7 @@ static void rehash(json_value_hashmap *map, size_t new_bucket_count) {
 	map->buckets.length = new_bucket_count;
 	for (size_t bucket = 0; bucket < old_bucket_count; bucket++) {
 		json_value_hashmap_node node;
-		json_value_hashmap_node_list_get(&old_buckets, bucket, &node);
+		node = json_value_hashmap_node_list_get_unchecked(&old_buckets, bucket);
 		if (node.key.arr.data == NULL) {
 			continue;
 		}
@@ -91,7 +91,7 @@ static void json_value_hashmap_set_internal(json_value_hashmap *map, string key,
 	}
 	size_t node_index = string_hash(as_sv(key), map->buckets.length);
 	json_value_hashmap_node *node;
-	json_value_hashmap_node_list_get_ref(&map->buckets, node_index, &node);
+	node = json_value_hashmap_node_list_get_ref_unchecked(&map->buckets, node_index);
 	if (node->key.arr.data == NULL) {
 		// Create new node
 		node->key = key;
@@ -110,7 +110,7 @@ static void json_value_hashmap_set_internal(json_value_hashmap *map, string key,
 void json_value_hashmap_free(json_value_hashmap *map) {
 	for (size_t i = 0; i < map->buckets.length; i++) {
 		json_value_hashmap_node node;
-		json_value_hashmap_node_list_get(&map->buckets, i, &node);
+		node = json_value_hashmap_node_list_get_unchecked(&map->buckets, i);
 		if (node.key.arr.data == NULL) {
 			continue;
 		}
