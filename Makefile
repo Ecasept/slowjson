@@ -6,8 +6,7 @@ BUILD_DIR = build
 
 rebuild = 0
 test = 0
-run = 0
-debug = 0
+ausan = 0
 arg1 =
 
 
@@ -19,7 +18,7 @@ ifneq ($(test),0)
 	CFLAGS += -DRUN_TESTS
 	TARGET := gradeviewer_tests
 endif
-ifneq ($(debug),0)
+ifneq ($(ausan),0)
 	CFLAGS += -DDEBUG -g -fsanitize=address,undefined
 	LDFLAGS += -fsanitize=address,undefined
 endif
