@@ -133,7 +133,7 @@ static Result convert_exponent(ParserConfig *config,
 
 static Result build_json_number(Lexer *lexer, ParserConfig *config,
 								ParsedNumber *parsed_number,
-								size_t start_index,
+								const char *number_str,
 								JSONNumber *out_number) {
 	intmax_t exponent_value = 0;
 	bool double_fallback = false;
@@ -201,10 +201,8 @@ static Result build_json_number(Lexer *lexer, ParserConfig *config,
 
 	char *endptr;
 	errno = 0;
-	// Use the original source buffer with start index
-	const char *start_ptr = (const char *)(lexer->decoder.source.data + start_index);
 	
-	double result = strtod(start_ptr, &endptr);
+	double result = strtod(number_str, &endptr);
 	
     if ((result == HUGE_VAL || result == -HUGE_VAL) && errno == ERANGE) {
         switch (config->double_overflow_behavior) {
@@ -247,8 +245,14 @@ static Result build_json_number(Lexer *lexer, ParserConfig *config,
 	/* Get next uchar */ \
 	Result r = lexer_peek_uchar(lexer, &chr); \
 	if (!r.success) { \
-		error_free(r); \
-		goto end_of_number; \
+		if (cerrno.type == ELexerEOF) { \
+			error_free(r); \
+			was_eof = true; \
+			goto end_of_number; \
+		} \
+		else { \
+			return r; \
+		} \
 	} \
 } while(0)
 
@@ -272,7 +276,7 @@ static Result build_json_number(Lexer *lexer, ParserConfig *config,
 
 Result lexer_lex_number(Lexer *lexer, JSONToken *token, uchar chr) {
 	ParsedNumber parsed_number = {0};
-
+	bool was_eof = false;
 	size_t start_index = utf8_decoder_pos(&lexer->decoder);
 
 	// Parse sign
@@ -369,5 +373,23 @@ Result lexer_lex_number(Lexer *lexer, JSONToken *token, uchar chr) {
 	}
 end_of_number:;
 	token->type = JSONTok_Number;
-	return build_json_number(lexer, &lexer->config, &parsed_number, start_index, &token->number);
+
+	if (was_eof) {
+		// Usually the next character after the number is something that
+		// is not allowed in a number (because it caused the number to end),
+		// and will also cause strtod to stop parsing.
+		// But if we reached end of file, the characters after the number could be anything,
+		// and could potentially NOT stop strtod from parsing further (eg. more numbers).
+		// So we need to ensure that the number is properly terminated.
+		#ifdef __STDC_NO_VLA__
+		#error "Variable Length Arrays are required for this function"
+		#endif
+		size_t length = utf8_decoder_pos(&lexer->decoder) - start_index;
+		uchar buffer[length + 1];
+		memcpy(buffer, lexer->decoder.source.data + start_index, length);
+		buffer[length] = '\0';
+		return build_json_number(lexer, &lexer->config, &parsed_number, (const char *)buffer, &token->number);
+	}
+
+	return build_json_number(lexer, &lexer->config, &parsed_number, (const char *)(lexer->decoder.source.data + start_index), &token->number);
 }
