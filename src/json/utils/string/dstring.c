@@ -52,6 +52,13 @@ void string_append_cstr(string *str, const char *cstr) {
 	memcpy(&str->arr.data[str->arr.length], cstr, len);
 	str->arr.length += len;
 }
+
+void string_append_bytes(string *str, const uchar *bytes, size_t len) {
+	uchar_list_ensure_resize(&str->arr, str->arr.length + len);
+	memcpy(&str->arr.data[str->arr.length], bytes, len);
+	str->arr.length += len;
+}
+
 /**
  * @brief Compares two strings for equality.
  * @note This is a bytewise comparison and does not take encoding into account.

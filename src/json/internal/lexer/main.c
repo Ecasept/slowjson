@@ -276,6 +276,30 @@ static Result lexer_lex_string(Lexer *lexer, JSONToken *token) {
 	bool is_escaped = false;
 
 	while (1) {
+		if (!is_escaped) {
+			// Fast path: read chunks of ASCII characters directly
+			size_t start_idx = utf8_decoder_pos(&lexer->decoder);
+			size_t current_idx = start_idx;
+
+			const uchar *data = lexer->decoder.source.data;
+			size_t max_idx = lexer->decoder.source.size;
+
+			while (current_idx < max_idx) {
+				uchar c = data[current_idx];
+				// Stop at control characters, double quote, backslash or non-ASCII
+				if (c < 0x20 || c == '"' || c == '\\' || c >= 0x80) {
+					break;
+				}
+				current_idx++;
+			}
+
+			size_t len = current_idx - start_idx;
+			if (len > 0) {
+				string_append_bytes(&value, data + start_idx, len);
+				lexer_skip(lexer, len);
+			}
+		}
+
 		Result r = lexer_consume(lexer, &chr);
 		if (!r.success) {
 			string_free(&value);

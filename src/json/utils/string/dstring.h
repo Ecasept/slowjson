@@ -17,6 +17,8 @@ void string_from_view(string *out, string_view sv);
 
 void string_to_cstr(const string *str, char **cstr);
 
+void string_append_bytes(string *str, const uchar *bytes, size_t len);
+
 void string_at(const string *str, size_t index, uchar *out);
 Result string_at_err(const string *str, size_t index, uchar *out);
 
