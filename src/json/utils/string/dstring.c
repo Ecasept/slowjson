@@ -83,10 +83,6 @@ void string_to_cstr(const string *str, char **cstr) {
 	(*cstr)[str->arr.length] = '\0';
 }
 
-void string_at(const string *str, size_t index, uchar *out) {
-	uchar_list_get(&str->arr, index, out);
-}
-
 void string_clone(const string *str, string *out) {
 	uchar_list_init(&out->arr, str->arr.length);
 	memcpy(out->arr.data, str->arr.data, str->arr.length);

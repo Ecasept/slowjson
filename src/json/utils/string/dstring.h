@@ -19,8 +19,6 @@ void string_to_cstr(const string *str, char **cstr);
 
 void string_append_bytes(string *str, const uchar *bytes, size_t len);
 
-void string_at(const string *str, size_t index, uchar *out);
-
 bool string_eq_cstr(const string *str, const char *cstr);
 
 struct StringSplitIterator {
