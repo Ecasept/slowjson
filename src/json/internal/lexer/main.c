@@ -119,7 +119,7 @@ Result lexer_next_token(Lexer *lexer, JSONToken *token) {
 
 
 static Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token, uchar start) {
-	uchar current_char;
+	uchar current_char = 0;
 
 	string whitespace;
 	string_new(&whitespace, "");
