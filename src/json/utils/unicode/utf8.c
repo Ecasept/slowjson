@@ -163,10 +163,9 @@ Result utf8_get_next_codepoint(string_view str, size_t *index,
 				EUnicodeError, str.size - *index);
 		}
 		// Four bytes
-		uchar c2, c3, c4;
-		check(get_next_uchar(str, *index + 1, &c2));
-		check(get_next_uchar(str, *index + 2, &c3));
-		check(get_next_uchar(str, *index + 3, &c4));
+		uchar c2 = sv_at_unchecked(str, *index + 1);
+		uchar c3 = sv_at_unchecked(str, *index + 2);
+		uchar c4 = sv_at_unchecked(str, *index + 3);
 		switch (c1) {
 		case 0xF0:
 			if (!between(0x90, c2, 0xBF)) {
