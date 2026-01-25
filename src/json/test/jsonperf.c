@@ -3,6 +3,7 @@
 #include "../utils/string/file.h"
 #include <time.h>
 #include <stdio.h>
+#include <string.h>
 
 struct Test {
 	const char *filename;
@@ -58,13 +59,44 @@ void run_perf_on_test(Test test) {
 	string_free(&json);
 }
 
-void run_jsonperf(size_t iterations) {
+static void list_available_tests(void) {
+	size_t num_tests = sizeof(tests) / sizeof(tests[0]);
+	printf("Available benchmarks:\n");
+	for (size_t i = 0; i < num_tests; i++) {
+		printf("- %s\n", tests[i].name);
+	}
+}
+
+static int find_test_index(const char *benchmark_name) {
+	if (benchmark_name == NULL) return -1;
+	size_t num_tests = sizeof(tests) / sizeof(tests[0]);
+	for (size_t i = 0; i < num_tests; i++) {
+		if (strcmp(tests[i].name, benchmark_name) == 0) {
+			return (int)i;
+		}
+	}
+	return -1;
+}
+
+void run_jsonperf(size_t iterations, const char *benchmark_name) {
+	int test_index = find_test_index(benchmark_name);
+	if (benchmark_name != NULL && test_index < 0) {
+		printf("Unknown benchmark: %s\n", benchmark_name);
+		list_available_tests();
+		return;
+	}
+
 	for (size_t i = 0; i < iterations; i++) {
 		printf("=== Iteration %zu ===\n", i + 1);
-		size_t num_tests = sizeof(tests) / sizeof(tests[0]);
-		for (size_t j = 0; j < num_tests; j++) {
-			run_perf_on_test(tests[j]);
+		if (test_index >= 0) {
+			run_perf_on_test(tests[(size_t)test_index]);
 			printf("\n");
+		} else {
+			size_t num_tests = sizeof(tests) / sizeof(tests[0]);
+			for (size_t j = 0; j < num_tests; j++) {
+				run_perf_on_test(tests[j]);
+				printf("\n");
+			}
 		}
 	}
 }

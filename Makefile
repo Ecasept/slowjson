@@ -15,6 +15,7 @@ test = 0
 ausan = 0
 arg1 =
 arg2 =
+arg3 =
 
 
 ifneq ($(rebuild),0)
@@ -57,16 +58,16 @@ run: all
 ifeq ($(OS),Windows_NT)
 	$(call FIX_PATH,$(BUILD_DIR)/$(TARGET))
 else
-	./$(BUILD_DIR)/$(TARGET) $(arg1) $(arg2)
+	./$(BUILD_DIR)/$(TARGET) $(arg1) $(arg2) $(arg3)
 endif
 
 profile: CFLAGS := $(CFLAGS) -g -DDEBUG
 profile: $(REBUILD_DEPENDENCY)
-	valgrind --tool=callgrind --dump-instr=yes ./$(BUILD_DIR)/$(TARGET) $(arg1) $(arg2)
+	valgrind --tool=callgrind --dump-instr=yes ./$(BUILD_DIR)/$(TARGET) $(arg1) $(arg2) $(arg3)
 
 valgrind: CFLAGS := $(CFLAGS) -g -DDEBUG
 valgrind: $(REBUILD_DEPENDENCY)
-	valgrind --leak-check=full --show-leak-kinds=all --main-stacksize=1000000 ./$(BUILD_DIR)/$(TARGET) $(arg1) $(arg2)
+	valgrind --leak-check=full --show-leak-kinds=all --main-stacksize=1000000 ./$(BUILD_DIR)/$(TARGET) $(arg1) $(arg2) $(arg3)
 
 $(BUILD_DIR)/$(TARGET): $(OBJS)
 	$(call MKDIR,$(dir $@))
