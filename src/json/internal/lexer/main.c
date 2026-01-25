@@ -102,7 +102,7 @@ Result lexer_next_token(Lexer *lexer, JSONToken *token) {
 	case '8':
 	case '9':
 		return lexer_lex_number(lexer, token, current_char);
-	default:
+	default:;
 		// Get codepoint
 		UCP codepoint;
 		check(lexer_peek(lexer, &codepoint));

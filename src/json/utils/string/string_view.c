@@ -83,7 +83,7 @@ while (i < sv.size) {
 			back++;
 		}
 		return i;
-continue_outer_while:
+continue_outer_while:;
 	}
 	return -1;
 }
