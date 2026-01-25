@@ -133,7 +133,7 @@ static Result convert_exponent(ParserConfig *config,
 
 static Result build_json_number(Lexer *lexer, ParserConfig *config,
 								ParsedNumber *parsed_number,
-								size_t start_index, size_t end_index,
+								size_t start_index,
 								JSONNumber *out_number) {
 	intmax_t exponent_value = 0;
 	bool double_fallback = false;
@@ -271,7 +271,6 @@ static Result build_json_number(Lexer *lexer, ParserConfig *config,
 } while(0)
 
 Result lexer_lex_number(Lexer *lexer, JSONToken *token, uchar chr) {
-	Result r;
 	ParsedNumber parsed_number = {0};
 
 	size_t start_index = utf8_decoder_pos(&lexer->decoder);
@@ -369,8 +368,6 @@ Result lexer_lex_number(Lexer *lexer, JSONToken *token, uchar chr) {
 		}
 	}
 end_of_number:;
-	size_t end_index = utf8_decoder_pos(&lexer->decoder);
-	
 	token->type = JSONTok_Number;
-	return build_json_number(lexer, &lexer->config, &parsed_number, start_index, end_index, &token->number);
+	return build_json_number(lexer, &lexer->config, &parsed_number, start_index, &token->number);
 }
