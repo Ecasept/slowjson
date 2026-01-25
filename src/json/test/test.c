@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
 		// Run all tests
 		run_jsontestsuite();
 		run_fxx_test();
-		run_jsonperf();
+		run_jsonperf(1);
 	} else {
 		// Run a specific test
 		const char *test_name = argv[1];
@@ -19,7 +19,12 @@ int main(int argc, char **argv) {
 		} else if (strcmp(test_name, "fxx_test") == 0) {
 			run_fxx_test();
 		} else if (strcmp(test_name, "jsonperf") == 0) {
-			run_jsonperf();
+			if (argc >= 3) {
+				size_t iterations = (size_t)atoi(argv[2]);
+				run_jsonperf(iterations);
+			} else {
+				run_jsonperf(1);
+			}
 		} else {
 			printf("Unknown test: %s\n", test_name);
 			return 1;

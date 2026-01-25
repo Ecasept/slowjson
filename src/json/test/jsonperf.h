@@ -1,2 +1,3 @@
 #pragma once
-void run_jsonperf(void);
+#include <stddef.h>
+void run_jsonperf(size_t iterations);

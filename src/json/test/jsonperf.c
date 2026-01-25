@@ -58,10 +58,13 @@ void run_perf_on_test(Test test) {
 	string_free(&json);
 }
 
-void run_jsonperf(void) {
-	size_t num_tests = sizeof(tests) / sizeof(tests[0]);
-	for (size_t i = 0; i < num_tests; i++) {
-		run_perf_on_test(tests[i]);
-		printf("\n");
+void run_jsonperf(size_t iterations) {
+	for (size_t i = 0; i < iterations; i++) {
+		printf("=== Iteration %zu ===\n", i + 1);
+		size_t num_tests = sizeof(tests) / sizeof(tests[0]);
+		for (size_t j = 0; j < num_tests; j++) {
+			run_perf_on_test(tests[j]);
+			printf("\n");
+		}
 	}
 }
