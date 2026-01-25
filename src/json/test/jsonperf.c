@@ -23,7 +23,7 @@ static Test tests[] = {
 
 static const double GB_IN_BYTES = 1024.0 * 1024.0 * 1024.0;
 
-void run_perf_on_test(Test test) {
+static int run_perf_on_test(Test test, double *time_taken, double *gb_per_sec) {
 	string json;
 	Result r = read_file_to_string(test.filename, &json);
 	if (!r.success) {
@@ -31,7 +31,7 @@ void run_perf_on_test(Test test) {
 		printf("Failed to read file: %s (%.*s)\n", test.filename,
 				(int)err_msg.arr.length, err_msg.arr.data);
 		string_free(&err_msg);
-		return;
+		return 0;
 	}
 
 	printf("Parsing %s (Size: %zu bytes)\n", test.name, json.arr.length);
@@ -47,16 +47,17 @@ void run_perf_on_test(Test test) {
 		string_free(&err_msg);
 		string_free(&json);
 		error_free(r);
-		return;
+		return 0;
 	}
 
-	double time_taken = ((double)(end - start)) / CLOCKS_PER_SEC;
-	printf("Parsing %s took %f seconds\n", test.name, time_taken);
-	double gb_per_sec = ((double)json.arr.length / GB_IN_BYTES) / time_taken;
-	printf("Throughput: %f GB/s\n", gb_per_sec);
+	*time_taken = ((double)(end - start)) / CLOCKS_PER_SEC;
+	printf("Parsing %s took %f seconds\n", test.name, *time_taken);
+	*gb_per_sec = ((double)json.arr.length / GB_IN_BYTES) / *time_taken;
+	printf("Throughput: %f GB/s\n", *gb_per_sec);
 
 	json_value_free(&root);
 	string_free(&json);
+	return 1;
 }
 
 static void list_available_tests(void) {
@@ -86,17 +87,47 @@ void run_jsonperf(size_t iterations, const char *benchmark_name) {
 		return;
 	}
 
+	size_t num_tests = sizeof(tests) / sizeof(tests[0]);
+	size_t tracked_tests = (test_index >= 0) ? 1 : num_tests;
+	double total_time[sizeof(tests) / sizeof(tests[0])] = {0};
+	double total_throughput[sizeof(tests) / sizeof(tests[0])] = {0};
+	size_t success_counts[sizeof(tests) / sizeof(tests[0])] = {0};
+
 	for (size_t i = 0; i < iterations; i++) {
 		printf("=== Iteration %zu ===\n", i + 1);
 		if (test_index >= 0) {
-			run_perf_on_test(tests[(size_t)test_index]);
+			double time_taken = 0.0;
+			double gb_per_sec = 0.0;
+			if (run_perf_on_test(tests[(size_t)test_index], &time_taken, &gb_per_sec)) {
+				total_time[0] += time_taken;
+				total_throughput[0] += gb_per_sec;
+				success_counts[0] += 1;
+			}
 			printf("\n");
 		} else {
-			size_t num_tests = sizeof(tests) / sizeof(tests[0]);
 			for (size_t j = 0; j < num_tests; j++) {
-				run_perf_on_test(tests[j]);
+				double time_taken = 0.0;
+				double gb_per_sec = 0.0;
+				if (run_perf_on_test(tests[j], &time_taken, &gb_per_sec)) {
+					total_time[j] += time_taken;
+					total_throughput[j] += gb_per_sec;
+					success_counts[j] += 1;
+				}
 				printf("\n");
 			}
 		}
+	}
+
+	printf("=== Averages ===\n");
+	for (size_t i = 0; i < tracked_tests; i++) {
+		const char *name = (test_index >= 0) ? tests[(size_t)test_index].name : tests[i].name;
+		if (success_counts[i] == 0) {
+			printf("%s: no successful runs\n", name);
+			continue;
+		}
+		double avg_time = total_time[i] / (double)success_counts[i];
+		double avg_throughput = total_throughput[i] / (double)success_counts[i];
+		printf("%s avg time: %f seconds\n", name, avg_time);
+		printf("%s avg throughput: %f GB/s\n", name, avg_throughput);
 	}
 }
