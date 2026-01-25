@@ -60,7 +60,11 @@ string format_real_result(RealResult rr);
 void cerrno_free(cerrno_t err);
 string format_cerrno(Result r, cerrno_t err);
 
-Result new_error(const char message[], ErrorType type);
+void set_cerrno(const char msg[], ErrorType type);
+static inline Result new_error(const char msg[], ErrorType type) {
+	set_cerrno(msg, type);
+	return (Result){.success = false};
+}
 static inline Result new_success(void) {
 	return (Result){ .success = true };
 }

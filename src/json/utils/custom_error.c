@@ -10,8 +10,7 @@
 
 thread_local cerrno_t cerrno;
 
-
-Result new_error(const char msg[], ErrorType type) {
+void set_cerrno(const char msg[], ErrorType type) {
 	size_t len = strlen(msg);
 	cerrno.message = malloc(sizeof(char) * (len + 1));
 	if (cerrno.message == NULL) {
@@ -20,7 +19,6 @@ Result new_error(const char msg[], ErrorType type) {
 	strcpy(cerrno.message, msg);
 
 	cerrno.type = type;
-	return (Result){.success = false};
 }
 
 void print_error(Result r) {
