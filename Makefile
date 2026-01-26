@@ -2,7 +2,8 @@ CC = gcc
 
 DEBUG_FLAGS = -g -DDEBUG
 OPT_FLAGS = -O2 # -flto -march=native
-CFLAGS = -Wall -Wextra -pedantic -std=c11 $(DEBUG_FLAGS) $(OPT_FLAGS)
+CFLAGS_EXTRA =
+CFLAGS = -Wall -Wextra -pedantic -std=c11 $(DEBUG_FLAGS) $(OPT_FLAGS) $(CFLAGS_EXTRA)
 
 OPT_LD_FLAGS = # -flto
 LDFLAGS = -lm $(OPT_LD_FLAGS)
