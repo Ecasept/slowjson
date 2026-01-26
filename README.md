@@ -122,6 +122,43 @@ Das Programm enthält eine zentrale **Hilfe** auf der die wesentlichen Programmf
 <!-- Die **Hilfe** kann von jeder Seite innerhalb des Programms, mit Ausnahme der Eingabedialoge, über ``[h]`` aufgerufen werden.  -->
 <br><br><br><br>
 
+>### Veranstaltung bearbeiten
+Die Option zum bearbeiten einer Veranstaltung ist von der **Veranstaltungsübersicht** und der Seite des **Leistungsstands** aufrufbar. Mit ``[b]`` erscheint der Dialog zum bearbeiten einer Veranstaltung. Zunächst gibt man mithilfe eiens Indexes an, welche Veranstaltung man bearbeiten möchte. Hat man dies ausgewählt wird einem nochmal schön übersichtlich die Veranstaltung angezeigt, die man bearbeitet. 
+Jetzt hat man verschiedene Möglichkeiten zum Bearbeiten des Moduls. 
+1. ``[l]`` Veranstaltung löschen 
+2. ``[n]`` Note ändern/hinzufügen 
+3. ``[m]`` Modulgruppe ändern 
+4. ``[v]`` Zurück zur Veranstaltungsübersicht
+5. ``[c]`` Andere Veranstaltung wählen
+Bei jeder Auswahlmöglichkeit kommt man dann zu einer weiteren Auswahl, wie zb.: ``Neue Note eingeben`` oder ``Note auf "ausstehend" setzen``.
+
+<br><br><br><br>
+
+>### Notendurchschnitt berechnen (nach FPO 2018 Bachelor Informatik)
+Die Seite **Leistungsstand** wird mit ``[d]`` aufgerufen. Dort wird einem dann der Aktuelle Notendurchschnitt nach FPO 2018 Bachelor Informatik und die Summe der erreichten Leistungspunkte angezegit. 
+
+Der Notendurchschnitt wird wiefolgt berechnet: 
+Alle bestandenen und benoteten Veranstaltungen werden den jeweiligen Modulgruppen zugeordnet und daraus schrittweise der Gesamtdurchschnitt ermittelt.
+
+Der Ablauf der Berechnung erfolgt wie folgt:
+1. Modulgruppen durchlaufen
+   Für jede vorhandene Modulgruppe werden alle zugehörigen Veranstaltungen gesucht.
+2.	Geeignete Veranstaltungen auswählen 
+   Es werden nur Veranstaltungen berücksichtigt, die:
+	- bestanden sind
+	- eine gültige Note besitzen (note >= 1.0)
+	- zur aktuellen Modulgruppe gehören
+3.	Gruppennote berechnen 
+   Aus den ausgewählten Veranstaltungen wird eine Gruppennote als leistungspunkt-gewichteter Mittelwert berechnet.
+4.	Gewichtung mit Modulgruppen-LP 
+   Die Gruppennote wird mit den vorgesehenen Leistungspunkten der Modulgruppe (lp_todo) gewichtet und zum Gesamtergebnis addiert.
+
+Unbenotete oder nicht bestandene Veranstaltungen werden ignoriert.
+Falls keine bewerteten Leistungspunkte vorhanden sind, gibt die Funktion 0.0 zurück.
+
+Rückgabewert: gewichteter Gesamtnotendurchschnitt (double).
+
+<br><br><br><br>
 
 ## Presentation
 1. **Franz**
