@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "test.h"
 #include <stdio.h>
+#include "../utils/alloc/default.h"
 
 struct Test {
 	const char *filename;
@@ -354,18 +355,18 @@ const char *ANSI_GREEN = "\033[32m";
 
 static string format_string(string_view sv) {
 	string result;
-	string_new(&result, "");
+	string_new(&result, "", ga);
 	for (size_t i = 0; i < sv.size; i++) {
 		uchar c = sv.data[i];
 		if (c >= 0x20 && c <= 126) {
-			string_append_cstr(&result, (const char[]){(char)c, '\0'});
+			string_append_cstr(&result, (const char[]){(char)c, '\0'}, ga);
 		} else {
-			string_append_cstr(&result, ANSI_UNDERLINE);
-			string_append_cstr(&result, "0x");
+			string_append_cstr(&result, ANSI_UNDERLINE, ga);
+			string_append_cstr(&result, "0x", ga);
 			char buf[3];
 			snprintf(buf, sizeof(buf), "%02X", c);
-			string_append_cstr(&result, buf);
-			string_append_cstr(&result, ANSI_RESET);
+			string_append_cstr(&result, buf, ga);
+			string_append_cstr(&result, ANSI_RESET, ga);
 		}
 	}
 	return result;
@@ -377,7 +378,7 @@ static Result format_test_input(string *input, const char *filename) {
 	if (!r.success) return r;
 
 	*input = format_string(as_sv(json));
-	string_free(&json);
+	string_free(&json, ga);
 	return new_success();
 }
 
@@ -387,7 +388,7 @@ static void format_test_input_internal(string *input, const char *filename) {
 		string err_msg = format_error(r);
 		fprintf(stderr, "Error formatting test input from %s: %.*s\n", filename,
 				(int)err_msg.arr.length, err_msg.arr.data);
-		string_free(&err_msg);
+		string_free(&err_msg, ga);
 		exit(EXIT_FAILURE);
 	}
 	error_free(r);
@@ -407,7 +408,7 @@ static void expect_error(RealResult rr, const char *test_name, string_view conte
 				ANSI_BOLD, test_name, ANSI_RESET, (int)len, context.data, ellipsis, ANSI_GREEN, ANSI_RESET);
 		string msg = format_real_result(rr);
 		printf("Expected error, got %.*s\n", (int)msg.arr.length, (char *)msg.arr.data);
-		string_free(&msg);
+		string_free(&msg, ga);
 	}
 }
 
@@ -420,7 +421,7 @@ static void expect_success(RealResult rr, const char *test_name, string_view con
 				ANSI_BOLD, test_name, ANSI_RESET, (int)len, context.data, ellipsis, ANSI_RED, ANSI_RESET);
 		string msg = format_real_result(rr);
 		printf("Expected success, got %.*s\n", (int)msg.arr.length, (char *)msg.arr.data);
-		string_free(&msg);
+		string_free(&msg, ga);
 		exit(EXIT_FAILURE);
 	} else {
 		printf("Test %s%s%s (%.*s%s): %sSUCCESS%s\n",
@@ -435,7 +436,7 @@ static void run_n_test_once(Test t) {
 	string input;
 	format_test_input_internal(&input, t.filename);
 	expect_error(rr, t.name, as_sv(input));
-	string_free(&input);
+	string_free(&input, ga);
 	real_result_free(rr);
 
 	if (sv_startswith(as_svc(t.name), svl("n_string")) || sv_startswith(as_svc(t.name), svl("n_number"))) {
@@ -445,25 +446,25 @@ static void run_n_test_once(Test t) {
 			string err_msg = format_error(r);
 			fprintf(stderr, "Error reading file %s: %.*s\n", t.filename,
 					(int)err_msg.arr.length, err_msg.arr.data);
-			string_free(&err_msg);
+			string_free(&err_msg, ga);
 			exit(EXIT_FAILURE);
 		}
 		if (sv_startswith(as_sv(file_content), svl("[")) &&
 			sv_endswith(as_sv(file_content), svl("]"))) {
 			
 			string stripped;
-			string_from_view(&stripped, sv_substr_unchecked(as_sv(file_content), 1, file_content.arr.length - 2));
+			string_from_view(&stripped, sv_substr_unchecked(as_sv(file_content), 1, file_content.arr.length - 2), ga);
 
 			RealResult rr2 = cerrno_store(run_string(&stripped, NULL, NULL));
 
 			string stripped_formatted = format_string(as_sv(stripped));
 
 			expect_error(rr2, t.name, as_sv(stripped_formatted));
-			string_free(&stripped_formatted);
+			string_free(&stripped_formatted, ga);
 			real_result_free(rr2);
-			string_free(&stripped);
+			string_free(&stripped, ga);
 		}
-		string_free(&file_content);
+		string_free(&file_content, ga);
 	}
 }
 
@@ -473,7 +474,7 @@ static void run_y_test_once(Test t) {
 	string input;
 	format_test_input_internal(&input, t.filename);
 	expect_success(rr, t.name, as_sv(input));
-	string_free(&input);
+	string_free(&input, ga);
 	real_result_free(rr);
 
 	if (sv_startswith(as_svc(t.name), svl("y_string")) || sv_startswith(as_svc(t.name), svl("y_number"))) {
@@ -483,14 +484,14 @@ static void run_y_test_once(Test t) {
 			sv_endswith(as_sv(file_content), svl("]"))) {
 			
 			string stripped;
-			string_from_view(&stripped, sv_substr_unchecked(as_sv(file_content), 1, file_content.arr.length - 2));
+			string_from_view(&stripped, sv_substr_unchecked(as_sv(file_content), 1, file_content.arr.length - 2), ga);
 
 			RealResult rr2 = cerrno_store(run_string(&stripped, NULL, NULL));
 			expect_success(rr2, t.name, svl("stripped"));
 			real_result_free(rr2);
-			string_free(&stripped);
+			string_free(&stripped, ga);
 		}
-		string_free(&file_content);
+		string_free(&file_content, ga);
 	}
 }
 

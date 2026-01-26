@@ -1,7 +1,8 @@
 #include "../string/dstring.h"
+#include "../alloc/allocator.h"
 
-Result wchar_to_utf8_string(const wchar_t *src, string *dest);
-Result utf8_string_to_wchar(string_view src, wchar_t **dest);
+Result wchar_to_utf8_string(const wchar_t *src, string *dest, Allocator a);
+Result utf8_string_to_wchar(string_view src, wchar_t **dest, Allocator a);
 
 
 #define TYPE wchar_t

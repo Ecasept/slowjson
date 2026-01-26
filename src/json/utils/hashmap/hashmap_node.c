@@ -20,20 +20,20 @@ Result json_value_hashmap_node_get(json_value_hashmap_node *node,
 }
 
 bool json_value_hashmap_node_set(json_value_hashmap_node *node, string key,
-								 JSONValue value) {
+                                 JSONValue value, Allocator a) {
 	bool eq;
 	string_eq(&node->key, &key, &eq);
 	if (eq) {
 		// Overwrite existing value
-		json_value_free(&node->value);
-		string_free(&node->key);
+		json_value_free(&node->value, a);
+		string_free(&node->key, a);
 		node->key = key;
 		node->value = value;
 		return false;
 	} else {
 		if (node->next == NULL) {
 			// End reached
-			json_value_hashmap_node *node2 = malloc(sizeof(json_value_hashmap_node));
+			json_value_hashmap_node *node2 = alloc(a, sizeof(json_value_hashmap_node));
 			if (node2 == NULL) {
 				panic("Failed to allocate memory for hashmap node");
 			}
@@ -43,7 +43,7 @@ bool json_value_hashmap_node_set(json_value_hashmap_node *node, string key,
 			node->next = node2;
 			return true;
 		} else {
-			return json_value_hashmap_node_set(node->next, key, value);
+			return json_value_hashmap_node_set(node->next, key, value, a);
 		}
 	}
 }
@@ -51,11 +51,11 @@ bool json_value_hashmap_node_set(json_value_hashmap_node *node, string key,
 /**
  * @brief Frees the successor nodes. Does not free the node itself.
  */
-void json_value_hashmap_node_free(json_value_hashmap_node *node) {
-	string_free(&node->key);
-	json_value_free(&node->value);
+void json_value_hashmap_node_free(json_value_hashmap_node *node, Allocator a) {
+	string_free(&node->key, a);
+	json_value_free(&node->value, a);
 	if (node->next != NULL) {
-		json_value_hashmap_node_free(node->next);
-		free(node->next);
+		json_value_hashmap_node_free(node->next, a);
+		dealloc(a, node->next);
 	}
 }

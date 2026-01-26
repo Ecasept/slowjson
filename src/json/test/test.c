@@ -3,6 +3,7 @@
 #include "jsontestsuite.h"
 #include "fxx_test.h"
 #include "jsonperf.h"
+#include "../utils/alloc/default.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,7 +65,7 @@ Result run_once(const char *filename) {
 	Parser parser = json_parser_new(config_default_parser_config());
 	JSONValue root;
 	r = json_parser_deserialize(&parser, &json, &root);
-	string_free(&json);
+	string_free(&json, ga);
 	
 	if (!r.success) {
 		json_parser_free(&parser);

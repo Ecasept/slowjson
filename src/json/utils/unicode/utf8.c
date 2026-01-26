@@ -217,7 +217,7 @@ Result utf8_get_next_codepoint(string_view str, size_t *index,
 /**
  * @brief Encodes a Unicode codepoint into UTF-8 and appends it to a string
  */
-Result utf8_append_encoded_codepoint(UnicodeCodePoint cp, string *str) {
+Result utf8_append_encoded_codepoint(UnicodeCodePoint cp, string *str, Allocator a) {
 	const uchar b3 = b(111);
 	const uchar b4 = b(1111);
 	const uchar b5 = b(11111);
@@ -229,31 +229,31 @@ Result utf8_append_encoded_codepoint(UnicodeCodePoint cp, string *str) {
 
 	if (btwcp(0, cp, 0x7F)) {
 		// One byte
-		string_append_uchar(str, cp);
+		string_append_uchar(str, cp, a);
 	} else if (btwcp(0x0080, cp, 0x07FF)) {
 		// Two bytes
 		uchar byte1 = ((cp >> 6) & b5) + double_header;
 		uchar byte2 = (cp & b6) + cont_header;
-		string_append_uchar(str, byte1);
-		string_append_uchar(str, byte2);
+		string_append_uchar(str, byte1, a);
+		string_append_uchar(str, byte2, a);
 	} else if (btwcp(0x0800, cp, 0xD7FF) || btwcp(0xE000, cp, 0xFFFF)) {
 		// Three bytes (skipping surrogate range)
 		uchar byte1 = ((cp >> 12) & b4) + triple_header;
 		uchar byte2 = ((cp >> 6) & b6) + cont_header;
 		uchar byte3 = (cp & b6) + cont_header;
-		string_append_uchar(str, byte1);
-		string_append_uchar(str, byte2);
-		string_append_uchar(str, byte3);
+		string_append_uchar(str, byte1, a);
+		string_append_uchar(str, byte2, a);
+		string_append_uchar(str, byte3, a);
 	} else if (btwcp(0x10000, cp, 0x10FFFF)) {
 		// Four bytes
 		uchar byte1 = ((cp >> 18) & b3) + quadruple_header;
 		uchar byte2 = ((cp >> 12) & b6) + cont_header;
 		uchar byte3 = ((cp >> 6) & b6) + cont_header;
 		uchar byte4 = (cp & b6) + cont_header;
-		string_append_uchar(str, byte1);
-		string_append_uchar(str, byte2);
-		string_append_uchar(str, byte3);
-		string_append_uchar(str, byte4);
+		string_append_uchar(str, byte1, a);
+		string_append_uchar(str, byte2, a);
+		string_append_uchar(str, byte3, a);
+		string_append_uchar(str, byte4, a);
 	} else if (btwcp(0xD800, cp, 0xDBFF)) {
 		return new_errorf(
 			"Tried to encode invalid Unicode codepoint 0x%2X: UTF-16 Surrogate High Half",

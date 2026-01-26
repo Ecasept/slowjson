@@ -27,7 +27,7 @@ Result json_value_hashmap_get(const json_value_hashmap *map, string_view key,
 							  JSONValue *out);
 
 void json_value_hashmap_set(json_value_hashmap *map, string key,
-							JSONValue value);
+                            JSONValue value, Allocator a);
 
-void json_value_hashmap_init(json_value_hashmap *map);
-void json_value_hashmap_free(json_value_hashmap *map);
+void json_value_hashmap_init(json_value_hashmap *map, Allocator a);
+void json_value_hashmap_free(json_value_hashmap *map, Allocator a);

@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "test.h"
+#include "../utils/alloc/default.h"
 
 struct Test {
 	const char *filename;
@@ -66,7 +67,7 @@ static Result get_fxx_test_data(string *line, double *expected, string *json_inp
 			memcpy(expected, &expected_bits, sizeof(double));
 			found_hex = true;
 		} else if (index == 3) {
-			string_from_view(json_input, it.current_part);
+			string_from_view(json_input, it.current_part, ga);
 			found_json = true;
 		}
 		index++;
@@ -74,7 +75,7 @@ static Result get_fxx_test_data(string *line, double *expected, string *json_inp
 
 	if (!found_hex || !found_json) {
 		if (found_json) {
-			string_free(json_input);
+			string_free(json_input, ga);
 		}
 		return new_error("Malformed fxx test line", EParserSyntaxError);
 	}
@@ -147,13 +148,13 @@ Result run_fxx_test_file(const char *filename) {
 		if (json_input.arr.length > 0 && json_input.arr.data[0] == '.') {
 			// decimal point without zero in front
 			printf("Skipping invalid JSON input: %.*s\n", (int)json_input.arr.length, json_input.arr.data);
-			string_free(&json_input);
+			string_free(&json_input, ga);
 			continue;
 		}
 		if (sv_find(as_sv(json_input), svl(".e")) != -1) {
 			// exponent after decimal point without number
 			printf("Skipping invalid JSON input: %.*s\n", (int)json_input.arr.length, json_input.arr.data);
-			string_free(&json_input);
+			string_free(&json_input, ga);
 			continue;
 		}
 		
@@ -162,10 +163,10 @@ Result run_fxx_test_file(const char *filename) {
 		if (!r.success) {
 			file_line_iterator_close(&iterator);
 			error_prependf(&r, "For input: %.*s: ", (int)json_input.arr.length, json_input.arr.data);
-			string_free(&json_input);
+			string_free(&json_input, ga);
 			return r;
 		}
-		string_free(&json_input);
+		string_free(&json_input, ga);
 		i++;
 	}
 
@@ -187,7 +188,7 @@ void run_fxx_test(void) {
 			string err_msg = format_error(r);
 			fprintf(stderr, "FXX Test '%s' failed: %.*s\n", test.name,
 					(int)err_msg.arr.length, err_msg.arr.data);
-			string_free(&err_msg);
+			string_free(&err_msg, ga);
 			error_free(r);
 			exit(EXIT_FAILURE);
 		} else {

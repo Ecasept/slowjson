@@ -7,6 +7,7 @@
 #endif
 
 #include "custom_error.h"
+#include "alloc/allocator.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,14 +24,14 @@ struct TYPED_NAME(list) {
 typedef struct TYPED_NAME(list) TYPED_NAME(list);
 
 // ===== Forward declarations =====
-void TYPED_NAME(list_init)(TYPED_NAME(list) * arr, size_t cap);
-void TYPED_NAME(list_resize)(TYPED_NAME(list) * arr, size_t new_capacity);
-void TYPED_NAME(list_ensure_resize)(TYPED_NAME(list) * arr, size_t capacity);
-void TYPED_NAME(list_push)(TYPED_NAME(list) * arr, TYPE element);
+void TYPED_NAME(list_init)(TYPED_NAME(list) * arr, size_t cap, Allocator a);
+void TYPED_NAME(list_resize)(TYPED_NAME(list) * arr, size_t new_capacity, Allocator a);
+void TYPED_NAME(list_ensure_resize)(TYPED_NAME(list) * arr, size_t capacity, Allocator a);
+void TYPED_NAME(list_push)(TYPED_NAME(list) * arr, TYPE element, Allocator a);
 void TYPED_NAME(list_ensure_index)(const TYPED_NAME(list) * arr, size_t index);
 void TYPED_NAME(list_set)(TYPED_NAME(list) * arr, size_t index, TYPE element);
-void TYPED_NAME(list_extend)(TYPED_NAME(list) * arr, const TYPED_NAME(list) * other);
-void TYPED_NAME(list_free)(TYPED_NAME(list) * arr);
+void TYPED_NAME(list_extend)(TYPED_NAME(list) * arr, const TYPED_NAME(list) * other, Allocator a);
+void TYPED_NAME(list_free)(TYPED_NAME(list) * arr, Allocator a);
 TYPE TYPED_NAME(list_get_unchecked)(const TYPED_NAME(list) * arr, size_t index);
 TYPE *TYPED_NAME(list_get_ref_unchecked)(const TYPED_NAME(list) * arr, size_t index);
 
@@ -55,11 +56,11 @@ static const size_t TYPED_NAME(INITIAL_LIST_SIZE) = 8;
  * @param cap The initial capacity of the array. Defaults to `INITIAL_LIST_SIZE`
  * if `0` is passed.
  */
-void TYPED_NAME(list_init)(TYPED_NAME(list) * arr, size_t cap) {
+void TYPED_NAME(list_init)(TYPED_NAME(list) * arr, size_t cap, Allocator a) {
 	if (cap == 0) {
 		cap = TYPED_NAME(INITIAL_LIST_SIZE);
 	}
-	arr->data = (TYPE *)malloc(sizeof(TYPE) * cap);
+	arr->data = (TYPE *)alloc(a, sizeof(TYPE) * cap);
 	if (arr->data == NULL) {
 		panic("Failed to allocate memory for array");
 	}
@@ -72,7 +73,7 @@ void TYPED_NAME(list_init)(TYPED_NAME(list) * arr, size_t cap) {
  *
  * Returns an error if `new_capacity` is smaller than the current size
  */
-void TYPED_NAME(list_resize)(TYPED_NAME(list) * arr, size_t new_capacity) {
+void TYPED_NAME(list_resize)(TYPED_NAME(list) * arr, size_t new_capacity, Allocator a) {
 	if (new_capacity < arr->length) {
 		panic("Resized size is smaller than current size of array");
 	}
@@ -83,7 +84,7 @@ void TYPED_NAME(list_resize)(TYPED_NAME(list) * arr, size_t new_capacity) {
 		new_cap *= 2;
 	}
 
-	TYPE *new_data = (TYPE *)realloc(arr->data, new_cap * sizeof(TYPE));
+	TYPE *new_data = (TYPE *)arealloc(a, arr->data, arr->capacity * sizeof(TYPE), new_cap * sizeof(TYPE));
 	if (new_data == NULL) {
 		panic("Failed to allocate memory");
 	}
@@ -96,17 +97,17 @@ void TYPED_NAME(list_resize)(TYPED_NAME(list) * arr, size_t new_capacity) {
  *
  * If not, it resizes the array.
  */
-void TYPED_NAME(list_ensure_resize)(TYPED_NAME(list) * arr, size_t capacity) {
+void TYPED_NAME(list_ensure_resize)(TYPED_NAME(list) * arr, size_t capacity, Allocator a) {
 	if (arr->capacity < capacity) {
-		TYPED_NAME(list_resize)(arr, capacity);
+		TYPED_NAME(list_resize)(arr, capacity, a);
 	}
 }
 
 /**
  * @brief Appends a copy of `element` to the array
  */
-void TYPED_NAME(list_push)(TYPED_NAME(list) * arr, TYPE element) {
-	TYPED_NAME(list_ensure_resize)(arr, arr->length + 1);
+void TYPED_NAME(list_push)(TYPED_NAME(list) * arr, TYPE element, Allocator a) {
+	TYPED_NAME(list_ensure_resize)(arr, arr->length + 1, a);
 	arr->data[arr->length] = element;
 	arr->length += 1;
 }
@@ -156,16 +157,16 @@ void TYPED_NAME(list_set)(TYPED_NAME(list) * arr, size_t index, TYPE element) {
  * @param other The array to copy other elements from
  */
 void TYPED_NAME(list_extend)(TYPED_NAME(list) * arr,
-							 const TYPED_NAME(list) * other) {
+					 const TYPED_NAME(list) * other, Allocator a) {
 	size_t old_len = arr->length;
 	size_t new_len = arr->length + other->length;
-	TYPED_NAME(list_ensure_resize)(arr, new_len);
+	TYPED_NAME(list_ensure_resize)(arr, new_len, a);
 
 	memcpy(&arr->data[old_len], other->data, other->length * sizeof(TYPE));
 	arr->length = new_len;
 }
 
-void TYPED_NAME(list_free)(TYPED_NAME(list) * arr) {
-	free(arr->data);
+void TYPED_NAME(list_free)(TYPED_NAME(list) * arr, Allocator a) {
+	dealloc(a, arr->data);
 }
 #endif

@@ -4,6 +4,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
+#include "../utils/alloc/default.h"
 
 struct Test {
 	const char *filename;
@@ -30,7 +31,7 @@ static int run_perf_on_test(Test test, double *time_taken, double *gb_per_sec) {
 		string err_msg = format_error(r);
 		printf("Failed to read file: %s (%.*s)\n", test.filename,
 				(int)err_msg.arr.length, err_msg.arr.data);
-		string_free(&err_msg);
+		string_free(&err_msg, ga);
 		return 0;
 	}
 
@@ -45,8 +46,8 @@ static int run_perf_on_test(Test test, double *time_taken, double *gb_per_sec) {
 	if (!r.success) {
 		string err_msg = format_error(r);
 		printf("Failed to parse JSON: %.*s\n", (int)err_msg.arr.length, err_msg.arr.data);
-		string_free(&err_msg);
-		string_free(&json);
+		string_free(&err_msg, ga);
+		string_free(&json, ga);
 		json_parser_value_free(&parser, &root);
 		json_parser_free(&parser);
 		error_free(r);
@@ -60,7 +61,7 @@ static int run_perf_on_test(Test test, double *time_taken, double *gb_per_sec) {
 
 	json_parser_value_free(&parser, &root);
 	json_parser_free(&parser);
-	string_free(&json);
+	string_free(&json, ga);
 	return 1;
 }
 

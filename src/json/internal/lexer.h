@@ -5,6 +5,7 @@
 #include "../utils/unicode/utf8.h"
 #include "jsonvalue.h"
 #include "../config.h"
+#include "../utils/alloc/allocator.h"
 
 // Apply `macro` to each JSONTokenType
 #define FOREACH_TOKEN(macro)                                                   \
@@ -53,8 +54,9 @@ typedef struct {
 	size_t column;
 	ParserConfig config;
 	UTF8Decoder decoder;
+	Allocator allocator;
 } Lexer;
 
-void lexer_init(Lexer *lexer, const string *source, ParserConfig config);
+void lexer_init(Lexer *lexer, const string *source, ParserConfig config, Allocator a);
 Result lexer_next_token(Lexer *lexer, JSONToken *token);
-void lexer_free_token(JSONToken *token);
+void lexer_free_token(Lexer *lexer, JSONToken *token);

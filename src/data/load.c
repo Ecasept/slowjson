@@ -6,6 +6,7 @@
 #include "load.h"
 #include "../json/utils/string/file.h"
 #include "../json/config.h"
+#include "../json/utils/alloc/default.h"
 
 const char *JSON_SAVEFILE_NAME = "data.json";
 
@@ -18,7 +19,7 @@ const char *JSON_SAVEFILE_NAME = "data.json";
 static Result extract_wstring(const JSONValue *obj, string_view key, wchar_t **out) {
     JSONValue val;
     check(json_get_typed(obj, key, JSON_STRING, &val));
-    return utf8_string_to_wchar(as_sv(val.str), out);
+    return utf8_string_to_wchar(as_sv(val.str), out, ga);
 }
 
 static void free_veranstaltung_content(struct Veranstaltung *v) {
@@ -114,20 +115,20 @@ static Result parse_savefile_json(JSONValue root, struct Veranstaltung **v, stru
 
     // Load Veranstaltungen
     *v_count = v_arr.list.length;
-    veranstaltung_list_init(&v_list, *v_count);
+    veranstaltung_list_init(&v_list, *v_count, ga);
     for (size_t i = 0; i < *v_count; i++) {
         struct Veranstaltung item;
         if (!(r = parse_veranstaltung(&v_arr.list.data[i], &item)).success) goto cleanup;
-        veranstaltung_list_push(&v_list, item);
+        veranstaltung_list_push(&v_list, item, ga);
     }
 
     // Load Modulgruppen
     *mg_count = mg_arr.list.length;
-    modulgruppe_list_init(&mg_list, *mg_count);
+    modulgruppe_list_init(&mg_list, *mg_count, ga);
     for (size_t i = 0; i < *mg_count; i++) {
         struct Modulgruppe item;
         if (!(r = parse_modulgruppe(&mg_arr.list.data[i], &item)).success) goto cleanup;
-        modulgruppe_list_push(&mg_list, item);
+        modulgruppe_list_push(&mg_list, item, ga);
     }
 
     *v = v_list.data;
@@ -137,8 +138,8 @@ static Result parse_savefile_json(JSONValue root, struct Veranstaltung **v, stru
 cleanup:
     for (size_t i = 0; i < v_list.length; i++) free_veranstaltung_content(&v_list.data[i]);
     for (size_t i = 0; i < mg_list.length; i++) free_modulgruppe_content(&mg_list.data[i]);
-    if (v_list.data) veranstaltung_list_free(&v_list);
-    if (mg_list.data) modulgruppe_list_free(&mg_list);
+    if (v_list.data) veranstaltung_list_free(&v_list, ga);
+    if (mg_list.data) modulgruppe_list_free(&mg_list, ga);
     return r;
 }
 
@@ -152,7 +153,7 @@ Result load_data_from_savefile(struct Veranstaltung **v, struct Modulgruppe **mg
     Parser parser = json_parser_new(config_default_parser_config());
     JSONValue root;
     r = json_parser_deserialize(&parser, &json, &root);
-    string_free(&json);
+    string_free(&json, ga);
 
     if (!r.success) {
 		json_parser_value_free(&parser, &root);

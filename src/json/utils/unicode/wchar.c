@@ -8,14 +8,14 @@
  * @param src The source wchar_t string (will be borrowed)
  * @param dest Pointer to store the resulting UTF-8 string (will be allocated)
  */
-Result wchar_to_utf8_string(const wchar_t *src, string *dest) {
+Result wchar_to_utf8_string(const wchar_t *src, string *dest, Allocator a) {
 	if (sizeof(wchar_t) == 2) {
 		// UTF-16
 		size_t index = 0;
 		Result r;
 		UnicodeCodePoint cp;
 
-		string_new(dest, "");
+		string_new(dest, "", a);
 
 		while (src[index] != L'\0') {
 			wchar_t w1 = src[index];
@@ -24,7 +24,7 @@ Result wchar_to_utf8_string(const wchar_t *src, string *dest) {
 				// Need to read another wchar_t
 				wchar_t w2 = src[index + 1];
 				if (!is_low_surrogate(w2)) {
-					string_free(dest);
+					string_free(dest, a);
 					return new_errorf(
 						"Invalid UTF-16 sequence: expected low surrogate after high surrogate at index %zu",
 						EUnicodeError, index);
@@ -32,7 +32,7 @@ Result wchar_to_utf8_string(const wchar_t *src, string *dest) {
 				cp = decode_surrogate_pair(w1, w2);
 				index++; // Advance extra for surrogate pair
 			} else if (is_low_surrogate(w1)) {
-				string_free(dest);
+				string_free(dest, a);
 				return new_errorf(
 					"Invalid UTF-16 sequence: unexpected low surrogate at index %zu",
 					EUnicodeError, index);
@@ -40,9 +40,9 @@ Result wchar_to_utf8_string(const wchar_t *src, string *dest) {
 				cp = (UnicodeCodePoint)w1;
 			}
 
-			r = utf8_append_encoded_codepoint(cp, dest);
+			r = utf8_append_encoded_codepoint(cp, dest, a);
 			if (!r.success) {
-				string_free(dest);
+				string_free(dest, a);
 				return r;
 			}
 			index++;
@@ -52,13 +52,13 @@ Result wchar_to_utf8_string(const wchar_t *src, string *dest) {
 		// UTF-32
 		size_t index = 0;
 		Result r;
-		string_new(dest, "");
+		string_new(dest, "", a);
 
 		while (src[index] != L'\0') {
 			UnicodeCodePoint cp = (UnicodeCodePoint)src[index];
-			r = utf8_append_encoded_codepoint(cp, dest);
+			r = utf8_append_encoded_codepoint(cp, dest, a);
 			if (!r.success) {
-				string_free(dest);
+				string_free(dest, a);
 				return r;
 			}
 			index++;
@@ -75,10 +75,10 @@ Result wchar_to_utf8_string(const wchar_t *src, string *dest) {
  * @param src The source UTF-8 string
  * @param dest Pointer to store the resulting wchar_t string (will be allocated)
  */
-Result utf8_string_to_wchar(string_view src, wchar_t **dest) {
+Result utf8_string_to_wchar(string_view src, wchar_t **dest, Allocator a) {
 
 	wchar_list out;
-	wchar_list_init(&out, 0);
+	wchar_list_init(&out, 0, a);
 	UTF8Decoder decoder = utf8_decoder_new(src);
 
 	if (sizeof(wchar_t) == 2) {
@@ -89,19 +89,19 @@ Result utf8_string_to_wchar(string_view src, wchar_t **dest) {
 		while (index < src.size) {
 			r = utf8_decoder_next(&decoder, &cp);
 			if (!r.success) {
-				wchar_list_free(&out);
+				wchar_list_free(&out, a);
 				return r;
 			}
 			if (needs_surrogate_pair(cp)) {
 				UCP high, low;
 				encode_surrogate_pair(cp, &high, &low);
-				wchar_list_push(&out, (wchar_t)high);
-				wchar_list_push(&out, (wchar_t)low);
+				wchar_list_push(&out, (wchar_t)high, a);
+				wchar_list_push(&out, (wchar_t)low, a);
 			} else {
-				wchar_list_push(&out, (wchar_t)cp);
+				wchar_list_push(&out, (wchar_t)cp, a);
 			}
 		}
-		wchar_list_push(&out, L'\0');
+		wchar_list_push(&out, L'\0', a);
 		*dest = out.data;
 		return new_success();
 	} else if (sizeof(wchar_t) == 4) {
@@ -113,12 +113,12 @@ Result utf8_string_to_wchar(string_view src, wchar_t **dest) {
 		while (index < src.size) {
 			r = utf8_decoder_next(&decoder, &cp);
 			if (!r.success) {
-				wchar_list_free(&out);
+				wchar_list_free(&out, a);
 				return r;
 			}
-			wchar_list_push(&out, (wchar_t)cp);
+			wchar_list_push(&out, (wchar_t)cp, a);
 		}
-		wchar_list_push(&out, L'\0');
+		wchar_list_push(&out, L'\0', a);
 		*dest = out.data;
 		return new_success();
 	} else {

@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include "number.h"
 #include "utils.h"
+#include "../../utils/alloc/default.h"
 
 // ==== Relevant Specifications ====
 // JSON Website (with syntax diagram):
@@ -25,12 +26,13 @@ static Result lexer_lex_literal(Lexer *lexer, JSONToken *token);
 
 const char *JSONTokenTypeStrings[] = {FOREACH_TOKEN(DECLARE_TOKEN_STRING)};
 
-void lexer_init(Lexer *lexer, const string *source, ParserConfig config) {
+void lexer_init(Lexer *lexer, const string *source, ParserConfig config, Allocator a) {
 	lexer->source = source;
 	lexer->line = 1;
 	lexer->column = 1;
 	lexer->config = config;
 	lexer->decoder = utf8_decoder_new(as_sv(*source));
+	lexer->allocator = a;
 }
 
 static inline void lexer_lex_structural(JSONToken *token, uchar start) {
@@ -122,8 +124,8 @@ static Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token, uchar start) 
 	uchar current_char = 0;
 
 	string whitespace;
-	string_new(&whitespace, "");
-	string_append_uchar(&whitespace, start);
+	string_new(&whitespace, "", lexer->allocator);
+	string_append_uchar(&whitespace, start, lexer->allocator);
 
 	while (1) {
 		Result r = lexer_peek_uchar(lexer, &current_char);
@@ -134,7 +136,7 @@ static Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token, uchar start) 
 			error_free(r);
 			return new_success();
 		} else if (!r.success) {
-			string_free(&whitespace);
+			string_free(&whitespace, lexer->allocator);
 			return r;
 		}
 
@@ -150,7 +152,7 @@ static Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token, uchar start) 
 			}
 
 			// Append whitespace character to current whitespace
-			string_append_uchar(&whitespace, current_char);
+			string_append_uchar(&whitespace, current_char, lexer->allocator);
 			break;
 		default:
 			// Found non-whitespace character, which means we finished parsing
@@ -271,7 +273,7 @@ static Result lexer_lex_string(Lexer *lexer, JSONToken *token) {
 	UCP chr;
 
 	string value;
-	string_new(&value, "");
+	string_new(&value, "", lexer->allocator);
 
 	bool is_escaped = false;
 
@@ -295,19 +297,19 @@ static Result lexer_lex_string(Lexer *lexer, JSONToken *token) {
 
 			size_t len = current_idx - start_idx;
 			if (len > 0) {
-				string_append_bytes(&value, data + start_idx, len);
+				string_append_bytes(&value, data + start_idx, len, lexer->allocator);
 				lexer_skip(lexer, len);
 			}
 		}
 
 		Result r = lexer_consume(lexer, &chr);
 		if (!r.success) {
-			string_free(&value);
+			string_free(&value, lexer->allocator);
 			return r;
 		}
 
 		if (chr <= 0x1F) {
-			string_free(&value);
+			string_free(&value, lexer->allocator);
 			return new_errorf(
 				"Encountered control character with value %u in string at line %zu, column %zu",
 				ELexerSyntaxError, chr, lexer->line, lexer->column - 1);
@@ -316,49 +318,49 @@ static Result lexer_lex_string(Lexer *lexer, JSONToken *token) {
 		if (is_escaped) {
 			switch (chr) {
 			case '"':
-				string_append_uchar(&value, '"');
+				string_append_uchar(&value, '"', lexer->allocator);
 				break;
 			case '\\':
-				string_append_uchar(&value, '\\');
+				string_append_uchar(&value, '\\', lexer->allocator);
 				break;
 			case '/':
-				string_append_uchar(&value, '/');
+				string_append_uchar(&value, '/', lexer->allocator);
 				break;
 			case 'b':
 				// backspace
-				string_append_uchar(&value, '\b');
+				string_append_uchar(&value, '\b', lexer->allocator);
 				break;
 			case 'f':
 				// form feed
-				string_append_uchar(&value, '\f');
+				string_append_uchar(&value, '\f', lexer->allocator);
 				break;
 			case 'n':
 				// line feed
-				string_append_uchar(&value, '\n');
+				string_append_uchar(&value, '\n', lexer->allocator);
 				break;
 			case 'r':
 				// carriage return
-				string_append_uchar(&value, '\r');
+				string_append_uchar(&value, '\r', lexer->allocator);
 				break;
 			case 't':
 				// tab
-				string_append_uchar(&value, '\t');
+				string_append_uchar(&value, '\t', lexer->allocator);
 				break;
 			case 'u':
 				// unicode escape sequence
 				r = lexer_lex_unicode_literal(lexer, &chr);
 				if (!r.success) {
-					string_free(&value);
+					string_free(&value, lexer->allocator);
 					return r;
 				}
-				r = utf8_append_encoded_codepoint(chr, &value);
+				r = utf8_append_encoded_codepoint(chr, &value, lexer->allocator);
 				if (!r.success) {
-					string_free(&value);
+					string_free(&value, lexer->allocator);
 					return r;
 				}
 				break;
 			default:
-				string_free(&value);
+				string_free(&value, lexer->allocator);
 				return new_errorf("Invalid escape character \\%c at line %zu, column %zu",
 								  ELexerSyntaxError, chr, lexer->line, lexer->column - 2);
 			}
@@ -373,9 +375,9 @@ static Result lexer_lex_string(Lexer *lexer, JSONToken *token) {
 				token->value = value;
 				return new_success();
 			default:
-				r = utf8_append_encoded_codepoint(chr, &value);
+				r = utf8_append_encoded_codepoint(chr, &value, lexer->allocator);
 				if (!r.success) {
-					string_free(&value);
+					string_free(&value, lexer->allocator);
 					return r;
 				}
 				break;
@@ -385,9 +387,9 @@ static Result lexer_lex_string(Lexer *lexer, JSONToken *token) {
 }
 
 
-void lexer_free_token(JSONToken *token) {
+void lexer_free_token(Lexer *lexer, JSONToken *token) {
 	if (token->type == JSONTok_String || token->type == JSONTok_Whitespace) {
-		string_free(&token->value);
+		string_free(&token->value, lexer->allocator);
 	}
 }
 

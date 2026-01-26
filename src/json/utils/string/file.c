@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include "../alloc/default.h"
 
 // How much to read per iteration
 static const size_t READ_SIZE = 4096;
@@ -19,17 +20,17 @@ Result read_file_to_string(const char *filename, string *str) {
 
 	}
 
-	string_new(str, "");
+	string_new(str, "", ga);
 
 	while (1) {
-		uchar_list_ensure_resize(&str->arr, str->arr.length + READ_SIZE);
+		uchar_list_ensure_resize(&str->arr, str->arr.length + READ_SIZE, ga);
 		unsigned char *ptr = str->arr.data + str->arr.length;
 		size_t count = fread(ptr, sizeof(unsigned char), READ_SIZE, fptr);
 		str->arr.length += count;
 		if (count != READ_SIZE) {
            if (ferror(fptr)) {
                 int err = errno;
-                string_free(str);
+				string_free(str, ga);
                 fclose(fptr);
                 return new_errorf("Could not read file \"%s\": %s",
                                   EFileOperationFailed, filename,
@@ -44,7 +45,7 @@ Result read_file_to_string(const char *filename, string *str) {
 
     if (fclose(fptr) == EOF) {
         int err = errno;
-        string_free(str);
+		string_free(str, ga);
         return new_errorf("Could not close file \"%s\": %s",
                           EFileOperationFailed, filename,
                           (err != 0) ? strerror(err) : "unknown close error");
@@ -90,7 +91,7 @@ Result read_lines(const char *filename, FileLineIterator *out_iterator) {
 
 	out_iterator->fptr = fptr;
 	out_iterator->eof_reached = false;
-	string_new(&out_iterator->current_line, "");
+	string_new(&out_iterator->current_line, "", ga);
 
 	return new_success();
 }
@@ -101,14 +102,14 @@ Result file_line_iterator_close(FileLineIterator *iterator) {
 	if (iterator->fptr != NULL) {
 		if (fclose(iterator->fptr) == EOF) {
 			int err = errno;
-			string_free(&iterator->current_line);
+			string_free(&iterator->current_line, ga);
 			return new_errorf("Could not close file: %s",
 							  EFileOperationFailed,
 							  (err != 0) ? strerror(err) : "unknown close error");
 		}
 		iterator->fptr = NULL;
 	}
-	string_free(&iterator->current_line);
+	string_free(&iterator->current_line, ga);
 	return new_success();
 }
 
@@ -144,7 +145,7 @@ Result file_line_iterator_next(FileLineIterator *iterator, bool *has_line) {
 			// End of line
 			break;
 		}
-		string_append_uchar(&iterator->current_line, (uchar)ch);
+		string_append_uchar(&iterator->current_line, (uchar)ch, ga);
 	}
 
 	*has_line = true;

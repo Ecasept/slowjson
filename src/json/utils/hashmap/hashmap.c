@@ -24,8 +24,8 @@ static double get_load_factor(const json_value_hashmap *map) {
 	return (double)map->size / (double)map->buckets.length;
 }
 
-void json_value_hashmap_init(json_value_hashmap *map) {
-	json_value_hashmap_node_list_init(&map->buckets, HASHMAP_INITIAL_SIZE);
+void json_value_hashmap_init(json_value_hashmap *map, Allocator a) {
+	json_value_hashmap_node_list_init(&map->buckets, HASHMAP_INITIAL_SIZE, a);
 	memset(map->buckets.data, 0,
 		   sizeof(json_value_hashmap_node) * map->buckets.capacity);
 	map->buckets.length = HASHMAP_INITIAL_SIZE;
@@ -47,13 +47,14 @@ Result json_value_hashmap_get(const json_value_hashmap *map, string_view key,
 }
 
 static void json_value_hashmap_set_internal(json_value_hashmap *map, string key,
-									  JSONValue value, bool rehash);
+                                            JSONValue value, bool rehash,
+                                            Allocator a);
 
-static void rehash(json_value_hashmap *map, size_t new_bucket_count) {
+static void rehash(json_value_hashmap *map, size_t new_bucket_count, Allocator a) {
 	size_t old_bucket_count = map->buckets.length;
 	json_value_hashmap_node_list old_buckets = map->buckets;
 
-	json_value_hashmap_node_list_init(&map->buckets, new_bucket_count);
+	json_value_hashmap_node_list_init(&map->buckets, new_bucket_count, a);
 	memset(map->buckets.data, 0, 
 		   sizeof(json_value_hashmap_node) * new_bucket_count);
 	map->buckets.length = new_bucket_count;
@@ -63,31 +64,31 @@ static void rehash(json_value_hashmap *map, size_t new_bucket_count) {
 		if (node.key.arr.data == NULL) {
 			continue;
 		}
-		json_value_hashmap_set_internal(map, node.key, node.value, false);
+		json_value_hashmap_set_internal(map, node.key, node.value, false, a);
 		json_value_hashmap_node *curr = node.next;
 		while (curr != NULL) {
-			json_value_hashmap_set_internal(map, curr->key, curr->value, false);
+			json_value_hashmap_set_internal(map, curr->key, curr->value, false, a);
 			json_value_hashmap_node *next = curr->next;
-			free(curr);
+			dealloc(a, curr);
 			curr = next;
 		}
 	}
-	json_value_hashmap_node_list_free(&old_buckets);
+	json_value_hashmap_node_list_free(&old_buckets, a);
 }
 
 void json_value_hashmap_set(json_value_hashmap *map, string key,
-							JSONValue value) {
-	json_value_hashmap_set_internal(map, key, value, true);
+							JSONValue value, Allocator a) {
+	json_value_hashmap_set_internal(map, key, value, true, a);
 }
 
 static void json_value_hashmap_set_internal(json_value_hashmap *map, string key,
-									  JSONValue value, bool should_rehash) {
+								 JSONValue value, bool should_rehash, Allocator a) {
 	double load_factor = get_load_factor(map);
 	if (should_rehash && load_factor > MAX_LOAD_FACTOR) {
-		rehash(map, map->buckets.length * 2);
+		rehash(map, map->buckets.length * 2, a);
 	} else if (should_rehash && load_factor < MIN_LOAD_FACTOR &&
 			   map->buckets.length > HASHMAP_INITIAL_SIZE) {
-		rehash(map, map->buckets.length / 2);
+		rehash(map, map->buckets.length / 2, a);
 	}
 	size_t node_index = string_hash(as_sv(key), map->buckets.length);
 	json_value_hashmap_node *node;
@@ -100,23 +101,23 @@ static void json_value_hashmap_set_internal(json_value_hashmap *map, string key,
 		map->size += 1;
 	} else {
 		// Update existing node
-		if (json_value_hashmap_node_set(node, key, value)) {
+		if (json_value_hashmap_node_set(node, key, value, a)) {
 			// New entry added instead of overwritten
 			map->size += 1;
 		}
 	}
 }
 
-void json_value_hashmap_free(json_value_hashmap *map) {
+void json_value_hashmap_free(json_value_hashmap *map, Allocator a) {
 	for (size_t i = 0; i < map->buckets.length; i++) {
 		json_value_hashmap_node node;
 		node = json_value_hashmap_node_list_get_unchecked(&map->buckets, i);
 		if (node.key.arr.data == NULL) {
 			continue;
 		}
-		json_value_hashmap_node_free(&node);
+		json_value_hashmap_node_free(&node, a);
 	}
-	json_value_hashmap_node_list_free(&map->buckets);
+	json_value_hashmap_node_list_free(&map->buckets, a);
 }
 
 #define TYPE json_value_hashmap_node

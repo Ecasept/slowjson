@@ -3,19 +3,19 @@
 #include <stdio.h>
 #include <string.h>
 
-void string_free(string *str) { uchar_list_free(&str->arr); }
+void string_free(string *str, Allocator a) { uchar_list_free(&str->arr, a); }
 
-void string_new(string *str, const char *source) {
+void string_new(string *str, const char *source, Allocator a) {
 	size_t len = strlen(source);
-	uchar_list_init(&str->arr, len);
+	uchar_list_init(&str->arr, len, a);
 
 	memcpy(str->arr.data, source, len);
 	str->arr.length = len;
 }
 
-string string_newr(const char *source) {
+string string_newr(const char *source, Allocator a) {
 	string str;
-	string_new(&str, source);
+	string_new(&str, source, a);
 	return str;
 }
 
@@ -25,8 +25,8 @@ string string_newr(const char *source) {
  * @param str The string to append to
  * @param other The string to append. It is not modified or freed.
  */
-void string_append(string *str, const string *other) {
-	uchar_list_extend(&str->arr, &other->arr);
+void string_append(string *str, const string *other, Allocator a) {
+	uchar_list_extend(&str->arr, &other->arr, a);
 }
 
 /**
@@ -37,8 +37,8 @@ void string_append(string *str, const string *other) {
  * @param str The string to append to
  * @param other The uchar to append
  */
-void string_append_uchar(string *str, uchar other) {
-	uchar_list_push(&str->arr, other);
+void string_append_uchar(string *str, uchar other, Allocator a) {
+	uchar_list_push(&str->arr, other, a);
 }
 /**
  * @brief Appends a C string to this string.
@@ -46,15 +46,15 @@ void string_append_uchar(string *str, uchar other) {
  * may lead to ill-formed sequences. Special care should be taken when U+0000
  * bytes are involved.
  */
-void string_append_cstr(string *str, const char *cstr) {
+void string_append_cstr(string *str, const char *cstr, Allocator a) {
 	size_t len = strlen(cstr);
-	uchar_list_ensure_resize(&str->arr, str->arr.length + len);
+	uchar_list_ensure_resize(&str->arr, str->arr.length + len, a);
 	memcpy(&str->arr.data[str->arr.length], cstr, len);
 	str->arr.length += len;
 }
 
-void string_append_bytes(string *str, const uchar *bytes, size_t len) {
-	uchar_list_ensure_resize(&str->arr, str->arr.length + len);
+void string_append_bytes(string *str, const uchar *bytes, size_t len, Allocator a) {
+	uchar_list_ensure_resize(&str->arr, str->arr.length + len, a);
 	memcpy(&str->arr.data[str->arr.length], bytes, len);
 	str->arr.length += len;
 }
@@ -74,8 +74,8 @@ void string_eq(const string *str, const string *other, bool *res) {
 	*res = memcmp(str->arr.data, other->arr.data, str->arr.length) == 0;
 }
 
-void string_to_cstr(const string *str, char **cstr) {
-	*cstr = (char *)malloc(sizeof(char) * (str->arr.length + 1));
+void string_to_cstr(const string *str, char **cstr, Allocator a) {
+	*cstr = (char *)alloc(a, sizeof(char) * (str->arr.length + 1));
 	if (*cstr == NULL) {
 		panic("Failed to allocate memory for C string");
 	}
@@ -83,14 +83,14 @@ void string_to_cstr(const string *str, char **cstr) {
 	(*cstr)[str->arr.length] = '\0';
 }
 
-void string_clone(const string *str, string *out) {
-	uchar_list_init(&out->arr, str->arr.length);
+void string_clone(const string *str, string *out, Allocator a) {
+	uchar_list_init(&out->arr, str->arr.length, a);
 	memcpy(out->arr.data, str->arr.data, str->arr.length);
 	out->arr.length = str->arr.length;
 }
 
-void string_from_view(string *out, string_view sv) {
-	uchar_list_init(&out->arr, sv.size);
+void string_from_view(string *out, string_view sv, Allocator a) {
+	uchar_list_init(&out->arr, sv.size, a);
 	memcpy(out->arr.data, sv.data, sv.size);
 	out->arr.length = sv.size;
 }

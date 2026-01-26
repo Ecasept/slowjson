@@ -13,5 +13,5 @@ typedef struct json_value_hashmap_node json_value_hashmap_node;
 Result json_value_hashmap_node_get(json_value_hashmap_node *node,
 								   string_view key, JSONValue *out);
 bool json_value_hashmap_node_set(json_value_hashmap_node *node, string key,
-								 JSONValue value);
-void json_value_hashmap_node_free(json_value_hashmap_node *node);
+                                 JSONValue value, Allocator a);
+void json_value_hashmap_node_free(json_value_hashmap_node *node, Allocator a);

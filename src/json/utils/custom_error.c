@@ -7,6 +7,7 @@
 #include "string/dstring.h"
 #include "string/string_view.h"
 #include "unicode/wchar.h"
+#include "alloc/default.h"
 
 thread_local cerrno_t cerrno;
 
@@ -82,17 +83,17 @@ void error_prependf(Result *r, const char *format, ...) {
 
 string format_cerrno(Result r, cerrno_t err) {
 	if (r.success) {
-		return string_newr("No error occurred.");
+		return string_newr("No error occurred.", ga);
 	} else {
 		if (err.message != NULL) {
-			string formatted = string_newr("Error: ");
-			string_append_cstr(&formatted, etostr(err.type));
-			string_append_cstr(&formatted, ": ");
-			string_append_cstr(&formatted, err.message);
+			string formatted = string_newr("Error: ", ga);
+			string_append_cstr(&formatted, etostr(err.type), ga);
+			string_append_cstr(&formatted, ": ", ga);
+			string_append_cstr(&formatted, err.message, ga);
 			return formatted;
 		} else {
-			string formatted = string_newr("Error: ");
-			string_append_cstr(&formatted, etostr(err.type));
+			string formatted = string_newr("Error: ", ga);
+			string_append_cstr(&formatted, etostr(err.type), ga);
 			return formatted;
 		}
 	}
@@ -109,8 +110,8 @@ string format_error(Result r) {
 wchar_t *format_error_wchar(Result r) {
 	string formatted = format_error(r);
 	wchar_t *wformatted = NULL;
-	Result res = utf8_string_to_wchar(as_sv(formatted), &wformatted);
-	string_free(&formatted);
+	Result res = utf8_string_to_wchar(as_sv(formatted), &wformatted, ga);
+	string_free(&formatted, ga);
 	if (!res.success) {
 		// Do not try to return `res.message` as that may also fail to convert to wchar_t
 		error_free(res);

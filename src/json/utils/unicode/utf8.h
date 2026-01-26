@@ -2,7 +2,7 @@
 #include "utils.h"
 #include <wchar.h>
 
-Result utf8_append_encoded_codepoint(UnicodeCodePoint cp, string *str);
+Result utf8_append_encoded_codepoint(UnicodeCodePoint cp, string *str, Allocator a);
 
 struct UTF8Decoder {
 	string_view source;

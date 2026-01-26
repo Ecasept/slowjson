@@ -3,21 +3,22 @@
 #include "../custom_error.h"
 #include "../unicode/unicode_types.h"
 #include "string_view.h"
+#include "../alloc/allocator.h"
 
-void string_free(string *str);
-void string_new(string *str, const char *source);
-string string_newr(const char *source);
+void string_free(string *str, Allocator a);
+void string_new(string *str, const char *source, Allocator a);
+string string_newr(const char *source, Allocator a);
 
-void string_append(string *str, const string *other);
-void string_append_uchar(string *str, uchar other);
-void string_append_cstr(string *str, const char *cstr);
+void string_append(string *str, const string *other, Allocator a);
+void string_append_uchar(string *str, uchar other, Allocator a);
+void string_append_cstr(string *str, const char *cstr, Allocator a);
 void string_eq(const string *str, const string *other, bool *res);
-void string_clone(const string *str, string *out);
-void string_from_view(string *out, string_view sv);
+void string_clone(const string *str, string *out, Allocator a);
+void string_from_view(string *out, string_view sv, Allocator a);
 
-void string_to_cstr(const string *str, char **cstr);
+void string_to_cstr(const string *str, char **cstr, Allocator a);
 
-void string_append_bytes(string *str, const uchar *bytes, size_t len);
+void string_append_bytes(string *str, const uchar *bytes, size_t len, Allocator a);
 
 bool string_eq_cstr(const string *str, const char *cstr);
 
