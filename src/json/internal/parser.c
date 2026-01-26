@@ -1,6 +1,8 @@
 #include "parser.h"
 #include "lexer.h"
 #include "../deserialize.h"
+#include <stdlib.h>
+
 
 // Forward declaration
 static Result parse_json_value(Parser *parser,
@@ -265,9 +267,21 @@ static Result parse_json_value_top_level(Parser *parser, JSONValue *out_value) {
 	return new_success();
 }
 
-Result json_deserialize(string *json, JSONValue *result, ParserConfig config) {
+Parser json_parser_new(ParserConfig config) {
+	Parser parser = {0};
+	parser.config = config;
+	parser.arena = malloc(sizeof(Arena));
+	if (parser.arena == NULL) {
+		panic("Failed to allocate memory for parser arena");
+	}
+	*parser.arena = new_arena();
+	parser.allocator = arena_as_allocator(parser.arena);
+	return parser;
+}
+
+Result json_parser_deserialize(Parser *parser, string *json, JSONValue *result) {
 	Lexer lexer;
-	lexer_init(&lexer, json, config);
+	lexer_init(&lexer, json, parser->config);
 	json_token_list tokens;
 	json_token_list_init(&tokens, 0);
 	Result r = get_tokens(&lexer, &tokens);
@@ -275,20 +289,29 @@ Result json_deserialize(string *json, JSONValue *result, ParserConfig config) {
 		return r;
 	}
 
-	Parser parser = {
-		.tokens = &tokens,
-		.position = 0,
-		.config = config,
-	};
-	r = parse_json_value_top_level(&parser, result);
+	parser->tokens = &tokens;
+	parser->position = 0;
+	r = parse_json_value_top_level(parser, result);
 
 	// Free tokens
-	for (size_t i = 0; i < parser.tokens->length; i++) {
-		JSONToken token = json_token_list_get_unchecked(parser.tokens, i);
+	for (size_t i = 0; i < parser->tokens->length; i++) {
+		JSONToken token = json_token_list_get_unchecked(parser->tokens, i);
 		lexer_free_token(&token);
 	}
-	json_token_list_free(parser.tokens);
+	json_token_list_free(parser->tokens);
+	parser->tokens = NULL;
 	return r;
+}
+
+void json_parser_free(Parser *parser) {
+	parser->tokens = NULL;
+	parser->position = 0;
+	free(parser->arena);
+}
+
+void json_parser_value_free(Parser *parser, JSONValue *value) {
+	json_value_free(value);
+	arena_free(parser->arena);
 }
 
 #define TYPE JSONToken

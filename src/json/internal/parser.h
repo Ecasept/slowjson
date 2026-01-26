@@ -2,6 +2,7 @@
 #include "jsonvalue.h"
 #include "lexer.h"
 #include "../config.h"
+#include "../utils/alloc/arena.h"
 
 
 #define TYPE JSONToken
@@ -16,5 +17,7 @@ struct Parser {
 	json_token_list *tokens;
 	size_t position;
 	ParserConfig config;
+	Arena *arena;
+	Allocator allocator;
 };
 typedef struct Parser Parser;

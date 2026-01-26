@@ -454,7 +454,7 @@ static void run_n_test_once(Test t) {
 			string stripped;
 			string_from_view(&stripped, sv_substr_unchecked(as_sv(file_content), 1, file_content.arr.length - 2));
 
-			RealResult rr2 = cerrno_store(run_string(&stripped, NULL));
+			RealResult rr2 = cerrno_store(run_string(&stripped, NULL, NULL));
 
 			string stripped_formatted = format_string(as_sv(stripped));
 
@@ -485,7 +485,7 @@ static void run_y_test_once(Test t) {
 			string stripped;
 			string_from_view(&stripped, sv_substr_unchecked(as_sv(file_content), 1, file_content.arr.length - 2));
 
-			RealResult rr2 = cerrno_store(run_string(&stripped, NULL));
+			RealResult rr2 = cerrno_store(run_string(&stripped, NULL, NULL));
 			expect_success(rr2, t.name, svl("stripped"));
 			real_result_free(rr2);
 			string_free(&stripped);

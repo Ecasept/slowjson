@@ -132,7 +132,6 @@ static Result parse_savefile_json(JSONValue root, struct Veranstaltung **v, stru
 
     *v = v_list.data;
     *mg = mg_list.data;
-    json_value_free(&root);
     return new_success();
 
 cleanup:
@@ -140,7 +139,6 @@ cleanup:
     for (size_t i = 0; i < mg_list.length; i++) free_modulgruppe_content(&mg_list.data[i]);
     if (v_list.data) veranstaltung_list_free(&v_list);
     if (mg_list.data) modulgruppe_list_free(&mg_list);
-    json_value_free(&root);
     return r;
 }
 
@@ -151,13 +149,21 @@ Result load_data_from_savefile(struct Veranstaltung **v, struct Modulgruppe **mg
     Result r = read_file_to_string(JSON_SAVEFILE_NAME, &json);
     if (!r.success) return r;
 
+    Parser parser = json_parser_new(config_default_parser_config());
     JSONValue root;
-    r = json_deserialize(&json, &root, config_default_parser_config());
+    r = json_parser_deserialize(&parser, &json, &root);
     string_free(&json);
-    
-    if (!r.success) return r;
 
-    return parse_savefile_json(root, v, mg, v_count, mg_count);
+    if (!r.success) {
+		json_parser_value_free(&parser, &root);
+        json_parser_free(&parser);
+        return r;
+    }
+
+    r = parse_savefile_json(root, v, mg, v_count, mg_count);
+	json_parser_value_free(&parser, &root);
+	json_parser_free(&parser);
+    return r;
 }
 
 #define TYPE struct Veranstaltung
