@@ -9,7 +9,7 @@
 static Result parse_json_value(Parser *parser,
 							   JSONValue *out_value, size_t depth);
 
-static Result get_tokens(Lexer *lexer, json_token_list *tokens) {
+static Result get_tokens(Lexer *lexer, json_token_list *tokens, Allocator token_list_allocator) {
 	JSONToken token;
 	Result r;
 	while (1) {
@@ -20,10 +20,10 @@ static Result get_tokens(Lexer *lexer, json_token_list *tokens) {
 				token = json_token_list_get_unchecked(tokens, i);
 				lexer_free_token(lexer, &token);
 			}
-			json_token_list_free(tokens, ga);
+			json_token_list_free(tokens, token_list_allocator);
 			return r;
 		}
-		json_token_list_push(tokens, token, ga);
+		json_token_list_push(tokens, token, token_list_allocator);
 		if (token.type == JSONTok_EOF) {
 			break;
 		}
@@ -82,7 +82,7 @@ static Result parse_json_array(Parser *parser, JSONValue *out_value, size_t dept
 	Result r;
 	JSONToken token;
 	out_value->type = JSON_ARRAY;
-	json_value_list_init(&out_value->list, 0, ga);
+	json_value_list_init(&out_value->list, 0, parser->allocator);
 
 	r = parser_peek_token(parser, &token);
 	if (!r.success)
@@ -100,7 +100,7 @@ static Result parse_json_array(Parser *parser, JSONValue *out_value, size_t dept
 		r = parse_json_value(parser, &element, depth + 1);
 		if (!r.success)
 			goto error;
-		json_value_list_push(&out_value->list, element, ga);
+		json_value_list_push(&out_value->list, element, parser->allocator);
 
 		// Check for ',' or ']'
 		r = parser_peek_token(parser, &token);
@@ -127,9 +127,9 @@ static Result parse_json_array(Parser *parser, JSONValue *out_value, size_t dept
 
 error:
 	for (size_t i = 0; i < out_value->list.length; i++) {
-		json_value_free(&out_value->list.data[i], ga);
+		json_value_free(&out_value->list.data[i], parser->allocator);
 	}
-	json_value_list_free(&out_value->list, ga);
+	json_value_list_free(&out_value->list, parser->allocator);
 	return r;
 }
 
@@ -137,7 +137,7 @@ static Result parse_json_object(Parser *parser, JSONValue *out_value, size_t dep
 	JSONToken token;
 	Result r;
 	out_value->type = JSON_OBJECT;
-	json_value_hashmap_init(&out_value->hashmap, ga);
+	json_value_hashmap_init(&out_value->hashmap, parser->allocator);
 
 	r = parser_peek_token(parser, &token);
 	if (!r.success)
@@ -165,8 +165,8 @@ static Result parse_json_object(Parser *parser, JSONValue *out_value, size_t dep
 			goto error;
 
 		string key_clone;
-		string_clone(&key.value, &key_clone, ga);
-		json_value_hashmap_set(&out_value->hashmap, key_clone, value, ga);
+		string_clone(&key.value, &key_clone, parser->allocator);
+		json_value_hashmap_set(&out_value->hashmap, key_clone, value, parser->allocator);
 
 		// Check for ',' or '}'
 		r = parser_peek_token(parser, &token);
@@ -192,7 +192,7 @@ static Result parse_json_object(Parser *parser, JSONValue *out_value, size_t dep
 	return new_success();
 
 error:
-	json_value_hashmap_free(&out_value->hashmap, ga);
+	json_value_hashmap_free(&out_value->hashmap, parser->allocator);
 	return r;
 }
 
@@ -221,8 +221,8 @@ static Result parse_json_value(Parser *parser, JSONValue *out_value, size_t dept
 		return parse_json_number(parser, out_value);
 	case JSONTok_String:
 		out_value->type = JSON_STRING;
-		string_new(&out_value->str, "", ga);
-		string_append(&out_value->str, &token.value, ga);
+		string_new(&out_value->str, "", parser->allocator);
+		string_append(&out_value->str, &token.value, parser->allocator);
 		check(parser_consume_token(parser, &token));
 		return new_success();
 	case JSONTok_True:
@@ -262,7 +262,7 @@ static Result parse_json_value_top_level(Parser *parser, JSONValue *out_value) {
 	JSONToken token;
 	r = parser_expect_token(parser, JSONTok_EOF, &token);
 	if (!r.success) {
-		json_value_free(out_value, ga);
+		json_value_free(out_value, parser->allocator);
 		return r;
 	}
 	return new_success();
@@ -276,16 +276,20 @@ Parser json_parser_new(ParserConfig config) {
 		panic("Failed to allocate memory for parser arena");
 	}
 	*parser.arena = new_arena();
-	parser.allocator = arena_as_allocator(parser.arena);
+	parser.allocator = ga;//arena_as_allocator(parser.arena);
 	return parser;
 }
 
 Result json_parser_deserialize(Parser *parser, string *json, JSONValue *result) {
+	Allocator token_list_allocator = parser->allocator;
+	Arena lexer_arena = new_arena();
+	Allocator lexer_allocator = arena_as_allocator(&lexer_arena);
+	
 	Lexer lexer;
-	lexer_init(&lexer, json, parser->config, ga);
+	lexer_init(&lexer, json, parser->config, lexer_allocator);
 	json_token_list tokens;
-	json_token_list_init(&tokens, 0, ga);
-	Result r = get_tokens(&lexer, &tokens);
+	json_token_list_init(&tokens, 0, token_list_allocator);
+	Result r = get_tokens(&lexer, &tokens, token_list_allocator);
 	if (!r.success) {
 		return r;
 	}
@@ -299,7 +303,7 @@ Result json_parser_deserialize(Parser *parser, string *json, JSONValue *result) 
 		JSONToken token = json_token_list_get_unchecked(parser->tokens, i);
 		lexer_free_token(&lexer, &token);
 	}
-	json_token_list_free(parser->tokens, ga);
+	json_token_list_free(parser->tokens, token_list_allocator);
 	parser->tokens = NULL;
 	return r;
 }
@@ -311,7 +315,7 @@ void json_parser_free(Parser *parser) {
 }
 
 void json_parser_value_free(Parser *parser, JSONValue *value) {
-	json_value_free(value, ga);
+	json_value_free(value, parser->allocator);
 	arena_free(parser->arena);
 }
 

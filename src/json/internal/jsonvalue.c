@@ -1,5 +1,4 @@
 #include "jsonvalue.h"
-#include "../utils/alloc/default.h"
 
 static const char *json_type_strings[] = {
 	"null",
