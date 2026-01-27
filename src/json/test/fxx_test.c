@@ -108,7 +108,7 @@ static Result run_single_fxx_test(double expected, string *json_input) {
 	
 	if (actual_bits != expected_bits) {
 		json_parser_free(&parser);
-		return new_errorf("Mismatch: expected %lx, got %lx", EParserSyntaxError, expected_bits, actual_bits);
+		return new_errorf("Mismatch: expected %llx, got %llx", EParserSyntaxError, expected_bits, actual_bits);
 	}
 
 	json_parser_free(&parser);
