@@ -73,9 +73,10 @@ int actual_main(void) {
 
 
 	} else {
+		ErrorType t = cerrno.type;
 		int continue_error_handling = 1;
 		wchar_t *error_message = format_error_wchar(r);
-		if (cerrno.type == EFileNotFound) {
+		if (t == EFileNotFound) {
 			print_loaddata_nofile_screen(error_message);
 			print_welcomescreen_options();
 			continue_error_handling = 0;
