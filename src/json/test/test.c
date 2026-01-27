@@ -63,39 +63,32 @@ Result run_once(const char *filename) {
 	if (!r.success) return r;
 
 	Parser parser = json_parser_new(config_default_parser_config());
-	JSONValue root;
-	r = json_parser_deserialize(&parser, &json, &root);
+	ParserResult result;
+	r = json_parser_deserialize(&parser, &json, &result);
 	string_free(&json, ga);
 	
 	if (!r.success) {
-		json_parser_free(&parser);
 		return r;
 	}
 
 	// Successfully deserialized
-	json_parser_free(&parser);
+	parser_result_free(&result);
 	return new_success();
 }
 
-Result run_string(string *json, JSONValue *out_root, Parser *out_parser) {
+Result run_string(string *json, ParserResult *out_result) {
 	Parser parser = json_parser_new(config_default_parser_config());
-	JSONValue root;
-	Result r = json_parser_deserialize(&parser, json, &root);
+	ParserResult result;
+	Result r = json_parser_deserialize(&parser, json, &result);
 	if (!r.success) {
-		json_parser_free(&parser);
 		return r;
 	}
 
-	if (out_root != NULL) {
-		if (out_parser == NULL) {
-			json_parser_free(&parser);
-			return new_error("Parser output requested without parser handle", EParserSyntaxError);
-		}
-		*out_root = root;
-		*out_parser = parser;
+	if (out_result != NULL) {
+		*out_result = result;
 		return new_success();
 	}
 
-	json_parser_free(&parser);
+	parser_result_free(&result);
 	return new_success();
 }

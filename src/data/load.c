@@ -151,19 +151,16 @@ Result load_data_from_savefile(struct Veranstaltung **v, struct Modulgruppe **mg
     if (!r.success) return r;
 
     Parser parser = json_parser_new(config_default_parser_config());
-    JSONValue root;
-    r = json_parser_deserialize(&parser, &json, &root);
+    ParserResult result;
+    r = json_parser_deserialize(&parser, &json, &result);
     string_free(&json, ga);
 
     if (!r.success) {
-		json_parser_value_free(&parser, &root);
-        json_parser_free(&parser);
         return r;
     }
 
-    r = parse_savefile_json(root, v, mg, v_count, mg_count);
-	json_parser_value_free(&parser, &root);
-	json_parser_free(&parser);
+    r = parse_savefile_json(result.value, v, mg, v_count, mg_count);
+	parser_result_free(&result);
     return r;
 }
 

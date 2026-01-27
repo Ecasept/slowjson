@@ -271,16 +271,20 @@ static Result parse_json_value_top_level(Parser *parser, JSONValue *out_value) {
 Parser json_parser_new(ParserConfig config) {
 	Parser parser = {0};
 	parser.config = config;
-	parser.arena = malloc(sizeof(Arena));
-	if (parser.arena == NULL) {
-		panic("Failed to allocate memory for parser arena");
-	}
-	*parser.arena = new_arena();
-	parser.allocator = ga;//arena_as_allocator(parser.arena);
+	parser.arena = NULL;
+	parser.allocator = (Allocator){0};
 	return parser;
 }
 
-Result json_parser_deserialize(Parser *parser, string *json, JSONValue *result) {
+Result json_parser_deserialize(Parser *parser, string *json, ParserResult *result) {
+	// Initialize parser arena and allocator for this run
+	parser->arena = malloc(sizeof(Arena));
+	if (parser->arena == NULL) {
+		panic("Failed to allocate memory for parser arena");
+	}
+	*parser->arena = new_arena();
+	parser->allocator = arena_as_allocator(parser->arena);
+
 	Allocator token_list_allocator = parser->allocator;
 	Arena lexer_arena = new_arena();
 	Allocator lexer_allocator = arena_as_allocator(&lexer_arena);
@@ -289,14 +293,17 @@ Result json_parser_deserialize(Parser *parser, string *json, JSONValue *result) 
 	lexer_init(&lexer, json, parser->config, lexer_allocator);
 	json_token_list tokens;
 	json_token_list_init(&tokens, 0, token_list_allocator);
+	
 	Result r = get_tokens(&lexer, &tokens, token_list_allocator);
 	if (!r.success) {
-		return r;
+		goto error;
 	}
 
 	parser->tokens = &tokens;
 	parser->position = 0;
-	r = parse_json_value_top_level(parser, result);
+	
+	// Parse into result->value using parser's current allocator
+	r = parse_json_value_top_level(parser, &result->value);
 
 	// Free tokens
 	for (size_t i = 0; i < parser->tokens->length; i++) {
@@ -305,18 +312,42 @@ Result json_parser_deserialize(Parser *parser, string *json, JSONValue *result) 
 	}
 	json_token_list_free(parser->tokens, token_list_allocator);
 	parser->tokens = NULL;
+
+	if (!r.success) {
+		goto error;
+	}
+	
+	arena_free(&lexer_arena);
+
+	// Transfer ownership of the parser's allocator to the result
+	result->allocator = parser->allocator;
+	result->arena = parser->arena;
+	
+	// Reset parser state
+	parser->arena = NULL;
+	parser->allocator = (Allocator){0};
+
+	return r;
+
+error:
+	arena_free(&lexer_arena);
+	
+	// Clean up parser arena on failure
+	arena_free(parser->arena);
+	free(parser->arena);
+	parser->arena = NULL;
+	parser->allocator = (Allocator){0};
+
+	result->arena = NULL;
+	result->value.type = JSON_NULL; // Safety
+
 	return r;
 }
 
-void json_parser_free(Parser *parser) {
-	parser->tokens = NULL;
-	parser->position = 0;
-	free(parser->arena);
-}
-
-void json_parser_value_free(Parser *parser, JSONValue *value) {
-	json_value_free(value, parser->allocator);
-	arena_free(parser->arena);
+void parser_result_free(ParserResult *result) {
+	json_value_free(&result->value, result->allocator);
+	arena_free(result->arena);
+	free(result->arena);
 }
 
 #define TYPE JSONToken
