@@ -62,8 +62,8 @@ int sv_find(string_view sv, string_view substr) {
 	#error "Variable Length Arrays are required for this function"
 	#endif
 	size_t bad_char[ALPHABET_SIZE];
-	size_t good_suffix_L[substr.size];
-	size_t good_suffix_H[substr.size];
+	// size_t good_suffix_L[substr.size];
+	// size_t good_suffix_H[substr.size];
 	build_bad_char_table(bad_char, substr);
 	
 
