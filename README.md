@@ -1,5 +1,12 @@
-# gradeviewer
-A command-line application to manage your university grades
+# Studienplaner und Notenübersicht
+Ein Kommandozeilenprogramm zur Verwaltung von Veranstaltungen und Studienleistungen
+
+Erstellt wurde das Programm von:
+- Adrian Jonkov
+- Jakob Watson
+- Franz Düchs
+
+<br><br><br><br>
 
 ## Features
 - Add and edit your courses and their credits
@@ -8,12 +15,12 @@ A command-line application to manage your university grades
 - View your current average grade
 - Persist all your data in a local JSON file
 
-## Usage
+<br><br><br><br>
+
+## Programm kompilieren
 *TODO*
 
-## Build Instructions
-*TODO*
-
+<br><br><br><br>
 
 ## Nutzungshinweise
 >### Allgemeines
@@ -116,11 +123,6 @@ Nachdem die Eingabe der Daten abgeschlossen wurde wird automatisch wieder die Se
 <br><br><br><br>
 
 
->### Hilfe
-Das Programm enthält eine zentrale **Hilfe** auf der die wesentlichen Programmfunktionen erklärt werden. Die Seite bietet dem Nutzer eine erste Anlaufstelle bei Fragen zur Nutzung des Programms. <br>
-
-<!-- Die **Hilfe** kann von jeder Seite innerhalb des Programms, mit Ausnahme der Eingabedialoge, über ``[h]`` aufgerufen werden.  -->
-<br><br><br><br>
 
 >### Veranstaltung bearbeiten
 Die Option zum bearbeiten einer Veranstaltung ist von der **Veranstaltungsübersicht** und der Seite des **Leistungsstands** aufrufbar. Mit ``[b]`` erscheint der Dialog zum bearbeiten einer Veranstaltung. Zunächst gibt man mithilfe eiens Indexes an, welche Veranstaltung man bearbeiten möchte. Hat man dies ausgewählt wird einem nochmal schön übersichtlich die Veranstaltung angezeigt, die man bearbeitet. 
@@ -158,3 +160,11 @@ Falls keine bewerteten Leistungspunkte vorhanden sind, gibt die Funktion 0.0 zur
 
 Rückgabewert: gewichteter Gesamtnotendurchschnitt (double).
 
+<br><br><br><br>
+
+
+>### Hilfe
+Das Programm enthält eine zentrale **Hilfe** auf der die wesentlichen Programmfunktionen erklärt werden. Die Seite bietet dem Nutzer eine erste Anlaufstelle bei Fragen zur Nutzung des Programms. <br>
+
+Die **Hilfe** kann von jeder Seite innerhalb des Programms, mit Ausnahme der Eingabedialoge, über ``[h]`` aufgerufen werden.
+<br><br><br><br>
