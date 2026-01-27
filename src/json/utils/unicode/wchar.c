@@ -83,12 +83,15 @@ Result utf8_string_to_wchar(string_view src, wchar_t **dest, Allocator a) {
 
 	if (sizeof(wchar_t) == 2) {
 		// UTF-16
-		size_t index = 0;
 		Result r;
 		UnicodeCodePoint cp;
-		while (index < src.size) {
+		while (true) {
 			r = utf8_decoder_next(&decoder, &cp);
 			if (!r.success) {
+				if (cerrno.type == EUnicodeUnexpectedEndOfString) {
+					error_free(r);
+					break;
+				}
 				wchar_list_free(&out, a);
 				return r;
 			}
@@ -108,11 +111,14 @@ Result utf8_string_to_wchar(string_view src, wchar_t **dest, Allocator a) {
 		// UTF-32
 		Result r;
 		UCP cp;
-		size_t index = 0;
 
-		while (index < src.size) {
+		while (true) {
 			r = utf8_decoder_next(&decoder, &cp);
 			if (!r.success) {
+				if (cerrno.type == EUnicodeUnexpectedEndOfString) {
+					error_free(r);
+					break;
+				}
 				wchar_list_free(&out, a);
 				return r;
 			}
