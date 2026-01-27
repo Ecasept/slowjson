@@ -6,8 +6,10 @@
 
 struct ParserResult {
     JSONValue value;
-    Allocator allocator;
-    Arena *arena;
+    Allocator parser_allocator;
+    Arena *parser_arena;
+    Allocator lexer_allocator;
+    Arena *lexer_arena;
 };
 typedef struct ParserResult ParserResult;
 

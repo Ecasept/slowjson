@@ -48,6 +48,7 @@ struct JSONValue {
 const char *jtostr(JSONType type);
 
 void json_value_free(JSONValue *value, Allocator a);
+void json_value_free_split(JSONValue *value, Allocator a, Allocator stra);
 
 JSONValue json_value_new_null(void);
 JSONValue json_value_new_bool(bool b);

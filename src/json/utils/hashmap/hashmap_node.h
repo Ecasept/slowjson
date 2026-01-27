@@ -15,3 +15,4 @@ Result json_value_hashmap_node_get(json_value_hashmap_node *node,
 bool json_value_hashmap_node_set(json_value_hashmap_node *node, string key,
                                  JSONValue value, Allocator a);
 void json_value_hashmap_node_free(json_value_hashmap_node *node, Allocator a);
+void json_value_hashmap_node_free_split(json_value_hashmap_node *node, Allocator a, Allocator stra);

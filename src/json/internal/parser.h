@@ -19,5 +19,6 @@ struct Parser {
 	ParserConfig config;
 	Arena *arena;
 	Allocator allocator;
+	Allocator string_allocator;
 };
 typedef struct Parser Parser;

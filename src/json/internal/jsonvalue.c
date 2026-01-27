@@ -17,6 +17,10 @@ const char *jtostr(JSONType type) {
 }
 
 void json_value_free(JSONValue *value, Allocator a) {
+	json_value_free_split(value, a, a);
+}
+
+void json_value_free_split(JSONValue *value, Allocator a, Allocator stra) {
 	switch (value->type) {
 	case JSON_NULL:
 	case JSON_BOOL:
@@ -25,15 +29,15 @@ void json_value_free(JSONValue *value, Allocator a) {
 		break;
 	case JSON_ARRAY:
 		for (size_t i = 0; i < value->list.length; i++) {
-			json_value_free(&value->list.data[i], a);
+			json_value_free_split(&value->list.data[i], a, stra);
 		}
 		json_value_list_free(&value->list, a);
 		break;
 	case JSON_OBJECT:
-		json_value_hashmap_free(&value->hashmap, a);
+		json_value_hashmap_free_split(&value->hashmap, a, stra);
 		break;
 	case JSON_STRING:
-		string_free(&value->str, a);
+		string_free(&value->str, stra);
 		break;
 	}
 }

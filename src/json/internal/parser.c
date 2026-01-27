@@ -4,6 +4,17 @@
 #include <stdlib.h>
 #include "../utils/alloc/default.h"
 
+static void free_lexer_tokens(Lexer *lexer, json_token_list *tokens, Allocator token_list_allocator) {
+	if (lexer->config.whitespace_storing == CONFIG_WHITESPACE_STORE) {
+		for (size_t i = 0; i < tokens->length; i++) {
+			JSONToken token = json_token_list_get_unchecked(tokens, i);
+			if (token.type == JSONTok_Whitespace) {
+				string_free(&token.value, lexer->allocator);
+			}
+		}
+	}
+	json_token_list_free(tokens, token_list_allocator);
+}
 
 // Forward declaration
 static Result parse_json_value(Parser *parser,
@@ -16,11 +27,7 @@ static Result get_tokens(Lexer *lexer, json_token_list *tokens, Allocator token_
 		r = lexer_next_token(lexer, &token);
 		if (!r.success) {
 			// Free previously allocated tokens
-			for (size_t i = 0; i < tokens->length; i++) {
-				token = json_token_list_get_unchecked(tokens, i);
-				lexer_free_token(lexer, &token);
-			}
-			json_token_list_free(tokens, token_list_allocator);
+			free_lexer_tokens(lexer, tokens, token_list_allocator);
 			return r;
 		}
 		json_token_list_push(tokens, token, token_list_allocator);
@@ -127,7 +134,7 @@ static Result parse_json_array(Parser *parser, JSONValue *out_value, size_t dept
 
 error:
 	for (size_t i = 0; i < out_value->list.length; i++) {
-		json_value_free(&out_value->list.data[i], parser->allocator);
+		json_value_free_split(&out_value->list.data[i], parser->allocator, parser->string_allocator);
 	}
 	json_value_list_free(&out_value->list, parser->allocator);
 	return r;
@@ -164,9 +171,7 @@ static Result parse_json_object(Parser *parser, JSONValue *out_value, size_t dep
 		if (!r.success)
 			goto error;
 
-		string key_clone;
-		string_clone(&key.value, &key_clone, parser->allocator);
-		json_value_hashmap_set(&out_value->hashmap, key_clone, value, parser->allocator);
+		json_value_hashmap_set(&out_value->hashmap, key.value, value, parser->allocator);
 
 		// Check for ',' or '}'
 		r = parser_peek_token(parser, &token);
@@ -192,7 +197,7 @@ static Result parse_json_object(Parser *parser, JSONValue *out_value, size_t dep
 	return new_success();
 
 error:
-	json_value_hashmap_free(&out_value->hashmap, parser->allocator);
+	json_value_hashmap_free_split(&out_value->hashmap, parser->allocator, parser->string_allocator);
 	return r;
 }
 
@@ -221,8 +226,8 @@ static Result parse_json_value(Parser *parser, JSONValue *out_value, size_t dept
 		return parse_json_number(parser, out_value);
 	case JSONTok_String:
 		out_value->type = JSON_STRING;
-		string_new(&out_value->str, "", parser->allocator);
-		string_append(&out_value->str, &token.value, parser->allocator);
+		// Copy the string value that was allocated by the lexer
+		out_value->str = token.value;
 		check(parser_consume_token(parser, &token));
 		return new_success();
 	case JSONTok_True:
@@ -262,7 +267,7 @@ static Result parse_json_value_top_level(Parser *parser, JSONValue *out_value) {
 	JSONToken token;
 	r = parser_expect_token(parser, JSONTok_EOF, &token);
 	if (!r.success) {
-		json_value_free(out_value, parser->allocator);
+		json_value_free_split(out_value, parser->allocator, parser->string_allocator);
 		return r;
 	}
 	return new_success();
@@ -286,8 +291,13 @@ Result json_parser_deserialize(Parser *parser, string *json, ParserResult *resul
 	parser->allocator = arena_as_allocator(parser->arena);
 
 	Allocator token_list_allocator = parser->allocator;
-	Arena lexer_arena = new_arena();
-	Allocator lexer_allocator = arena_as_allocator(&lexer_arena);
+	Arena *lexer_arena = malloc(sizeof(Arena));
+	if (lexer_arena == NULL) {
+		panic("Failed to allocate memory for lexer arena");
+	}
+	*lexer_arena = new_arena();
+	Allocator lexer_allocator = arena_as_allocator(lexer_arena);
+	parser->string_allocator = lexer_allocator;
 	
 	Lexer lexer;
 	lexer_init(&lexer, json, parser->config, lexer_allocator);
@@ -305,49 +315,45 @@ Result json_parser_deserialize(Parser *parser, string *json, ParserResult *resul
 	// Parse into result->value using parser's current allocator
 	r = parse_json_value_top_level(parser, &result->value);
 
-	// Free tokens
-	for (size_t i = 0; i < parser->tokens->length; i++) {
-		JSONToken token = json_token_list_get_unchecked(parser->tokens, i);
-		lexer_free_token(&lexer, &token);
-	}
-	json_token_list_free(parser->tokens, token_list_allocator);
-	parser->tokens = NULL;
+	// Clear parser tokens to avoid double free
+	free_lexer_tokens(&lexer, &tokens, token_list_allocator);
 
 	if (!r.success) {
 		goto error;
 	}
-	
-	arena_free(&lexer_arena);
 
-	// Transfer ownership of the parser's allocator to the result
-	result->allocator = parser->allocator;
-	result->arena = parser->arena;
+	// Transfer ownership of the allocators to the result
+	result->parser_allocator = parser->allocator;
+	result->parser_arena = parser->arena;
+	result->lexer_allocator = lexer_allocator;
+	result->lexer_arena = lexer_arena;
 	
 	// Reset parser state
 	parser->arena = NULL;
 	parser->allocator = (Allocator){0};
+	parser->string_allocator = (Allocator){0};
 
 	return r;
 
 error:
-	arena_free(&lexer_arena);
-	
-	// Clean up parser arena on failure
+	arena_free(lexer_arena);
+	free(lexer_arena);
 	arena_free(parser->arena);
 	free(parser->arena);
+
 	parser->arena = NULL;
 	parser->allocator = (Allocator){0};
-
-	result->arena = NULL;
-	result->value.type = JSON_NULL; // Safety
+	parser->string_allocator = (Allocator){0};
 
 	return r;
 }
 
 void parser_result_free(ParserResult *result) {
-	json_value_free(&result->value, result->allocator);
-	arena_free(result->arena);
-	free(result->arena);
+	json_value_free_split(&result->value, result->parser_allocator, result->lexer_allocator);
+	arena_free(result->parser_arena);
+	free(result->parser_arena);
+	arena_free(result->lexer_arena);
+	free(result->lexer_arena);
 }
 
 #define TYPE JSONToken

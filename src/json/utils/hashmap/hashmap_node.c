@@ -52,10 +52,14 @@ bool json_value_hashmap_node_set(json_value_hashmap_node *node, string key,
  * @brief Frees the successor nodes. Does not free the node itself.
  */
 void json_value_hashmap_node_free(json_value_hashmap_node *node, Allocator a) {
-	string_free(&node->key, a);
-	json_value_free(&node->value, a);
+	json_value_hashmap_node_free_split(node, a, a);
+}
+
+void json_value_hashmap_node_free_split(json_value_hashmap_node *node, Allocator a, Allocator stra) {
+	string_free(&node->key, stra);
+	json_value_free_split(&node->value, a, stra);
 	if (node->next != NULL) {
-		json_value_hashmap_node_free(node->next, a);
+		json_value_hashmap_node_free_split(node->next, a, stra);
 		dealloc(a, node->next);
 	}
 }

@@ -109,13 +109,17 @@ static void json_value_hashmap_set_internal(json_value_hashmap *map, string key,
 }
 
 void json_value_hashmap_free(json_value_hashmap *map, Allocator a) {
+	json_value_hashmap_free_split(map, a, a);
+}
+
+void json_value_hashmap_free_split(json_value_hashmap *map, Allocator a, Allocator stra) {
 	for (size_t i = 0; i < map->buckets.length; i++) {
 		json_value_hashmap_node node;
 		node = json_value_hashmap_node_list_get_unchecked(&map->buckets, i);
 		if (node.key.arr.data == NULL) {
 			continue;
 		}
-		json_value_hashmap_node_free(&node, a);
+		json_value_hashmap_node_free_split(&node, a, stra);
 	}
 	json_value_hashmap_node_list_free(&map->buckets, a);
 }
