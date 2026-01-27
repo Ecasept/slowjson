@@ -17,19 +17,6 @@ UTF8Decoder utf8_decoder_new(string_view source) {
 	};
 }
 
-/**
- * @brief Returns the next uchar from a string, or an IndexOutOfBounds Error
- */
-static inline Result get_next_uchar(string_view str, size_t index, uchar *out) {
-	if (index >= str.size) {
-		return new_error(
-			"Unexpected end of unicode string while reading codepoint",
-			EUnicodeUnexpectedEndOfString);
-	}
-	*out = sv_at_unchecked(str, index);
-	return new_success();
-}
-
 #define continuation_error(lower, byte, upper) \
 	new_errorf( \
 		"Invalid continuation byte 0x%2X. Expected between 0x%2X and 0x%2X", \
