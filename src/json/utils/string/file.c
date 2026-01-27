@@ -144,6 +144,9 @@ Result file_line_iterator_next(FileLineIterator *iterator, bool *has_line) {
 		if (ch == '\n') {
 			// End of line
 			break;
+		} else if (ch == '\r') {
+			// Ignore carriage return
+			continue;
 		}
 		string_append_uchar(&iterator->current_line, (uchar)ch, ga);
 	}
