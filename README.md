@@ -8,15 +8,6 @@ Erstellt wurde das Programm von:
 
 <br><br><br><br>
 
-## Features
-- Add and edit your courses and their credits
-- Attach extra information like semester and module group
-- Add your exam grades
-- View your current average grade
-- Persist all your data in a local JSON file
-
-<br><br><br><br>
-
 ## Programm kompilieren
 *TODO*
 
