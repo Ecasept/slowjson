@@ -35,6 +35,13 @@ enum ConfigDoubleOutOfRangeBehavior {
 };
 typedef enum ConfigDoubleOutOfRangeBehavior ConfigDoubleOutOfRangeBehavior;
 
+enum ConfigLexerWhitespaceStoring {
+	// Whitespace tokens that the lexer returns will contain the exact whitespace as an allocated string
+	CONFIG_WHITESPACE_STORE,
+	// Whitespace tokens will not contain any data
+	CONFIG_WHITESPACE_DISCARD
+};
+typedef enum ConfigLexerWhitespaceStoring ConfigLexerWhitespaceStoring;
 
 struct ParserLimits {
 	// Maximum depth of nested objects/arrays
@@ -66,6 +73,12 @@ struct ParserConfig {
 	* range of a double, the behavior specified here is applied.
 	*/
 	ConfigDoubleOutOfRangeBehavior double_overflow_behavior;
+	/**
+	 * @brief Specifies whether whitespace tokens returned by the lexer
+	 * should store the actual whitespace characters or not. Can increase
+	 * performance and reduce memory usage when set to DISCARD.
+	 */
+	ConfigLexerWhitespaceStoring whitespace_storing;
 	// Limits for the parser
 	ParserLimits limits;
 };

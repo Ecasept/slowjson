@@ -87,7 +87,6 @@ Result lexer_next_token(Lexer *lexer, JSONToken *token) {
 	case '\r':
 	case '\t':
 	case ' ':
-		lexer_skip(lexer, 1); // Consume whitespace character
 		return lexer_lex_whitespace(lexer, token, current_char);
 	case '"':
 		lexer_skip(lexer, 1); // Consume opening quote
@@ -118,13 +117,21 @@ Result lexer_next_token(Lexer *lexer, JSONToken *token) {
 	}
 }
 
-
-
-static Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token, uchar start) {
+static Result lexer_lex_whitespace_store(Lexer *lexer, JSONToken *token, uchar start) {
 	uchar current_char = 0;
+
+	token->line = lexer->line;
+	token->column = lexer->column;
 
 	string whitespace;
 	string_new(&whitespace, "", lexer->allocator);
+	
+	// Skip `start` character
+	lexer_skip(lexer, 1);
+	if (start == '\n') {
+		lexer->column = 1;
+		lexer->line++;
+	}
 	string_append_uchar(&whitespace, start, lexer->allocator);
 
 	while (1) {
@@ -161,6 +168,46 @@ static Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token, uchar start) 
 			token->value = whitespace;
 			return new_success();
 		}
+	}
+}
+
+static Result lexer_lex_whitespace_discard(Lexer *lexer, JSONToken *token, uchar start) {
+	token->type = JSONTok_Whitespace;
+	token->value.arr.data = NULL;
+	token->line = lexer->line;
+	token->column = lexer->column;
+
+	// Skip `start` character
+	lexer_skip(lexer, 1);
+	if (start == '\n') {
+		lexer->column = 1;
+		lexer->line++;
+	}
+
+	const uchar *data = lexer->decoder.source.data;
+	size_t max_idx = lexer->decoder.source.size;
+
+	while (lexer->decoder.index < max_idx) {
+		uchar c = data[lexer->decoder.index];
+		if (c != ' ' && c != '\n' && c != '\t' && c != '\r') {
+			break;
+		}
+		
+		lexer->line += (c == '\n');
+		lexer->column = (c == '\n') ? 1 : lexer->column + 1;
+		lexer->decoder.index++;
+	}
+	return new_success();
+}
+
+static Result lexer_lex_whitespace(Lexer *lexer, JSONToken *token, uchar start) {
+	switch (lexer->config.whitespace_storing) {
+		case CONFIG_WHITESPACE_STORE:
+			return lexer_lex_whitespace_store(lexer, token, start);
+		case CONFIG_WHITESPACE_DISCARD:
+			return lexer_lex_whitespace_discard(lexer, token, start);
+		default:
+			panic("Invalid state in lexer_lex_whitespace");
 	}
 }
 
@@ -388,7 +435,7 @@ static Result lexer_lex_string(Lexer *lexer, JSONToken *token) {
 
 
 void lexer_free_token(Lexer *lexer, JSONToken *token) {
-	if (token->type == JSONTok_String || token->type == JSONTok_Whitespace) {
+	if (token->type == JSONTok_String || (token->type == JSONTok_Whitespace && lexer->config.whitespace_storing == CONFIG_WHITESPACE_STORE)) {
 		string_free(&token->value, lexer->allocator);
 	}
 }
