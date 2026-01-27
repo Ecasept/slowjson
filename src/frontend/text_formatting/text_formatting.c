@@ -198,7 +198,7 @@ void print_overview_by_mod(struct Veranstaltung *ver, size_t size_ver, struct Mo
                 // Sortierung der Veranstaltungen nach Modulgruppe
                 sort_by_mod(ver, size_ver);
 
-                wprintf(L"\nSortierung: Modulgruppe, alphabetisch\n");
+                wprintf(L"\nSortierung: Modulgruppe\n");
 
 
                 for (size_t i = 0; i < size_ver; ++i) {
