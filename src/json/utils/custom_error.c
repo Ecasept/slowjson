@@ -9,7 +9,7 @@
 #include "unicode/wchar.h"
 #include "alloc/default.h"
 
-thread_local cerrno_t cerrno;
+cerrno_t cerrno;
 
 void set_cerrno(const char msg[], ErrorType type) {
 	size_t len = strlen(msg);

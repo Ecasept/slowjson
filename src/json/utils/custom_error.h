@@ -1,7 +1,6 @@
 #pragma once
 #include <stdbool.h>
 #include "wchar.h"
-#include <threads.h>
 #define check(code) do {Result _r = (code); if (!_r.success) return _r;} while(0)
 
 struct string;
@@ -52,7 +51,7 @@ struct RealResult {
 };
 typedef struct RealResult RealResult;
 
-extern thread_local cerrno_t cerrno;
+extern cerrno_t cerrno;
 
 RealResult cerrno_store(Result r);
 void real_result_free(RealResult rr);
