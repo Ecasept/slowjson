@@ -51,6 +51,7 @@ static inline void arena_new_chunk(Arena *arena, size_t size) {
 	arena->chunk = new_chunk;
 	arena->offset = ALIGNED_METADATA_SIZE;
 	arena->current_chunk_size = size;
+	arena->last_ptr = NULL;
 
 #ifdef VALGRIND_ENABLED
 	VALGRIND_MAKE_MEM_NOACCESS(arena.chunk, size);
@@ -64,13 +65,14 @@ static inline void* arena_alloc(Arena *a, size_t size) {
 	if (size == 0) {
 		return NULL;
 	}
-	size = align_to(size, ALIGNMENT_BYTES);
-	if (a->offset + size > a->current_chunk_size) {
-		arena_new_chunk(a, size);
+	size_t aligned_size = align_to(size, ALIGNMENT_BYTES);
+	if (a->offset + aligned_size > a->current_chunk_size) {
+		arena_new_chunk(a, aligned_size);
 		// Will allocate at least enough space for `size`
 	}
 	void *ptr = (void *)(a->chunk + a->offset);
-	a->offset += size;
+	a->last_ptr = ptr;
+	a->offset += aligned_size;
 
 #ifdef VALGRIND_ENABLED
 	VALGRIND_MAKE_MEM_UNDEFINED(ptr, size);
@@ -113,6 +115,38 @@ static inline void *arena_realloc(Arena *a, void* ptr, size_t old_size, size_t n
 	}
 	if (new_size == 0) {
 		return NULL;
+	}
+	if (ptr == a->last_ptr) {
+		// Try to extend the last allocation, saving a memove
+		size_t aligned_new_size = align_to(new_size, ALIGNMENT_BYTES);
+
+		// Used space without the last allocation
+		size_t current_offset = (unsigned char *)ptr - a->chunk;
+		size_t remaining_space = a->current_chunk_size - current_offset;
+		
+		if (aligned_new_size <= remaining_space) {
+			a->offset = current_offset + aligned_new_size;
+
+			if (new_size > old_size) {
+				size_t diff = new_size - old_size;
+#ifdef VALGRIND_ENABLED
+				VALGRIND_MAKE_MEM_UNDEFINED((unsigned char *)ptr + old_size, diff);
+#endif
+#ifdef ASAN_ENABLED
+				__asan_unpoison_memory_region((unsigned char *)ptr + old_size, diff);
+#endif
+			} else if (new_size < old_size) {
+				size_t diff = old_size - new_size;
+#ifdef VALGRIND_ENABLED
+				VALGRIND_MAKE_MEM_NOACCESS((unsigned char *)ptr + new_size, diff);
+#endif
+#ifdef ASAN_ENABLED
+				__asan_poison_memory_region((unsigned char *)ptr + new_size, diff);
+#endif
+			}
+			
+			return ptr;
+		}
 	}
 	void* new_ptr = arena_alloc(a, new_size);
 	size_t to_copy = old_size < new_size ? old_size : new_size;

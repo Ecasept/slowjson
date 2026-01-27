@@ -6,6 +6,7 @@ struct Arena {
 	unsigned char *chunk;
 	size_t offset;
 	size_t current_chunk_size;
+	unsigned char *last_ptr;
 };
 typedef struct Arena Arena;
 
