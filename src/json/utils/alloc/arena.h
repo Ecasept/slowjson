@@ -9,6 +9,6 @@ struct Arena {
 };
 typedef struct Arena Arena;
 
-Arena new_arena();
+Arena new_arena(void);
 Allocator arena_as_allocator(Arena *a);
 void arena_free(Arena *a);

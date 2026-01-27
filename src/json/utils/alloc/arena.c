@@ -130,7 +130,7 @@ void *arena_realloc_wrapper(void *a, void *ptr, size_t old_size, size_t new_size
 	return arena_realloc((Arena *)a, ptr, old_size, new_size);
 }
 
-Arena new_arena() {
+Arena new_arena(void) {
 	Arena arena = {0};
 	arena_new_chunk(&arena, PAGE_SIZE);
 	arena.start = arena.chunk;

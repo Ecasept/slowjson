@@ -495,7 +495,7 @@ static void run_y_test_once(Test t) {
 	}
 }
 
-void run_jsontestsuite() {
+void run_jsontestsuite(void) {
 	size_t n_n_tests = sizeof(n_tests) / sizeof(n_tests[0]);
 	size_t n_y_tests = sizeof(y_tests) / sizeof(y_tests[0]);
 
