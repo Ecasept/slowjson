@@ -38,34 +38,32 @@ static Result get_tokens(Lexer *lexer, json_token_list *tokens, Allocator token_
 	return new_success();
 }
 
-static Result parser_peek_token_count(json_token_list *tokens, size_t position,
-									  JSONToken *out_token, size_t *count) {
-	if (position >= tokens->length) {
-		return new_error("Unexpected end of input", EParserUnexpectedEOF);
-	}
-	(*count)++;
-	*out_token = json_token_list_get_unchecked(tokens, position);
-	if (out_token->type == JSONTok_Whitespace) {
-		// Skip whitespace
-		return parser_peek_token_count(tokens, position + 1, out_token, count);
-	}
-	return new_success();
-}
-
 static Result parser_peek_token(Parser *parser,
-								JSONToken *out_token) {
-	size_t count = 0;
-	return parser_peek_token_count(parser->tokens, parser->position, out_token, &count);
+								JSONToken *out_token, size_t *count) {
+	*count = 0;
+	while (true) {
+		*out_token = json_token_list_get_unchecked(parser->tokens, parser->position + *count);
+		(*count)++;
+		if (out_token->type != JSONTok_Whitespace) {
+			return new_success();
+		}
+		if (parser->position + *count >= parser->tokens->length) {
+			return new_error("Unexpected end of input", EParserUnexpectedEOF);
+		}
+	}
 }
 
 static Result parser_consume_token(Parser *parser, JSONToken *out_token) {
-	size_t count = 0;
-	Result r = parser_peek_token_count(parser->tokens, parser->position, out_token, &count);
-	if (!r.success) {
-		return r;
+	while (true) {
+		*out_token = json_token_list_get_unchecked(parser->tokens, parser->position);
+		parser->position++;
+		if (out_token->type != JSONTok_Whitespace) {
+			return new_success();
+		}
+		if (parser->position >= parser->tokens->length) {
+			return new_error("Unexpected end of input", EParserUnexpectedEOF);
+		}
 	}
-	parser->position += count;
-	return new_success();
 }
 static Result parser_expect_token(Parser *parser,
 								  JSONTokenType expected_type,
@@ -84,6 +82,9 @@ static Result parser_expect_token(Parser *parser,
 	*out_token = token;
 	return new_success();
 }
+static void parser_skip_tokens(Parser *parser, size_t count) {
+	parser->position += count;
+}
 
 static Result parse_json_array(Parser *parser, JSONValue *out_value, size_t depth) {
 	Result r;
@@ -91,14 +92,13 @@ static Result parse_json_array(Parser *parser, JSONValue *out_value, size_t dept
 	out_value->type = JSON_ARRAY;
 	json_value_list_init(&out_value->list, 0, parser->allocator);
 
-	r = parser_peek_token(parser, &token);
+	size_t count;
+	r = parser_peek_token(parser, &token, &count);
 	if (!r.success)
 		goto error;
 	if (token.type == JSONTok_RBracket) {
 		// Empty array
-		r = parser_consume_token(parser, &token);
-		if (!r.success)
-			goto error;
+		parser_skip_tokens(parser, count);
 		return new_success();
 	}
 	// Parse elements
@@ -110,17 +110,13 @@ static Result parse_json_array(Parser *parser, JSONValue *out_value, size_t dept
 		json_value_list_push(&out_value->list, element, parser->allocator);
 
 		// Check for ',' or ']'
-		r = parser_peek_token(parser, &token);
+		r = parser_peek_token(parser, &token, &count);
 		if (!r.success)
 			goto error;
 		if (token.type == JSONTok_Comma) {
-			r = parser_consume_token(parser, &token);
-			if (!r.success)
-				goto error;
+			parser_skip_tokens(parser, count);
 		} else if (token.type == JSONTok_RBracket) {
-			r = parser_consume_token(parser, &token);
-			if (!r.success)
-				goto error;
+			parser_skip_tokens(parser, count);
 			break;
 		} else {
 			r = new_errorf(
@@ -146,14 +142,13 @@ static Result parse_json_object(Parser *parser, JSONValue *out_value, size_t dep
 	out_value->type = JSON_OBJECT;
 	json_value_hashmap_init(&out_value->hashmap, parser->allocator);
 
-	r = parser_peek_token(parser, &token);
+	size_t count;
+	r = parser_peek_token(parser, &token, &count);
 	if (!r.success)
 		goto error;
 	if (token.type == JSONTok_RBrace) {
 		// Empty object
-		r = parser_consume_token(parser, &token);
-		if (!r.success)
-			goto error;
+		parser_skip_tokens(parser, count);
 		return new_success();
 	}
 	// Parse key-value pairs
@@ -174,17 +169,13 @@ static Result parse_json_object(Parser *parser, JSONValue *out_value, size_t dep
 		json_value_hashmap_set(&out_value->hashmap, key.value, value, parser->allocator);
 
 		// Check for ',' or '}'
-		r = parser_peek_token(parser, &token);
+		r = parser_peek_token(parser, &token, &count);
 		if (!r.success)
 			goto error;
 		if (token.type == JSONTok_Comma) {
-			r = parser_consume_token(parser, &token);
-			if (!r.success)
-				goto error;
+			parser_skip_tokens(parser, count);
 		} else if (token.type == JSONTok_RBrace) {
-			r = parser_consume_token(parser, &token);
-			if (!r.success)
-				goto error;
+			parser_skip_tokens(parser, count);
 			break;
 		} else {
 			r = new_errorf(
@@ -220,7 +211,8 @@ static Result parse_json_value(Parser *parser, JSONValue *out_value, size_t dept
 	}
 	
 	JSONToken token;
-	check(parser_peek_token(parser, &token));
+	size_t count;
+	check(parser_peek_token(parser, &token, &count));
 	switch (token.type) {
 	case JSONTok_Number:
 		return parse_json_number(parser, out_value);
@@ -228,27 +220,27 @@ static Result parse_json_value(Parser *parser, JSONValue *out_value, size_t dept
 		out_value->type = JSON_STRING;
 		// Copy the string value that was allocated by the lexer
 		out_value->str = token.value;
-		check(parser_consume_token(parser, &token));
+		parser_skip_tokens(parser, count);
 		return new_success();
 	case JSONTok_True:
 		out_value->type = JSON_BOOL;
 		out_value->boolean = true;
-		check(parser_consume_token(parser, &token));
+		parser_skip_tokens(parser, count);
 		return new_success();
 	case JSONTok_False:
 		out_value->type = JSON_BOOL;
 		out_value->boolean = false;
-		check(parser_consume_token(parser, &token));
+		parser_skip_tokens(parser, count);
 		return new_success();
 	case JSONTok_Null:
 		out_value->type = JSON_NULL;
-		check(parser_consume_token(parser, &token));
+		parser_skip_tokens(parser, count);
 		return new_success();
 	case JSONTok_LBracket:
-		check(parser_consume_token(parser, &token));
+		parser_skip_tokens(parser, count);
 		return parse_json_array(parser, out_value, depth);
 	case JSONTok_LBrace:
-		check(parser_consume_token(parser, &token));
+		parser_skip_tokens(parser, count);
 		return parse_json_object(parser, out_value, depth);
 	default:
 		return new_errorf(
@@ -288,7 +280,7 @@ Result json_parser_deserialize(Parser *parser, string *json, ParserResult *resul
 		panic("Failed to allocate memory for parser arena");
 	}
 	*parser->arena = new_arena();
-	parser->allocator = arena_as_allocator(parser->arena);
+	parser->allocator = ga;//arena_as_allocator(parser->arena);
 
 	Allocator token_list_allocator = parser->allocator;
 	Arena *lexer_arena = malloc(sizeof(Arena));
