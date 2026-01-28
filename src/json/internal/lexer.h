@@ -44,8 +44,10 @@ typedef struct {
 	JSONTokenType type;
 	size_t line;
 	size_t column;
-	string value;
-	JSONNumber number;
+	union {
+		string value;
+		JSONNumber number;
+	};
 } JSONToken;
 
 typedef struct {
