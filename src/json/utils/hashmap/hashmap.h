@@ -29,6 +29,9 @@ Result json_value_hashmap_get(const json_value_hashmap *map, string_view key,
 void json_value_hashmap_set(json_value_hashmap *map, string key,
                             JSONValue value, Allocator a);
 
+void json_value_hashmap_set_split(json_value_hashmap *map, string key,
+                            JSONValue value, Allocator a, Allocator stra);
+
 void json_value_hashmap_init(json_value_hashmap *map, Allocator a);
 void json_value_hashmap_free(json_value_hashmap *map, Allocator a);
 void json_value_hashmap_free_split(json_value_hashmap *map, Allocator a, Allocator stra);

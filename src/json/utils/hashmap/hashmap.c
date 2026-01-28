@@ -48,9 +48,9 @@ Result json_value_hashmap_get(const json_value_hashmap *map, string_view key,
 
 static void json_value_hashmap_set_internal(json_value_hashmap *map, string key,
                                             JSONValue value, bool rehash,
-                                            Allocator a);
+                                            Allocator a, Allocator stra);
 
-static void rehash(json_value_hashmap *map, size_t new_bucket_count, Allocator a) {
+static void rehash(json_value_hashmap *map, size_t new_bucket_count, Allocator a, Allocator stra) {
 	size_t old_bucket_count = map->buckets.length;
 	json_value_hashmap_node_list old_buckets = map->buckets;
 
@@ -64,10 +64,10 @@ static void rehash(json_value_hashmap *map, size_t new_bucket_count, Allocator a
 		if (node.key.arr.data == NULL) {
 			continue;
 		}
-		json_value_hashmap_set_internal(map, node.key, node.value, false, a);
+		json_value_hashmap_set_internal(map, node.key, node.value, false, a, stra);
 		json_value_hashmap_node *curr = node.next;
 		while (curr != NULL) {
-			json_value_hashmap_set_internal(map, curr->key, curr->value, false, a);
+			json_value_hashmap_set_internal(map, curr->key, curr->value, false, a, stra);
 			json_value_hashmap_node *next = curr->next;
 			dealloc(a, curr);
 			curr = next;
@@ -78,17 +78,22 @@ static void rehash(json_value_hashmap *map, size_t new_bucket_count, Allocator a
 
 void json_value_hashmap_set(json_value_hashmap *map, string key,
 							JSONValue value, Allocator a) {
-	json_value_hashmap_set_internal(map, key, value, true, a);
+	json_value_hashmap_set_internal(map, key, value, true, a, a);
+}
+
+void json_value_hashmap_set_split(json_value_hashmap *map, string key,
+							JSONValue value, Allocator a, Allocator stra) {
+	json_value_hashmap_set_internal(map, key, value, true, a, stra);
 }
 
 static void json_value_hashmap_set_internal(json_value_hashmap *map, string key,
-								 JSONValue value, bool should_rehash, Allocator a) {
+								 JSONValue value, bool should_rehash, Allocator a, Allocator stra) {
 	double load_factor = get_load_factor(map);
 	if (should_rehash && load_factor > MAX_LOAD_FACTOR) {
-		rehash(map, map->buckets.length * 2, a);
+		rehash(map, map->buckets.length * 2, a, stra);
 	} else if (should_rehash && load_factor < MIN_LOAD_FACTOR &&
 			   map->buckets.length > HASHMAP_INITIAL_SIZE) {
-		rehash(map, map->buckets.length / 2, a);
+		rehash(map, map->buckets.length / 2, a, stra);
 	}
 	size_t node_index = string_hash(as_sv(key), map->buckets.length);
 	json_value_hashmap_node *node;
@@ -101,7 +106,7 @@ static void json_value_hashmap_set_internal(json_value_hashmap *map, string key,
 		map->size += 1;
 	} else {
 		// Update existing node
-		if (json_value_hashmap_node_set(node, key, value, a)) {
+		if (json_value_hashmap_node_set_split(node, key, value, a, stra)) {
 			// New entry added instead of overwritten
 			map->size += 1;
 		}

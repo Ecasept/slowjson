@@ -166,7 +166,7 @@ static Result parse_json_object(Parser *parser, JSONValue *out_value, size_t dep
 		if (!r.success)
 			goto error;
 
-		json_value_hashmap_set(&out_value->hashmap, key.value, value, parser->allocator);
+		json_value_hashmap_set_split(&out_value->hashmap, key.value, value, parser->allocator, parser->string_allocator);
 
 		// Check for ',' or '}'
 		r = parser_peek_token(parser, &token, &count);

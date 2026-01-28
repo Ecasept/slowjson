@@ -21,12 +21,17 @@ Result json_value_hashmap_node_get(json_value_hashmap_node *node,
 
 bool json_value_hashmap_node_set(json_value_hashmap_node *node, string key,
                                  JSONValue value, Allocator a) {
+	return json_value_hashmap_node_set_split(node, key, value, a, a);
+}
+
+bool json_value_hashmap_node_set_split(json_value_hashmap_node *node, string key,
+                                 JSONValue value, Allocator a, Allocator stra) {
 	bool eq;
 	string_eq(&node->key, &key, &eq);
 	if (eq) {
 		// Overwrite existing value
-		json_value_free(&node->value, a);
-		string_free(&node->key, a);
+		json_value_free_split(&node->value, a, stra);
+		string_free(&node->key, stra);
 		node->key = key;
 		node->value = value;
 		return false;
@@ -43,7 +48,7 @@ bool json_value_hashmap_node_set(json_value_hashmap_node *node, string key,
 			node->next = node2;
 			return true;
 		} else {
-			return json_value_hashmap_node_set(node->next, key, value, a);
+			return json_value_hashmap_node_set_split(node->next, key, value, a, stra);
 		}
 	}
 }
