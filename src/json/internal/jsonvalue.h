@@ -1,5 +1,5 @@
 #pragma once
-#include "../../utils/dstring.h"
+#include "../utils/string/dstring.h"
 #include "stdbool.h"
 
 enum JSONType {
@@ -18,12 +18,12 @@ typedef struct JSONValue JSONValue;
 #define TYPE JSONValue
 #define TYPED_NAME(name) json_value_##name
 #define LIST_DECLARATION
-#include "../../utils/list.h"
+#include "../utils/list.h"
 #undef LIST_DECLARATION
 #undef TYPE
 #undef TYPED_NAME
 
-#include "../hashmap/hashmap.h"
+#include "../utils/hashmap/hashmap.h"
 
 struct JSONNumber {
 	bool is_integer;
@@ -47,14 +47,15 @@ struct JSONValue {
 
 const char *jtostr(JSONType type);
 
-void json_value_free(JSONValue *value);
+void json_value_free(JSONValue *value, Allocator a);
+void json_value_free_split(JSONValue *value, Allocator a, Allocator stra);
 
 JSONValue json_value_new_null(void);
 JSONValue json_value_new_bool(bool b);
 JSONValue json_value_new_number(JSONNumber number);
 JSONValue json_value_new_integer(int64_t int_value);
 JSONValue json_value_new_float(double float_value);
-JSONValue json_value_new_string_cstr(const char *str);
+JSONValue json_value_new_string_cstr(const char *str, Allocator a);
 JSONValue json_value_new_string(string *str);
-JSONValue json_value_new_array(void);
-JSONValue json_value_new_object(void);
+JSONValue json_value_new_array(Allocator a);
+JSONValue json_value_new_object(Allocator a);

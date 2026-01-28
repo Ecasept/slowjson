@@ -9,7 +9,33 @@ Erstellt wurde das Programm von:
 <br><br><br><br>
 
 ## Programm kompilieren
-*TODO*
+Dieses Programm benutzt [make](https://en.wikipedia.org/wiki/Make_(software)) als build system. Hier sind einige hilfreiche Befehle:
+```sh
+// Alias für `make all`
+make
+// Kompiliert das Programm. Output ist in `./build/gradeviewer`
+make all
+// Kompiliert und führt das Programm aus
+make run
+// Rekompiliert das ganze Programm vor dem ausführen
+make run rebuild=1
+// Führt die Tests aus
+make run test=1
+// Mit valgrind nach memory leaks checken
+make valgrind
+// Mit callgrind profilen
+make profile
+// Siehe die `Makefile` für weiter Informationen und Features
+```
+
+Falls kein `make` auf dem System installiert ist, so kann der Compiler manuell aufgerufen werden:
+```
+mkdir -p build && gcc -Wall -Wextra -pedantic -std=c11 src/data/load.c src/data/save.c src/frontend/edit_events/edit_events.c src/frontend/text_formatting/text_formatting.c src/frontend/user_input/user_input.c src/json/internal/config.c src/json/internal/deserialize.c src/json/internal/jsonvalue.c src/json/internal/lexer/main.c src/json/internal/lexer/number.c src/json/internal/parser.c src/json/internal/serialize.c src/json/test/fxx_test.c src/json/test/jsonperf.c src/json/test/jsontestsuite.c src/json/test/test.c src/json/utils/alloc/arena.c src/json/utils/custom_error.c src/json/utils/hashmap/hashmap.c src/json/utils/hashmap/hashmap_node.c src/json/utils/list.c src/json/utils/string/dstring.c src/json/utils/string/file.c src/json/utils/string/string_view.c src/json/utils/unicode/utf16.c src/json/utils/unicode/utf8.c src/json/utils/unicode/wchar.c src/main/main.c src/midend/data.c src/midend/mid.c -o build/gradeviewer
+```
+
+### Hinweise
+- Je nach Betriebssystem und Compiler kann es sein, dass Warnungen beim Kompilieren auftreten. In der Angabe war zwar spezifiziert, dass keine Warnungen auftreten dürfen, jedoch ist dies virtuell unmöglich praktisch umzusetzen, da nicht jeder mögliche Compiler und jedes mögliche Betriebssystem getestet werden können. Wir haben versucht alle Warnungen bestmöglich zu eliminieren. Jedoch kann es, besonders unter Windows, zu Fehlern wegen dem `%zu` format specifier kommen, da der Compiler diese nicht unterstützt, selbst wenn die standard library (welche letztenendes zuständig für dessen Implementation ist) dies tut. Siehe [hier](https://stackoverflow.com/questions/68900199/how-to-get-mingw-gcc-to-recognize-the-zu-format-specifier-for-size-t) für mehr Informationen dazu.
+
 
 <br><br><br><br>
 

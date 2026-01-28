@@ -1,10 +1,36 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -std=c11 -g -DDEBUG -O2
-DEBUG_CFLAGS = -g -fsanitize=address,undefined
-LDFLAGS = -lm
-DEBUG_LDFLAGS = -fsanitize=address,undefined
+
+DEBUG_FLAGS = -g -DDEBUG
+OPT_FLAGS = -O2 # -flto -march=native
+CFLAGS_EXTRA =
+CFLAGS = -Wall -Wextra -pedantic -std=c11 $(DEBUG_FLAGS) $(OPT_FLAGS) $(CFLAGS_EXTRA)
+
+OPT_LD_FLAGS = # -flto
+LDFLAGS = $(OPT_LD_FLAGS)
+
 TARGET = gradeviewer
 BUILD_DIR = build
+
+rebuild = 0
+test = 0
+ausan = 0
+arg1 =
+arg2 =
+arg3 =
+
+
+ifneq ($(rebuild),0)
+	CLEAN_DEPENDENCY = clean
+endif
+
+ifneq ($(test),0)
+	CFLAGS += -DRUN_TESTS
+	TARGET := gradeviewer_tests
+endif
+ifneq ($(ausan),0)
+	CFLAGS += -DDEBUG -g -fsanitize=address,undefined
+	LDFLAGS += -fsanitize=address,undefined
+endif
 
 # Platform detection
 ifeq ($(OS),Windows_NT)
@@ -27,25 +53,22 @@ endif
 OBJS = $(SRCS:%.c=$(BUILD_DIR)/%.o)
 
 # Builds normally
-all: $(BUILD_DIR)/$(TARGET)
-
-# Cleans and builds everything from scratch
-rebuild: clean all
+all: $(CLEAN_DEPENDENCY) $(BUILD_DIR)/$(TARGET)
 
 run: all
 ifeq ($(OS),Windows_NT)
 	$(call FIX_PATH,$(BUILD_DIR)/$(TARGET))
 else
-	./$(BUILD_DIR)/$(TARGET)
+	./$(BUILD_DIR)/$(TARGET) $(arg1) $(arg2) $(arg3)
 endif
 
-debug: CFLAGS := $(CFLAGS) $(DEBUG_CFLAGS)
-debug: LDFLAGS := $(LDFLAGS) $(DEBUG_LDFLAGS)
-debug: rebuild all
+profile: CFLAGS := $(CFLAGS) -g -DDEBUG
+profile: all
+	valgrind --tool=callgrind --dump-instr=yes ./$(BUILD_DIR)/$(TARGET) $(arg1) $(arg2) $(arg3)
 
 valgrind: CFLAGS := $(CFLAGS) -g -DDEBUG
-valgrind: rebuild
-	valgrind --tool=callgrind --dump-instr=yes ./$(BUILD_DIR)/$(TARGET)
+valgrind: all
+	valgrind --leak-check=full --show-leak-kinds=all --main-stacksize=1000000 ./$(BUILD_DIR)/$(TARGET) $(arg1) $(arg2) $(arg3)
 
 $(BUILD_DIR)/$(TARGET): $(OBJS)
 	$(call MKDIR,$(dir $@))

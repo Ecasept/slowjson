@@ -3,7 +3,7 @@
 #include "../frontend/edit_events/edit_events.h"
 #include "../data/load.h"
 #include "../data/save.h"
-#include "../utils/custom_error.h"
+#include "../json/utils/custom_error.h"
 #include <string.h>
 #include <wchar.h>
 #include <locale.h>
@@ -17,12 +17,16 @@
 
 
 
-
- 
+#ifndef RUN_TESTS
+int actual_main(void);
+int main(void) {
+	return actual_main();
+}
+#endif
 
   
   
-int main() {
+int actual_main(void) {
 	setlocale(LC_ALL, "");
 	setlocale(LC_NUMERIC, "C");
 	
@@ -69,9 +73,10 @@ int main() {
 
 
 	} else {
+		ErrorType t = cerrno.type;
 		int continue_error_handling = 1;
 		wchar_t *error_message = format_error_wchar(r);
-		if (r.type == EFileNotFound) {
+		if (t == EFileNotFound) {
 			print_loaddata_nofile_screen(error_message);
 			print_welcomescreen_options();
 			continue_error_handling = 0;

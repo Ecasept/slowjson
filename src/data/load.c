@@ -1,47 +1,14 @@
-#include "../utils/dstring.h"
-#include "../utils/unicode/utf8.h"
-#include "../utils/unicode/wchar.h"
+#include "../json/utils/string/dstring.h"
+#include "../json/utils/unicode/utf8.h"
+#include "../json/utils/unicode/wchar.h"
 #include "../midend/data.h"
-#include "../json/json.h"
+#include "../json/deserialize.h"
 #include "load.h"
-#include "file.h"
-/**
- * @brief Gets a field from a json object and verifies its type.
- * 
- * @param obj The JSON object
- * @param key The key to look for
- * @param type The expected type
- * @param out Pointer to store the resulting JSONValue pointer
- */
-static Result json_get_typed(const JSONValue *obj, string_view key, JSONType type, JSONValue *out) {
-    if (obj->type != JSON_OBJECT) {
-        return new_error("Expected JSON object", ESaveFormatError);
-    }
-    
-	check(json_value_hashmap_get(&obj->hashmap, key, out));
-	
-	if (out->type != type) {
-		return new_errorf("Field '%.*s': expected %s, got %s",
-						  ESaveFormatError, (int)key.size, key.data, jtostr(type), jtostr(out->type));
-	}
-    return new_success();
-}
+#include "../json/utils/string/file.h"
+#include "../json/config.h"
+#include "../json/utils/alloc/default.h"
 
-/**
- * @brief Extracts a number field from a JSON object and verifies it is an integer.
- * @param obj The JSON object
- * @param key The key to look for
- * @param out Pointer to store the resulting integer
- */
-static Result extract_int(const JSONValue *obj, string_view key, int *out) {
-    JSONValue val;
-    check(json_get_typed(obj, key, JSON_NUMBER, &val));
-    if (!val.number.is_integer) {
-        return new_errorf("Field '%.*s' must be an integer", ESaveFormatError, (int)key.size, key.data);
-    }
-    *out = (int)val.number.int_value;
-    return new_success();
-}
+const char *JSON_SAVEFILE_NAME = "data.json";
 
 /**
  * @brief Extracts a string field from a JSON object and converts it to wchar_t string.
@@ -52,7 +19,7 @@ static Result extract_int(const JSONValue *obj, string_view key, int *out) {
 static Result extract_wstring(const JSONValue *obj, string_view key, wchar_t **out) {
     JSONValue val;
     check(json_get_typed(obj, key, JSON_STRING, &val));
-    return utf8_string_to_wchar(as_sv(val.str), out);
+    return utf8_string_to_wchar(as_sv(val.str), out, ga);
 }
 
 static void free_veranstaltung_content(struct Veranstaltung *v) {
@@ -148,33 +115,31 @@ static Result parse_savefile_json(JSONValue root, struct Veranstaltung **v, stru
 
     // Load Veranstaltungen
     *v_count = v_arr.list.length;
-    veranstaltung_list_init(&v_list, *v_count);
+    veranstaltung_list_init(&v_list, *v_count, ga);
     for (size_t i = 0; i < *v_count; i++) {
         struct Veranstaltung item;
         if (!(r = parse_veranstaltung(&v_arr.list.data[i], &item)).success) goto cleanup;
-        veranstaltung_list_push(&v_list, item);
+        veranstaltung_list_push(&v_list, item, ga);
     }
 
     // Load Modulgruppen
     *mg_count = mg_arr.list.length;
-    modulgruppe_list_init(&mg_list, *mg_count);
+    modulgruppe_list_init(&mg_list, *mg_count, ga);
     for (size_t i = 0; i < *mg_count; i++) {
         struct Modulgruppe item;
         if (!(r = parse_modulgruppe(&mg_arr.list.data[i], &item)).success) goto cleanup;
-        modulgruppe_list_push(&mg_list, item);
+        modulgruppe_list_push(&mg_list, item, ga);
     }
 
     *v = v_list.data;
     *mg = mg_list.data;
-    json_value_free(&root);
     return new_success();
 
 cleanup:
     for (size_t i = 0; i < v_list.length; i++) free_veranstaltung_content(&v_list.data[i]);
     for (size_t i = 0; i < mg_list.length; i++) free_modulgruppe_content(&mg_list.data[i]);
-    if (v_list.data) veranstaltung_list_free(&v_list);
-    if (mg_list.data) modulgruppe_list_free(&mg_list);
-    json_value_free(&root);
+    if (v_list.data) veranstaltung_list_free(&v_list, ga);
+    if (mg_list.data) modulgruppe_list_free(&mg_list, ga);
     return r;
 }
 
@@ -185,19 +150,24 @@ Result load_data_from_savefile(struct Veranstaltung **v, struct Modulgruppe **mg
     Result r = read_file_to_string(JSON_SAVEFILE_NAME, &json);
     if (!r.success) return r;
 
-    JSONValue root;
-    r = deserialize_json(&json, &root);
-    string_free(&json);
-    
-    if (!r.success) return r;
+    Parser parser = json_parser_new(config_default_parser_config());
+    ParserResult result;
+    r = json_parser_deserialize(&parser, &json, &result);
+    string_free(&json, ga);
 
-    return parse_savefile_json(root, v, mg, v_count, mg_count);
+    if (!r.success) {
+        return r;
+    }
+
+    r = parse_savefile_json(result.value, v, mg, v_count, mg_count);
+	parser_result_free(&result);
+    return r;
 }
 
 #define TYPE struct Veranstaltung
 #define TYPED_NAME(name) veranstaltung_##name
 #define LIST_IMPLEMENTATION
-#include "../utils/list.h"
+#include "../json/utils/list.h"
 #undef LIST_IMPLEMENTATION
 #undef TYPE
 #undef TYPED_NAME
@@ -205,7 +175,7 @@ Result load_data_from_savefile(struct Veranstaltung **v, struct Modulgruppe **mg
 #define TYPE struct Modulgruppe
 #define TYPED_NAME(name) modulgruppe_##name
 #define LIST_IMPLEMENTATION
-#include "../utils/list.h"
+#include "../json/utils/list.h"
 #undef LIST_IMPLEMENTATION
 #undef TYPE
 #undef TYPED_NAME
