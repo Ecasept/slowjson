@@ -128,7 +128,9 @@ static inline void *arena_realloc(Arena *a, void* ptr, size_t old_size, size_t n
 			a->offset = current_offset + aligned_new_size;
 
 			if (new_size > old_size) {
+#if defined(VALGRIND_ENABLED) || defined(ASAN_ENABLED)
 				size_t diff = new_size - old_size;
+#endif
 #ifdef VALGRIND_ENABLED
 				VALGRIND_MAKE_MEM_UNDEFINED((unsigned char *)ptr + old_size, diff);
 #endif
@@ -136,7 +138,9 @@ static inline void *arena_realloc(Arena *a, void* ptr, size_t old_size, size_t n
 				__asan_unpoison_memory_region((unsigned char *)ptr + old_size, diff);
 #endif
 			} else if (new_size < old_size) {
+#if defined(VALGRIND_ENABLED) || defined(ASAN_ENABLED)
 				size_t diff = old_size - new_size;
+#endif
 #ifdef VALGRIND_ENABLED
 				VALGRIND_MAKE_MEM_NOACCESS((unsigned char *)ptr + new_size, diff);
 #endif
