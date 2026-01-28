@@ -24,12 +24,12 @@ int read_command(wchar_t valid_input[], size_t size)
                 single_character = 1;
                 
                 
-                wchar_t first_c = '\0';
-                wchar_t second_c = '\n';
+                wint_t first_c = '\0';
+                wint_t second_c = '\n';
 
                 first_c = getwchar();
 
-                if (first_c == EOF) {
+                if (first_c == WEOF) {
                         return BUFFER_ERROR;
                 } 
                 if (first_c != '\n') {
@@ -40,7 +40,7 @@ int read_command(wchar_t valid_input[], size_t size)
                 // Prüfung ob nur einzelnes Zeichen eingegeben
                 // Falls mehere Zeichen eingegeben -> counter dekrementieren
 
-                if (second_c == EOF) {
+                if (second_c == WEOF) {
                         return BUFFER_ERROR;
                 } else if (second_c != '\n') {
                         if (flush() == BUFFER_ERROR) {
@@ -53,7 +53,7 @@ int read_command(wchar_t valid_input[], size_t size)
                 // Prüfung ob first_c in valid_input[] enthalten ist
                 int valid = 0;
                 for (size_t i = 0; i < size; ++i) {
-                        if (valid_input[i] == first_c)
+                        if (valid_input[i] == (wchar_t) first_c)
                                 valid = 1;
                 }
 
@@ -82,7 +82,7 @@ int read_string(wchar_t **s)
         int counter = LIMIT_INPUT_ATTEMPTS;
         int valid_character = -1;
 
-        wchar_t c = L'\0';
+        wint_t c = L'\0';
         int i = 0;
         size_t size = 1;
         wchar_t *p_1 = NULL;
@@ -91,7 +91,7 @@ int read_string(wchar_t **s)
         // Zeichenweise Eingabe auslesen
         while(1) {
                 c = getwchar();
-                if (c == EOF) {
+                if (c == WEOF) {
                         return BUFFER_ERROR;
                 }
                 valid_character = 1;
@@ -617,10 +617,10 @@ int read_number_in_bound(int lower_bound, int upper_bound, int *number)
 
 int flush(void)
 {
-        wchar_t c = L'\0';
+        wint_t c = L'\0';
         while(1) {
                 c = getwchar();
-                if (c == EOF) {
+                if (c == WEOF) {
                         return BUFFER_ERROR;
                 }
                 if (c == L'\n') {

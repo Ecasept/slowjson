@@ -54,7 +54,7 @@ int print_overviewscreen(struct Veranstaltung *ver, size_t size_ver, struct Modu
         }
 
 
-        wprintf(L"%ls Veranstaltungsübersicht %ls\n", TXT_INVERSE, END_STYLE);
+        wprintf(L"\n%ls Veranstaltungsübersicht %ls\n", TXT_INVERSE, END_STYLE);
         
 
         // Übersicht nach Semester geordnet ausgeben
@@ -299,7 +299,7 @@ void print_helpscreen(void)
         clear_display();
 
 
-        wprintf(L"%ls Hilfe %ls\n\n", TXT_INVERSE, END_STYLE);
+        wprintf(L"\n%ls Hilfe %ls\n\n", TXT_INVERSE, END_STYLE);
 
         wprintf(L"\n%lsAllgemeines%ls\n", TXT_UNDERLINED, END_STYLE);
         wprintf(L"- An jedem Seitenende werden die aktuell verfügbaren \"%lsOptionen%ls\" angezeigt.\n", TXT_UNDERLINED, END_STYLE);
@@ -453,8 +453,7 @@ void clear_display(void)
         wprintf(L"\033[0;0H\n\n\n");
         #endif
         #ifdef _WIN32
-        
-        wprintf(L"\033[H\033[J");
+        wprintf(L"\x1b[3J\x1b[2J\x1b[H\x1b[J");
         #endif
 }
 
