@@ -6,7 +6,7 @@ CFLAGS_EXTRA =
 CFLAGS = -Wall -Wextra -pedantic -std=c11 $(DEBUG_FLAGS) $(OPT_FLAGS) $(CFLAGS_EXTRA)
 
 OPT_LD_FLAGS = # -flto
-LDFLAGS = -lm $(OPT_LD_FLAGS)
+LDFLAGS = $(OPT_LD_FLAGS)
 
 TARGET = gradeviewer
 BUILD_DIR = build
