@@ -41,6 +41,9 @@ static int run_perf_on_test(Test test, double *time_taken, double *gb_per_sec) {
 	Parser parser = json_parser_new(config_default_parser_config());
 	ParserResult result;
 	r = json_parser_deserialize(&parser, &json, &result);
+	if (r.success) {
+		parser_result_free(&result);
+	}
 	clock_t end = clock();
 
 	if (!r.success) {
@@ -57,7 +60,6 @@ static int run_perf_on_test(Test test, double *time_taken, double *gb_per_sec) {
 	*gb_per_sec = ((double)json.arr.length / GB_IN_BYTES) / *time_taken;
 	printf("Throughput: %f GB/s\n", *gb_per_sec);
 
-	parser_result_free(&result);
 	string_free(&json, ga);
 	return 1;
 }
