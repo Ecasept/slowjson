@@ -13,11 +13,11 @@ Dieses Programm benutzt [make](https://en.wikipedia.org/wiki/Make_(software)) al
 ```sh
 // Alias für `make all`
 make
-// Kompiliert das Programm. Output ist in `./build/gradeviewer`
+// Kompiliert das Programm. Output ist in `./build/gradeviewer`. Rekompiliert nur Dateien die sich seit dem letzten Mal geändert haben.
 make all
 // Kompiliert und führt das Programm aus
 make run
-// Rekompiliert das ganze Programm vor dem ausführen
+// Rekompiliert das ganze Programm von neu (selbst wenn nur minimale/keine Änderungen durchgeführt wurden) 
 make run rebuild=1
 // Führt die Tests aus
 make run test=1
@@ -25,17 +25,24 @@ make run test=1
 make valgrind
 // Mit callgrind profilen
 make profile
-// Siehe die `Makefile` für weiter Informationen und Features
+// Siehe die `Makefile` für weitere Informationen und Features
 ```
 
-Falls kein `make` auf dem System installiert ist, so kann der Compiler manuell aufgerufen werden:
-```
-mkdir -p build && gcc -Wall -Wextra -pedantic -std=c11 src/data/load.c src/data/save.c src/frontend/edit_events/edit_events.c src/frontend/text_formatting/text_formatting.c src/frontend/user_input/user_input.c src/json/internal/config.c src/json/internal/deserialize.c src/json/internal/jsonvalue.c src/json/internal/lexer/main.c src/json/internal/lexer/number.c src/json/internal/parser.c src/json/internal/serialize.c src/json/test/fxx_test.c src/json/test/jsonperf.c src/json/test/jsontestsuite.c src/json/test/test.c src/json/utils/alloc/arena.c src/json/utils/custom_error.c src/json/utils/hashmap/hashmap.c src/json/utils/hashmap/hashmap_node.c src/json/utils/list.c src/json/utils/string/dstring.c src/json/utils/string/file.c src/json/utils/string/string_view.c src/json/utils/unicode/utf16.c src/json/utils/unicode/utf8.c src/json/utils/unicode/wchar.c src/main/main.c src/midend/data.c src/midend/mid.c -o build/gradeviewer
+Falls kein `make` auf dem System installiert ist, kann der Compiler auch manuell zum Kompilieren aufgerufen werden:
+```sh
+gcc -Wall -Wextra -pedantic -std=c11 src/data/load.c src/data/save.c src/frontend/edit_events/edit_events.c src/frontend/text_formatting/text_formatting.c src/frontend/user_input/user_input.c src/json/internal/config.c src/json/internal/deserialize.c src/json/internal/jsonvalue.c src/json/internal/lexer/main.c src/json/internal/lexer/number.c src/json/internal/parser.c src/json/internal/serialize.c src/json/test/fxx_test.c src/json/test/jsonperf.c src/json/test/jsontestsuite.c src/json/test/test.c src/json/utils/alloc/arena.c src/json/utils/custom_error.c src/json/utils/hashmap/hashmap.c src/json/utils/hashmap/hashmap_node.c src/json/utils/list.c src/json/utils/string/dstring.c src/json/utils/string/file.c src/json/utils/string/string_view.c src/json/utils/unicode/utf16.c src/json/utils/unicode/utf8.c src/json/utils/unicode/wchar.c src/main/main.c src/midend/data.c src/midend/mid.c
 ```
 
-### Hinweise
-- Je nach Betriebssystem und Compiler kann es sein, dass Warnungen beim Kompilieren auftreten. In der Angabe war zwar spezifiziert, dass keine Warnungen auftreten dürfen, jedoch ist dies virtuell unmöglich praktisch umzusetzen, da nicht jeder mögliche Compiler und jedes mögliche Betriebssystem getestet werden können. Wir haben versucht alle Warnungen bestmöglich zu eliminieren. Jedoch kann es, besonders unter Windows, zu Fehlern wegen dem `%zu` format specifier kommen, da der Compiler diese nicht unterstützt, selbst wenn die standard library (welche letztenendes zuständig für dessen Implementation ist) dies tut. Siehe [hier](https://stackoverflow.com/questions/68900199/how-to-get-mingw-gcc-to-recognize-the-zu-format-specifier-for-size-t) für mehr Informationen dazu.
+**Hinweis**
+> Je nach Betriebssystem und Compiler kann es sein, dass Warnungen beim Kompilieren auftreten. In der Angabe war zwar spezifiziert, dass keine Warnungen entstehen dürfen, jedoch ist es virtuell unmöglich dies praktisch umzusetzen, da nicht jeder mögliche Compiler und jedes Betriebssystem getestet werden können. Wir haben versucht alle Warnungen bestmöglich zu eliminieren, jedoch kann es auf bestimmten Systemen doch noch zu einzelnen neuen Warnungen kommen. Besonders unter Windows ist es möglich, dass Fehler wegen dem  `%zu` format specifier für `size_t` auftauchen. Das liegt daran, dass der Compiler `%zu` nicht erkennt, selbst wenn die eigentliche Implementation der format specifiers (welche letztenendes beim Ausführen des Prorammes benutzt wird) dies tut. Siehe [hier](https://stackoverflow.com/questions/68900199/how-to-get-mingw-gcc-to-recognize-the-zu-format-specifier-for-size-t) für mehr Informationen dazu.
 
+## JSON Parser
+Das Programm enthält einen eigens entwickelten JSON Parser unter `src/json`, der auch als separate Library genutzt werden kann. Unter `src/data` ist eine beispielhafte Nutzung der Library für dieses Programm zu finden.
+- Die Architektur ist ein Lexer-Parser split mit in-memory DOM Darstellung
+- Eigene C-Daten können mithilfe der Library serialisiert werden
+- Um ohne externe libraries auszukommen wurden viele Datenstrukturen eigens implementiert
+- Der Parser wurde intensiv mit den in der Codebase enthaltenen Tools getestet und gebenchmarkt. Er kann teilweise mit bestehenden Implementationen mithalten
+- Wenn memory allocations fehlschlagen (z.B. bei OOM) panicked der Parser und bricht das Programm ab, da in diesen Fällen sowieso meist keine sinnvolle error recovery mehr möglich ist.
 
 <br><br><br><br>
 
