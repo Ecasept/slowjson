@@ -1,50 +1,80 @@
-# Studienplaner und Notenübersicht
-Ein Kommandozeilenprogramm zur Verwaltung von Veranstaltungen und Studienleistungen
+# slowjson
+An overengineered, standalone zero-dependency JSON manipulation library written in pure C11. Developed as the persistence layer for a university course planner group project at the University of Augsburg. But mainly because i wanted to challenge myself and learn new stuff.
 
-Erstellt wurde das Programm von:
-- Adrian Jonkov
-- Jakob Watson
-- Franz Düchs
+## Features
+- **DOM Manipulation:** Helpers to store and modify and JSON types as C datatypes
+- **Serialization:** Ability to convert between JSON objects and strings
+- **I/O Helpers:** Easy integration for reading and writing to files
 
-<br><br><br><br>
+## Implementation
+It features many “sub-libraries” and helpful utilties that i included as a learning experience, under the pretext that we weren’t allowed to use external libraries. This includes:
+- A custom Arena memory allocator with valgrind and asan integration
+- A custom string and string view class
+- A generic dynamic array implementation in c
+- A hashmap with separate chaining and a polynomial rolling hash function
+- A full UTF8 (and 16) encoder and decoder
+- A test runner that tests the library on multiple well established json test suites and on memory safety
+- A consistent error handling paradigm throughout the whole codebase (failed memory allocations, eg. because of an OOM, panic and exit)
+## Constraints
+(based on the group project requirements)
+- C11 compliance
+- no external libraries
+- cross-compatibility
+- no (non-avoidable) compilation warnings or errors
+- compiles without any additional compiler parameters other than `-std=c11 -Wall -Wextra -pedantic`
 
-## Programm kompilieren
-Dieses Programm benutzt [make](https://en.wikipedia.org/wiki/Make_(software)) als build system. Hier sind einige hilfreiche Befehle:
+## Performance
+Even under the strict project and time constraints, the parser includes a fair amount of performance enhancing techniques. Among other things, it utilizes custom arena allocators, aggressive function inlining, multiple fast paths, direct memory mapping, zero-copy string views and extensive performance tests. However it still does not beat most established json parsers.
+
+<img width="882" height="567" alt="ResizedImage_2026-08-20_18-50-27_7335" src="https://github.com/user-attachments/assets/6b62952e-2ea4-4a78-88c6-0a8f7b8b4c73" alt="Comparing slowjson with established parsers on different datasets. slowjson is mostly dead last by a good amount"/>
+
+## Context
+slowjson is a standalone JSON manipulation library that I developed for a group project in my first semester at the University of Augsburg. I was responsible for the persistence layer, while the other members built the actual university course planner on top of the library. We received full marks for the project.
+
+The slowjson library itself is located in `src/json`, while `src/data` contains the usage of the library for this application. The other directories contain the actual application code for the study course organization program.
+## Usage
+See `src/data/load.c` and `src/data/save.c`
+## Building
+
+This project uses [make](https://en.wikipedia.org/wiki/Make_(software)) as its build system.
+
 ```sh
-// Alias für `make all`
+# Alias for `make all`
 make
-// Kompiliert das Programm. Output ist in `./build/gradeviewer`. Rekompiliert nur Dateien die sich seit dem letzten Mal geändert haben.
+
+# Build the program (output: ./build/gradeviewer).
+# Only changed files are recompiled.
 make all
-// Kompiliert und führt das Programm aus
+
+# Build and run
 make run
-// Rekompiliert das ganze Programm von neu (selbst wenn nur minimale/keine Änderungen durchgeführt wurden) 
+
+# Force a full rebuild, then run
 make run rebuild=1
-// Führt die Tests aus
+
+# Build and run tests
 make run test=1
-// Mit valgrind nach memory leaks checken
+
+# Run Valgrind (memory leak checks)
 make valgrind
-// Mit callgrind profilen
+
+# Run Callgrind profiling
 make profile
-// Siehe die `Makefile` für weitere Informationen und Features
 ```
 
-Falls kein `make` auf dem System installiert ist, kann der Compiler auch manuell zum Kompilieren aufgerufen werden:
+See the `Makefile` for additional targets and options.
+
+If `make` is not available on your system, you can compile manually with `gcc`:
+
 ```sh
 gcc -Wall -Wextra -pedantic -std=c11 src/data/load.c src/data/save.c src/frontend/edit_events/edit_events.c src/frontend/text_formatting/text_formatting.c src/frontend/user_input/user_input.c src/json/internal/config.c src/json/internal/deserialize.c src/json/internal/jsonvalue.c src/json/internal/lexer/main.c src/json/internal/lexer/number.c src/json/internal/parser.c src/json/internal/serialize.c src/json/test/fxx_test.c src/json/test/jsonperf.c src/json/test/jsontestsuite.c src/json/test/test.c src/json/utils/alloc/arena.c src/json/utils/custom_error.c src/json/utils/hashmap/hashmap.c src/json/utils/hashmap/hashmap_node.c src/json/utils/list.c src/json/utils/string/dstring.c src/json/utils/string/file.c src/json/utils/string/string_view.c src/json/utils/unicode/utf16.c src/json/utils/unicode/utf8.c src/json/utils/unicode/wchar.c src/main/main.c src/midend/data.c src/midend/mid.c
 ```
 
-**Hinweis**
-> Je nach Betriebssystem und Compiler kann es sein, dass Warnungen beim Kompilieren auftreten. In der Angabe war zwar spezifiziert, dass keine Warnungen entstehen dürfen, jedoch ist es virtuell unmöglich dies praktisch umzusetzen, da nicht jeder mögliche Compiler und jedes Betriebssystem getestet werden können. Wir haben versucht alle Warnungen bestmöglich zu eliminieren, jedoch kann es auf bestimmten Systemen doch noch zu einzelnen neuen Warnungen kommen. Besonders unter Windows ist es möglich, dass Fehler wegen dem  `%zu` format specifier für `size_t` auftauchen. Das liegt daran, dass der Compiler `%zu` nicht erkennt, selbst wenn die eigentliche Implementation der format specifiers (welche letztenendes beim Ausführen des Prorammes benutzt wird) dies tut. Siehe [hier](https://stackoverflow.com/questions/68900199/how-to-get-mingw-gcc-to-recognize-the-zu-format-specifier-for-size-t) für mehr Informationen dazu.
+> **Note**
+> Although the requirement was that the project should compile without warnings, some warnings may appear across different compilers and operating systems.  
+> In particular, certain Windows/MinGW toolchains may warn about `%zu` (`size_t`) even when runtime behavior is correct.
 
-## JSON Parser
-Das Programm enthält einen eigens entwickelten JSON Parser unter `src/json`, der auch als separate Library genutzt werden kann. Unter `src/data` ist eine beispielhafte Nutzung der Library für dieses Programm zu finden.
-- Die Architektur ist ein Lexer-Parser split mit in-memory DOM Darstellung
-- Eigene C-Daten können mithilfe der Library serialisiert werden
-- Um ohne externe libraries auszukommen wurden viele Datenstrukturen eigens implementiert
-- Der Parser wurde intensiv mit den in der Codebase enthaltenen Tools getestet und gebenchmarkt. Er kann teilweise mit bestehenden Implementationen mithalten
-- Wenn memory allocations fehlschlagen (z.B. bei OOM) panicked der Parser und bricht das Programm ab, da in diesen Fällen sowieso meist keine sinnvolle error recovery mehr möglich ist.
-
-<br><br><br><br>
+## Original README
 
 ## Nutzungshinweise
 >### Allgemeines
