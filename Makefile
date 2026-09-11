@@ -3,10 +3,10 @@ CC = gcc
 DEBUG_FLAGS = -g -DDEBUG
 CFLAGS_DEFAULT = -Wall -Wextra -pedantic -std=c11
 CFLAGS = $(CFLAGS_DEFAULT) $(DEBUG_FLAGS)
-OPT_FLAGS = $(CFLAGS_DEFAULT) -O2 -flto -march=native
+OPT_FLAGS = $(CFLAGS_DEFAULT) -O3 -flto -march=native
 
 
-OPT_LD_FLAGS = -flto
+OPT_LDFLAGS = -flto
 LDFLAGS = 
 
 TARGET = gradeviewer
@@ -18,12 +18,16 @@ ausan = 0
 arg1 =
 arg2 =
 arg3 =
-
+opt = 0
 
 ifneq ($(rebuild),0)
 	CLEAN_DEPENDENCY = clean
 endif
 
+ifneq ($(opt),0)
+	CFLAGS := $(OPT_FLAGS)
+	LDFLAGS := $(OPT_LDFLAGS)
+endif
 ifneq ($(test),0)
 	CFLAGS += -DRUN_TESTS
 	TARGET := gradeviewer_tests
