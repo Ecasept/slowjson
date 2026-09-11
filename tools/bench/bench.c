@@ -1,14 +1,15 @@
 #include "jsonperf.h"
+#include <stdbool.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
-static int is_number(const char *value) {
-	if (value == NULL || *value == '\0') return 0;
+static bool is_number(const char *value) {
+	if (value == NULL || *value == '\0') return false;
 	for (const unsigned char *p = (const unsigned char *)value; *p != '\0'; p++) {
-		if (!isdigit(*p)) return 0;
+		if (!isdigit(*p)) return false;
 	}
-	return 1;
+	return true;
 }
 
 int main(int argc, char **argv) {
@@ -43,6 +44,5 @@ int main(int argc, char **argv) {
 		benchmark_name = NULL;
 	}
 
-	run_jsonperf(iterations, warmup_iterations, benchmark_name);
-	return 0;
+	return run_jsonperf(iterations, warmup_iterations, benchmark_name);
 }

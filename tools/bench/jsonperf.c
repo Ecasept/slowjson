@@ -3,6 +3,8 @@
 #include "jsonperf.h"
 #include "json/deserialize.h"
 #include "json/utils/string/file.h"
+#include <stdbool.h>
+#include <stdlib.h>
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
@@ -31,8 +33,8 @@ static double elapsed_seconds(const struct timespec *start,
 		(double)(end->tv_nsec - start->tv_nsec) / 1000000000.0;
 }
 
-static int run_perf_on_test(Test test, double *time_taken, double *gb_per_sec,
-		int report_result) {
+static bool run_perf_on_test(Test test, double *time_taken, double *gb_per_sec,
+		bool report_result) {
 	string json;
 	Result r = read_file_to_string(test.filename, &json);
 	if (!r.success) {
@@ -40,7 +42,7 @@ static int run_perf_on_test(Test test, double *time_taken, double *gb_per_sec,
 		printf("Failed to read file: %s (%.*s)\n", test.filename,
 				(int)err_msg.arr.length, err_msg.arr.data);
 		string_free(&err_msg, ga);
-		return 0;
+		return false;
 	}
 
 	if (report_result) {
@@ -52,7 +54,7 @@ static int run_perf_on_test(Test test, double *time_taken, double *gb_per_sec,
 	if (clock_gettime(CLOCK_MONOTONIC, &start) != 0) {
 		printf("Failed to start monotonic clock\n");
 		string_free(&json, ga);
-		return 0;
+		return false;
 	}
 	Parser parser = json_parser_new(config_default_parser_config());
 	JSONDocument result = json_document_new();
@@ -62,7 +64,7 @@ static int run_perf_on_test(Test test, double *time_taken, double *gb_per_sec,
 		printf("Failed to read monotonic clock\n");
 		string_free(&json, ga);
 		if (!r.success) error_free(r);
-		return 0;
+		return false;
 	}
 
 	if (!r.success) {
@@ -71,7 +73,7 @@ static int run_perf_on_test(Test test, double *time_taken, double *gb_per_sec,
 		string_free(&err_msg, ga);
 		string_free(&json, ga);
 		error_free(r);
-		return 0;
+		return false;
 	}
 
 	*time_taken = elapsed_seconds(&start, &end);
@@ -84,7 +86,7 @@ static int run_perf_on_test(Test test, double *time_taken, double *gb_per_sec,
 	}
 
 	string_free(&json, ga);
-	return 1;
+	return true;
 }
 
 static void list_available_tests(void) {
@@ -106,13 +108,13 @@ static int find_test_index(const char *benchmark_name) {
 	return -1;
 }
 
-void run_jsonperf(size_t iterations, size_t warmup_iterations,
+int run_jsonperf(size_t iterations, size_t warmup_iterations,
 		const char *benchmark_name) {
 	int test_index = find_test_index(benchmark_name);
 	if (benchmark_name != NULL && test_index < 0) {
 		printf("Unknown benchmark: %s\n", benchmark_name);
 		list_available_tests();
-		return;
+		return EXIT_FAILURE;
 	}
 
 	size_t num_tests = sizeof(tests) / sizeof(tests[0]);
@@ -126,12 +128,16 @@ void run_jsonperf(size_t iterations, size_t warmup_iterations,
 		if (test_index >= 0) {
 			double time_taken = 0.0;
 			double gb_per_sec = 0.0;
-			run_perf_on_test(tests[(size_t)test_index], &time_taken, &gb_per_sec, 0);
+			if (!run_perf_on_test(tests[(size_t)test_index], &time_taken, &gb_per_sec, false)) {
+				return EXIT_FAILURE;
+			}
 		} else {
 			for (size_t j = 0; j < num_tests; j++) {
 				double time_taken = 0.0;
 				double gb_per_sec = 0.0;
-				run_perf_on_test(tests[j], &time_taken, &gb_per_sec, 0);
+				if (!run_perf_on_test(tests[j], &time_taken, &gb_per_sec, false)) {
+					return EXIT_FAILURE;
+				}
 			}
 		}
 	}
@@ -142,20 +148,24 @@ void run_jsonperf(size_t iterations, size_t warmup_iterations,
 		if (test_index >= 0) {
 			double time_taken = 0.0;
 			double gb_per_sec = 0.0;
-			if (run_perf_on_test(tests[(size_t)test_index], &time_taken, &gb_per_sec, 1)) {
+			if (run_perf_on_test(tests[(size_t)test_index], &time_taken, &gb_per_sec, true)) {
 				total_time[0] += time_taken;
 				total_throughput[0] += gb_per_sec;
 				success_counts[0] += 1;
+			} else {
+				return EXIT_FAILURE;
 			}
 			printf("\n");
 		} else {
 			for (size_t j = 0; j < num_tests; j++) {
 				double time_taken = 0.0;
 				double gb_per_sec = 0.0;
-				if (run_perf_on_test(tests[j], &time_taken, &gb_per_sec, 1)) {
+				if (run_perf_on_test(tests[j], &time_taken, &gb_per_sec, true)) {
 					total_time[j] += time_taken;
 					total_throughput[j] += gb_per_sec;
 					success_counts[j] += 1;
+				} else {
+					return EXIT_FAILURE;
 				}
 				printf("\n");
 			}
@@ -174,4 +184,5 @@ void run_jsonperf(size_t iterations, size_t warmup_iterations,
 		printf("%s avg time: %f seconds\n", name, avg_time);
 		printf("%s avg throughput: %f GB/s\n", name, avg_throughput);
 	}
+	return EXIT_SUCCESS;
 }
