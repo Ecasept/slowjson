@@ -1,13 +1,17 @@
 # slowjson
+
 An overengineered, standalone zero-dependency JSON manipulation library written in pure C11. Developed as the persistence layer for a university course planner group project at the University of Augsburg. But mainly because i wanted to challenge myself and learn new stuff.
 
 ## Features
+
 - **DOM Manipulation:** Helpers to store and modify and JSON types as C datatypes
 - **Serialization:** Ability to convert between JSON objects and strings
 - **I/O Helpers:** Easy integration for reading and writing to files
 
 ## Implementation
+
 It features many “sub-libraries” and helpful utilties that i included as a learning experience, under the pretext that we weren’t allowed to use external libraries. This includes:
+
 - A custom Arena memory allocator with valgrind and asan integration
 - A custom string and string view class
 - A generic dynamic array implementation in c
@@ -15,8 +19,11 @@ It features many “sub-libraries” and helpful utilties that i included as a l
 - A full UTF8 (and 16) encoder and decoder
 - A test runner that tests the library on multiple well established json test suites and on memory safety
 - A consistent error handling paradigm throughout the whole codebase (failed memory allocations, eg. because of an OOM, panic and exit)
+
 ## Constraints
+
 (based on the group project requirements)
+
 - C11 compliance
 - no external libraries
 - cross-compatibility
@@ -24,14 +31,17 @@ It features many “sub-libraries” and helpful utilties that i included as a l
 - compiles without any additional compiler parameters other than `-std=c11 -Wall -Wextra -pedantic`
 
 ## Performance
+
 Even under the strict project and time constraints, the parser includes a fair amount of performance enhancing techniques. Among other things, it utilizes custom arena allocators, aggressive function inlining, multiple fast paths, direct memory mapping, zero-copy string views and extensive performance tests. However it still does not beat most established json parsers.
 
 <img width="882" height="567" alt="ResizedImage_2026-08-20_18-50-27_7335" src="https://github.com/user-attachments/assets/6b62952e-2ea4-4a78-88c6-0a8f7b8b4c73" alt="Comparing slowjson with established parsers on different datasets. slowjson is mostly dead last by a good amount"/>
 
 ## Context
+
 slowjson is a standalone JSON manipulation library that I developed for a group project in my first semester at the University of Augsburg. I was responsible for the persistence layer, while the other members built the actual university course planner on top of the library. We received full marks for the project.
 
 The slowjson library itself is located in `src/json`, while `src/data` contains the usage of the library for this application. The other directories contain the actual application code for the study course organization program.
+
 ## Usage
 
 You can build a standalone static library:
@@ -105,6 +115,7 @@ Save it at the repository root as `example.c` and execute it with:
 cc -std=c11 -Wall -Wextra -pedantic -Isrc example.c -Lbuild -lslowjson -o example
 ./example
 ```
+
 It should print:
 
 ```text
@@ -117,9 +128,19 @@ Updated JSON: {"name":"James Doe","age":20,"children":[]}
 For a larger integration example, see [loading](src/data/load.c) and
 [saving](src/data/save.c) in the course planner.
 
+## Fuzzing
+
+The project has a simple fuzzer that serializes random strings, verifies deserialization, and enables asan and ubsan.
+
+```sh
+make fuzz
+# or with explicit values:
+make fuzz FUZZ_ITERATIONS=1000000 FUZZ_SEED=67 FUZZ_THREADS=8
+```
+
 ## Building
 
-This project uses [make](https://en.wikipedia.org/wiki/Make_(software)) as its build system.
+This project uses [make](<https://en.wikipedia.org/wiki/Make_(software)>) as its build system.
 
 ```sh
 # Alias for `make all`
@@ -146,7 +167,6 @@ make profile
 ```
 
 See the `Makefile` for additional targets and options.
-
 
 > **Note**
 > Although the requirement was that the project should compile without warnings, some warnings may appear across different compilers and operating systems.  

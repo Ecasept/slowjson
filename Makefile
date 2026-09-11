@@ -1,12 +1,13 @@
 CC = gcc
 
 DEBUG_FLAGS = -g -DDEBUG
-OPT_FLAGS = -O2 # -flto -march=native
-CFLAGS_EXTRA =
-CFLAGS = -Wall -Wextra -pedantic -std=c11 $(DEBUG_FLAGS) $(OPT_FLAGS) $(CFLAGS_EXTRA)
+CFLAGS_DEFAULT = -Wall -Wextra -pedantic -std=c11
+CFLAGS = $(CFLAGS_DEFAULT) $(DEBUG_FLAGS)
+OPT_FLAGS = $(CFLAGS_DEFAULT) -O2 -flto -march=native
 
-OPT_LD_FLAGS = # -flto
-LDFLAGS = $(OPT_LD_FLAGS)
+
+OPT_LD_FLAGS = -flto
+LDFLAGS = 
 
 TARGET = gradeviewer
 BUILD_DIR = build
@@ -56,10 +57,29 @@ LIB_SRCS := $(sort $(wildcard src/json/internal/*.c src/json/internal/lexer/*.c 
 LIB_OBJS := $(LIB_SRCS:%.c=$(BUILD_DIR)/lib/%.o)
 LIB_TARGET := $(BUILD_DIR)/libslowjson.a
 
+FUZZ_ITERATIONS ?= 100000
+FUZZ_SEED ?= 1
+FUZZ_THREADS ?= 1
+FUZZ_TARGET := $(BUILD_DIR)/fuzz/slowjson-fuzz
+FUZZ_OBJS := $(LIB_SRCS:%.c=$(BUILD_DIR)/fuzz/%.o) $(BUILD_DIR)/fuzz/tools/fuzz.o
+FUZZ_FLAGS := -pthread -std=c11 -Wall -Wextra -pedantic -g -DDEBUG -O1 -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=all
+
 # Builds normally
 all: $(CLEAN_DEPENDENCY) $(BUILD_DIR)/$(TARGET)
 
 lib: $(CLEAN_DEPENDENCY) $(LIB_TARGET)
+
+fuzz: $(FUZZ_TARGET)
+	$(FUZZ_TARGET) $(FUZZ_ITERATIONS) $(FUZZ_SEED) $(FUZZ_THREADS)
+
+$(FUZZ_TARGET): $(FUZZ_OBJS)
+	$(CC) $(FUZZ_FLAGS) $(FUZZ_OBJS) -o $@
+
+$(BUILD_DIR)/fuzz/%.o: %.c
+	$(call MKDIR,$(dir $@))
+	$(CC) $(FUZZ_FLAGS) -Isrc -MMD -MP -c $< -o $@
+
+-include $(FUZZ_OBJS:.o=.d)
 
 $(LIB_TARGET): $(LIB_OBJS)
 	$(call MKDIR,$(dir $@))
@@ -101,4 +121,4 @@ else
 	$(RMDIR) $(BUILD_DIR)
 endif
 
-.PHONY: all lib clean build run valgrind
+.PHONY: all lib fuzz clean build run valgrind
