@@ -58,6 +58,7 @@ static void rehash(json_value_hashmap *map, size_t new_bucket_count, Allocator a
 	memset(map->buckets.data, 0, 
 		   sizeof(json_value_hashmap_node) * new_bucket_count);
 	map->buckets.length = new_bucket_count;
+	map->size = 0;
 	for (size_t bucket = 0; bucket < old_bucket_count; bucket++) {
 		json_value_hashmap_node node;
 		node = json_value_hashmap_node_list_get_unchecked(&old_buckets, bucket);
