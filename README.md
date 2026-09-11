@@ -34,7 +34,7 @@ It features many “sub-libraries” and helpful utilties that i included as a l
 
 Even under the strict project and time constraints, the parser includes a fair amount of performance enhancing techniques. Among other things, it utilizes custom arena allocators, aggressive function inlining, multiple fast paths, direct memory mapping, zero-copy string views and extensive performance tests. However it still does not beat most established json parsers.
 
-<img width="882" height="567" alt="ResizedImage_2026-08-20_18-50-27_7335" src="https://github.com/user-attachments/assets/6b62952e-2ea4-4a78-88c6-0a8f7b8b4c73" alt="Comparing slowjson with established parsers on different datasets. slowjson is mostly dead last by a good amount"/>
+<img width="882" height="567" src="https://github.com/user-attachments/assets/6b62952e-2ea4-4a78-88c6-0a8f7b8b4c73" alt="Comparing slowjson with established parsers on different datasets. slowjson is mostly dead last by a good amount"/>
 
 ## Context
 
@@ -47,10 +47,10 @@ The slowjson library itself is located in `src/json`, while `src/data` contains 
 You can build a standalone static library:
 
 ```sh
-make lib
+./dev lib
 ```
 
-This creates `build/libslowjson.a` including only the JSON library without the course planner.
+This creates `build/Debug/libslowjson.a` including only sources from `src/json`.
 
 Here is an example of how to use the API:
 
@@ -112,7 +112,7 @@ int main(void) {
 Save it at the repository root as `example.c` and execute it with:
 
 ```sh
-cc -std=c11 -Wall -Wextra -pedantic -Isrc example.c -Lbuild -lslowjson -o example
+cc -std=c11 -Wall -Wextra -pedantic -Isrc example.c -Lbuild/Debug -lslowjson -o example
 ./example
 ```
 
@@ -130,43 +130,52 @@ For a larger integration example, see [loading](src/data/load.c) and
 
 ## Fuzzing
 
-The project has a simple fuzzer that serializes random strings, verifies deserialization, and enables asan and ubsan.
+The project has a simple fuzzer that parses random strings.
+Use DebugExtra to enable ASan and UBSan. The `fuzz` command builds and runs it.
 
 ```sh
-make fuzz
-# or with explicit values:
-make fuzz FUZZ_ITERATIONS=1000000 FUZZ_SEED=67 FUZZ_THREADS=8
+./dev --profile DebugExtra fuzz
+# Explicit iterations, seed, and thread count:
+./dev --profile DebugExtra fuzz 1000000 67 8
 ```
 
 ## Building
 
-This project uses [make](<https://en.wikipedia.org/wiki/Make_(software)>) as its build system.
+Install a C11 compiler, [Meson](https://mesonbuild.com/) 1.3 or newer,
+[Ninja](https://ninja-build.org/), and Python 3. Valgrind is only needed for
+memory checks and Callgrind profiling.
+
+The `dev` helper configures Meson with the Ninja backend automaticaly. Run it as `python3 dev` on Windows.
 
 ```sh
-# Alias for `make all`
-make
+# Build and run the course planner
+./dev run
 
-# Build the program (output: ./build/gradeviewer).
-# Only changed files are recompiled.
-make all
+# Build and run all tests
+./dev test
+#
+./dev test jsontestsuite
+./dev test jsonperf twitter 10
 
-# Build and run
-make run
+# Check and profile the test runner
+./dev valgrind jsontestsuite
+./dev callgrind jsonperf twitter 10
 
-# Force a full rebuild, then run
-make run rebuild=1
+# Build only the static library
+./dev lib
+# Build and run the fuzzer
+./dev fuzz
 
-# Build and run tests
-make run test=1
-
-# Run Valgrind (memory leak checks)
-make valgrind
-
-# Run Callgrind profiling
-make profile
+# Select other profiles
+./dev --profile DebugExtra test jsontestsuite
+./dev --profile Release lib
 ```
 
-See the `Makefile` for additional targets and options.
+| Profile           | Configuration                                                      |
+| ----------------- | ------------------------------------------------------------------ |
+| `Debug` (default) | No optimization, debug symbols, `-DDEBUG`, assertions enabled      |
+| `DebugExtra`      | Debug plus ASan, UBSan, frame pointers, and fatal sanitizer errors |
+| `Release`         | `-O3`, LTO, `-march=native` when supported, assertions disabled    |
 
 > **Note**
 > Although the requirement was that the project should compile without warnings, some warnings may appear across different compilers and operating systems.  

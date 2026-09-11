@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "test.h"
 #include <stdio.h>
-#include "../utils/alloc/default.h"
+#include "json/utils/alloc/default.h"
 
 struct Test {
 	const char *filename;
@@ -9,8 +9,8 @@ struct Test {
 };
 typedef struct Test Test;
 
-#define PARSER_DIR "src/json/test/files/jsontestsuite/test_parsing/"
-#define TRANSFORM_DIR "src/json/test/files/jsontestsuite/test_transform/"
+#define PARSER_DIR "tools/test/files/jsontestsuite/test_parsing/"
+#define TRANSFORM_DIR "tools/test/files/jsontestsuite/test_transform/"
 #define TESTP(test_name) { .filename = PARSER_DIR test_name ".json", .name = test_name }
 #define TESTT(test_name) { .filename = TRANSFORM_DIR test_name ".json", .name = test_name }
 Test n_tests[] = {

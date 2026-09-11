@@ -14,19 +14,9 @@
 #include <windows.h>
 #endif
 
-
-
-
-#ifndef RUN_TESTS
-int actual_main(void);
+ 
+  
 int main(void) {
-	return actual_main();
-}
-#endif
-
-  
-  
-int actual_main(void) {
 	setlocale(LC_ALL, "");
 	setlocale(LC_NUMERIC, "C");
 	

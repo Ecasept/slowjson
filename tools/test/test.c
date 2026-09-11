@@ -1,15 +1,14 @@
-#include "../deserialize.h"
-#include "../utils/string/file.h"
+#include "json/deserialize.h"
+#include "json/utils/string/file.h"
 #include "jsontestsuite.h"
 #include "fxx_test.h"
 #include "jsonperf.h"
-#include "../utils/alloc/default.h"
+#include "json/utils/alloc/default.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-#ifdef RUN_TESTS
 static int is_number(const char *value) {
 	if (value == NULL || *value == '\0') return 0;
 	for (const unsigned char *p = (const unsigned char *)value; *p != '\0'; p++) {
@@ -55,7 +54,6 @@ int main(int argc, char **argv) {
 	}
 	return 0;
 }
-#endif
 
 Result run_once(const char *filename) {
 	string json;

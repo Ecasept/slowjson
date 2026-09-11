@@ -1,10 +1,10 @@
 #include "jsonperf.h"
-#include "../deserialize.h"
-#include "../utils/string/file.h"
+#include "json/deserialize.h"
+#include "json/utils/string/file.h"
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
-#include "../utils/alloc/default.h"
+#include "json/utils/alloc/default.h"
 
 struct Test {
 	const char *filename;
@@ -12,7 +12,7 @@ struct Test {
 };
 typedef struct Test Test;
 
-#define PERF_DIR "src/json/test/files/nativejson-benchmark/"
+#define PERF_DIR "tools/test/files/nativejson-benchmark/"
 #define TEST(test_name)                                                        \
 	{ .filename = PERF_DIR test_name ".json", .name = test_name }
 

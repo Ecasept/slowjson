@@ -1,14 +1,14 @@
-#include "../utils/string/dstring.h"
-#include "../utils/string/file.h"
-#include "../utils/string/string_view.h"
-#include "../deserialize.h"
-#include "../internal/jsonvalue.h"
-#include "../config.h"
+#include "json/utils/string/dstring.h"
+#include "json/utils/string/file.h"
+#include "json/utils/string/string_view.h"
+#include "json/deserialize.h"
+#include "json/internal/jsonvalue.h"
+#include "json/config.h"
 #include <inttypes.h>
 #include <stdlib.h>
 #include <time.h>
 #include "test.h"
-#include "../utils/alloc/default.h"
+#include "json/utils/alloc/default.h"
 
 struct Test {
 	const char *filename;
@@ -16,7 +16,7 @@ struct Test {
 };
 typedef struct Test Test;
 
-#define TEST_DIR "src/json/test/files/parse-number-fxx-test-data/data/"
+#define TEST_DIR "tools/test/files/parse-number-fxx-test-data/data/"
 #define TEST(test_name) { .filename = TEST_DIR test_name ".txt", .name = test_name }
 
 #define ANSI_CLEAR_LINE "\033[2K\r"
