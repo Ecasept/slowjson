@@ -13,52 +13,32 @@ typedef struct Test Test;
 #define TRANSFORM_DIR "src/json/test/files/jsontestsuite/test_transform/"
 #define TESTP(test_name) { .filename = PARSER_DIR test_name ".json", .name = test_name }
 #define TESTT(test_name) { .filename = TRANSFORM_DIR test_name ".json", .name = test_name }
-/*
-
-i_number_double_huge_neg_exp
-i_number_huge_exp
-i_number_neg_int_huge_exp
-i_number_pos_double_huge_exp
-i_number_real_neg_overflow
-i_number_real_pos_overflow
-i_number_real_underflow
-i_number_too_big_neg_int
-i_number_too_big_pos_int
-i_number_very_big_negative_int
-i_object_key_lone_2nd_surrogate
-i_string_1st_surrogate_but_2nd_missing
-i_string_1st_valid_surrogate_2nd_invalid
-i_string_incomplete_surrogate_and_escape_valid
-i_string_incomplete_surrogate_pair
-i_string_incomplete_surrogates_escape_valid
-i_string_invalid_lonely_surrogate
-i_string_invalid_surrogate
-i_string_invalid_utf-8
-i_string_inverted_surrogates_U+1D11E
-i_string_iso_latin_1
-i_string_lone_second_surrogate
-i_string_lone_utf8_continuation_byte
-i_string_not_in_unicode_range
-i_string_overlong_sequence_2_bytes
-i_string_overlong_sequence_6_bytes
-i_string_overlong_sequence_6_bytes_null
-i_string_truncated-utf-8
-i_string_utf16BE_no_BOM
-i_string_utf16LE_no_BOM
-i_string_UTF-16LE_with_BOM
-i_string_UTF-8_invalid_sequence
-i_string_UTF8_surrogate_U+D800
-i_structure_500_nested_arrays
-i_structure_UTF-8_BOM_empty_object
-
-
-
-*/
-
-
-
-
 Test n_tests[] = {
+	TESTP("i_object_key_lone_2nd_surrogate"),
+	TESTP("i_string_1st_surrogate_but_2nd_missing"),
+	TESTP("i_string_1st_valid_surrogate_2nd_invalid"),
+	TESTP("i_string_UTF-16LE_with_BOM"),
+	TESTP("i_string_UTF-8_invalid_sequence"),
+	TESTP("i_string_UTF8_surrogate_U+D800"),
+	TESTP("i_string_incomplete_surrogate_and_escape_valid"),
+	TESTP("i_string_incomplete_surrogate_pair"),
+	TESTP("i_string_incomplete_surrogates_escape_valid"),
+	TESTP("i_string_invalid_lonely_surrogate"),
+	TESTP("i_string_invalid_surrogate"),
+	TESTP("i_string_invalid_utf-8"),
+	TESTP("i_string_inverted_surrogates_U+1D11E"),
+	TESTP("i_string_iso_latin_1"),
+	TESTP("i_string_lone_second_surrogate"),
+	TESTP("i_string_lone_utf8_continuation_byte"),
+	TESTP("i_string_not_in_unicode_range"),
+	TESTP("i_string_overlong_sequence_2_bytes"),
+	TESTP("i_string_overlong_sequence_6_bytes"),
+	TESTP("i_string_overlong_sequence_6_bytes_null"),
+	TESTP("i_string_truncated-utf-8"),
+	TESTP("i_string_utf16BE_no_BOM"),
+	TESTP("i_string_utf16LE_no_BOM"),
+	TESTP("i_structure_UTF-8_BOM_empty_object"),
+
 	TESTP("n_array_1_true_without_comma"),
 	TESTP("n_array_a_invalid_utf8"),
 	TESTP("n_array_colon_instead_of_comma"),
@@ -250,6 +230,18 @@ Test n_tests[] = {
 };
 
 Test y_tests[] = {
+	TESTP("i_number_double_huge_neg_exp"),
+	TESTP("i_number_huge_exp"),
+	TESTP("i_number_neg_int_huge_exp"),
+	TESTP("i_number_pos_double_huge_exp"),
+	TESTP("i_number_real_neg_overflow"),
+	TESTP("i_number_real_pos_overflow"),
+	TESTP("i_number_real_underflow"),
+	TESTP("i_number_too_big_neg_int"),
+	TESTP("i_number_too_big_pos_int"),
+	TESTP("i_number_very_big_negative_int"),
+	TESTP("i_structure_500_nested_arrays"),
+
 	TESTP("y_array_arraysWithSpaces"),
 	TESTP("y_array_empty"),
 	TESTP("y_array_empty-string"),
