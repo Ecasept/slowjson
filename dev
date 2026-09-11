@@ -14,7 +14,7 @@ def main():
     parser.add_argument(
         '--profile', choices=['Debug', 'DebugExtra', 'Release'], default='Debug')
     parser.add_argument('command', choices=[
-                        'run', 'test', 'valgrind', 'callgrind', 'lib', 'fuzz'])
+                        'build', 'run', 'test', 'valgrind', 'callgrind', 'lib', 'fuzz'])
     parser.add_argument('args', nargs=argparse.REMAINDER,
                         help='arguments passed to the program')
     options = parser.parse_args()
@@ -22,8 +22,8 @@ def main():
 
     if args[:1] == ['--']:
         args = args[1:]
-    if options.command == 'lib' and args:
-        parser.error('lib only builds and does not accept program arguments')
+    if options.command in ('build', 'lib') and args:
+        parser.error(f'{options.command} only builds and does not accept program arguments')
     wrapped = options.command in ('valgrind', 'callgrind')
     if wrapped and options.profile == 'DebugExtra':
         parser.error(
@@ -34,15 +34,15 @@ def main():
 
     root = Path(__file__).resolve().parent
     build = root / 'build' / options.profile
-    target = {'run': 'gradeviewer', 'lib': 'slowjson',
+    target = {'build': 'gradeviewer', 'run': 'gradeviewer', 'lib': 'slowjson',
               'fuzz': 'slowjson-fuzz'}.get(options.command, 'gradeviewer_tests')
-	if not (build / 'meson-private' / 'coredata.dat').exists():
+    if not (build / 'meson-private' / 'coredata.dat').exists():
         subprocess.run(['meson', 'setup', str(build), str(root), '--backend=ninja',
                         '--native-file', str(root / 'build-support' / (options.profile + '.ini'))],
                        cwd=root, check=True)
     subprocess.run(['meson', 'compile', '-C', str(build),
                    target], cwd=root, check=True)
-    if options.command == 'lib':
+    if options.command in ('build', 'lib'):
         return 0
     executable = build / (target + ('.exe' if os.name == 'nt' else ''))
     prefix = []

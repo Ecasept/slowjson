@@ -150,6 +150,8 @@ The `dev` helper configures Meson with the Ninja backend automaticaly. Run it as
 ```sh
 # Build and run the course planner
 ./dev run
+# Bulid only
+./dev build
 
 # Build and run all tests
 ./dev test
