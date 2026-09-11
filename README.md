@@ -35,6 +35,12 @@ It features many “sub-libraries” and helpful utilities that I included as a 
 
 Even under the strict project and time constraints, the parser includes a fair amount of performance-enhancing techniques. Among other things, it utilizes custom arena allocators, aggressive function inlining, multiple fast paths, direct memory mapping, zero-copy string views and extensive performance tests. However, it still does not beat most established JSON parsers.
 
+Some further ideas for enhancing performance are:
+- Skip de- and reencoding non-escaped Unicode characters just like ASCII
+- Combine lexer and parser
+- Use a better allocation strategy, as mmap currently adds a lot of OS overhead
+- Use a better hashmap implementation (cJSON for example uses a linked list) 
+ 
 <img width="882" height="567" src="https://github.com/user-attachments/assets/6b62952e-2ea4-4a78-88c6-0a8f7b8b4c73" alt="Comparing slowjson with established parsers on different datasets. slowjson is mostly dead last by a good amount"/>
 
 I tried various tools for profiling and ended up getting the best results by using my built-in benchmark helper and analyzing the callgrind output with kcachegrind, supplemented with some `perf` runs. Here is an example of some of my leftover callgrind outputs:
