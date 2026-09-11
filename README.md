@@ -153,15 +153,19 @@ The `dev` helper configures Meson with the Ninja backend automaticaly. Run it as
 # Bulid only
 ./dev build
 
-# Build and run all tests
+# Build and run all or specific tests
 ./dev test
-#
 ./dev test jsontestsuite
-./dev test jsonperf twitter 10
+# Benchmark on certain datasets
+./dev bench twitter 10 10
+./dev bench all 10 10
 
-# Check and profile the test runner
-./dev valgrind jsontestsuite
-./dev callgrind jsonperf twitter 10
+# Inspect or profile release benchmarks (benchmark, measured iterations, warmups)
+./dev valgrind bench citm_catalog 10 10
+./dev callgrind bench all 10 10
+# Inspect or profile tests
+./dev valgrind test jsontestsuite
+./dev callgrind test fxx_test
 
 # Build only the static library
 ./dev lib

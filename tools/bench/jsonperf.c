@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include "jsonperf.h"
 #include "json/deserialize.h"
 #include "json/utils/string/file.h"
@@ -12,7 +14,7 @@ struct Test {
 };
 typedef struct Test Test;
 
-#define PERF_DIR "tools/test/files/nativejson-benchmark/"
+#define PERF_DIR "tools/bench/files/nativejson-benchmark/"
 #define TEST(test_name)                                                        \
 	{ .filename = PERF_DIR test_name ".json", .name = test_name }
 
@@ -23,8 +25,14 @@ static Test tests[] = {
 };
 
 static const double GB_IN_BYTES = 1024.0 * 1024.0 * 1024.0;
+static double elapsed_seconds(const struct timespec *start,
+		const struct timespec *end) {
+	return (double)(end->tv_sec - start->tv_sec) +
+		(double)(end->tv_nsec - start->tv_nsec) / 1000000000.0;
+}
 
-static int run_perf_on_test(Test test, double *time_taken, double *gb_per_sec) {
+static int run_perf_on_test(Test test, double *time_taken, double *gb_per_sec,
+		int report_result) {
 	string json;
 	Result r = read_file_to_string(test.filename, &json);
 	if (!r.success) {
@@ -35,14 +43,27 @@ static int run_perf_on_test(Test test, double *time_taken, double *gb_per_sec) {
 		return 0;
 	}
 
-	printf("Parsing %s (Size: %zu bytes)\n", test.name, json.arr.length);
+	if (report_result) {
+		printf("Parsing %s (Size: %zu bytes)\n", test.name, json.arr.length);
+	}
 
-	clock_t start = clock();
+	struct timespec start;
+	struct timespec end;
+	if (clock_gettime(CLOCK_MONOTONIC, &start) != 0) {
+		printf("Failed to start monotonic clock\n");
+		string_free(&json, ga);
+		return 0;
+	}
 	Parser parser = json_parser_new(config_default_parser_config());
 	JSONDocument result = json_document_new();
 	r = json_parser_deserialize(&parser, &json, &result);
 	json_document_free(&result);
-	clock_t end = clock();
+	if (clock_gettime(CLOCK_MONOTONIC, &end) != 0) {
+		printf("Failed to read monotonic clock\n");
+		string_free(&json, ga);
+		if (!r.success) error_free(r);
+		return 0;
+	}
 
 	if (!r.success) {
 		string err_msg = format_error(r);
@@ -53,10 +74,14 @@ static int run_perf_on_test(Test test, double *time_taken, double *gb_per_sec) {
 		return 0;
 	}
 
-	*time_taken = ((double)(end - start)) / CLOCKS_PER_SEC;
-	printf("Parsing %s took %f seconds\n", test.name, *time_taken);
+	*time_taken = elapsed_seconds(&start, &end);
+	if (report_result) {
+		printf("Parsing %s took %f seconds\n", test.name, *time_taken);
+	}
 	*gb_per_sec = ((double)json.arr.length / GB_IN_BYTES) / *time_taken;
-	printf("Throughput: %f GB/s\n", *gb_per_sec);
+	if (report_result) {
+		printf("Throughput: %f GB/s\n", *gb_per_sec);
+	}
 
 	string_free(&json, ga);
 	return 1;
@@ -81,7 +106,8 @@ static int find_test_index(const char *benchmark_name) {
 	return -1;
 }
 
-void run_jsonperf(size_t iterations, const char *benchmark_name) {
+void run_jsonperf(size_t iterations, size_t warmup_iterations,
+		const char *benchmark_name) {
 	int test_index = find_test_index(benchmark_name);
 	if (benchmark_name != NULL && test_index < 0) {
 		printf("Unknown benchmark: %s\n", benchmark_name);
@@ -95,12 +121,28 @@ void run_jsonperf(size_t iterations, const char *benchmark_name) {
 	double total_throughput[sizeof(tests) / sizeof(tests[0])] = {0};
 	size_t success_counts[sizeof(tests) / sizeof(tests[0])] = {0};
 
+	printf("=== Warmup (%zu iterations) ===\n", warmup_iterations);
+	for (size_t i = 0; i < warmup_iterations; i++) {
+		if (test_index >= 0) {
+			double time_taken = 0.0;
+			double gb_per_sec = 0.0;
+			run_perf_on_test(tests[(size_t)test_index], &time_taken, &gb_per_sec, 0);
+		} else {
+			for (size_t j = 0; j < num_tests; j++) {
+				double time_taken = 0.0;
+				double gb_per_sec = 0.0;
+				run_perf_on_test(tests[j], &time_taken, &gb_per_sec, 0);
+			}
+		}
+	}
+	printf("=== Measurements ===\n");
+
 	for (size_t i = 0; i < iterations; i++) {
 		printf("=== Iteration %zu ===\n", i + 1);
 		if (test_index >= 0) {
 			double time_taken = 0.0;
 			double gb_per_sec = 0.0;
-			if (run_perf_on_test(tests[(size_t)test_index], &time_taken, &gb_per_sec)) {
+			if (run_perf_on_test(tests[(size_t)test_index], &time_taken, &gb_per_sec, 1)) {
 				total_time[0] += time_taken;
 				total_throughput[0] += gb_per_sec;
 				success_counts[0] += 1;
@@ -110,7 +152,7 @@ void run_jsonperf(size_t iterations, const char *benchmark_name) {
 			for (size_t j = 0; j < num_tests; j++) {
 				double time_taken = 0.0;
 				double gb_per_sec = 0.0;
-				if (run_perf_on_test(tests[j], &time_taken, &gb_per_sec)) {
+				if (run_perf_on_test(tests[j], &time_taken, &gb_per_sec, 1)) {
 					total_time[j] += time_taken;
 					total_throughput[j] += gb_per_sec;
 					success_counts[j] += 1;

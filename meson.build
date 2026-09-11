@@ -52,9 +52,13 @@ test_runner = executable('gradeviewer_tests', files(
   'tools/test/test.c',
   'tools/test/jsontestsuite.c',
   'tools/test/fxx_test.c',
-  'tools/test/jsonperf.c',
 ), dependencies: json_dep, build_by_default: false)
 test('slowjson', test_runner, workdir: meson.project_source_root(), timeout: 0)
+
+executable('jsonperf', files(
+  'tools/bench/bench.c',
+  'tools/bench/jsonperf.c',
+), dependencies: json_dep, build_by_default: false)
 
 executable('slowjson-fuzz', 'tools/fuzz/fuzz.c',
   dependencies: [json_dep, dependency('threads')], build_by_default: false)
