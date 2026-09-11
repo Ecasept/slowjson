@@ -35,3 +35,5 @@ void json_value_hashmap_set_split(json_value_hashmap *map, string key,
 void json_value_hashmap_init(json_value_hashmap *map, Allocator a);
 void json_value_hashmap_free(json_value_hashmap *map, Allocator a);
 void json_value_hashmap_free_split(json_value_hashmap *map, Allocator a, Allocator stra);
+
+Result json_value_hashmap_get_ref(json_value_hashmap *map, string_view key, JSONValue **out);

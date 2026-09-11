@@ -11,7 +11,7 @@ Result run_once(const char *filename);
 /**
  * @brief Parses the given JSON string and outputs the resulting JSONValue.
  * @param json The JSON string to parse
- * @param out_result If non-NULL, will be set to the resulting ParserResult on success.
- * If NULL, the resulting ParserResult will be freed immediately.
+ * @param out_result If non-NULL, will be set to the resulting JSONDocument on success.
+ * If NULL, the resulting JSONDocument will be freed immediately.
  */
-Result run_string(string *json, ParserResult *out_result);
+Result run_string(string *json, JSONDocument *out_result);

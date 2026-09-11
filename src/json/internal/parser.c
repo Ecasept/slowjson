@@ -90,7 +90,7 @@ static Result parse_json_array(Parser *parser, JSONValue *out_value, size_t dept
 	Result r;
 	JSONToken token;
 	out_value->type = JSON_ARRAY;
-	json_value_list_init(&out_value->list, 0, parser->allocator);
+	json_value_list_init(&out_value->list, 0, parser->document->value_allocator);
 
 	size_t count;
 	r = parser_peek_token(parser, &token, &count);
@@ -107,7 +107,7 @@ static Result parse_json_array(Parser *parser, JSONValue *out_value, size_t dept
 		r = parse_json_value(parser, &element, depth + 1);
 		if (!r.success)
 			goto error;
-		json_value_list_push(&out_value->list, element, parser->allocator);
+		json_value_list_push(&out_value->list, element, parser->document->value_allocator);
 
 		// Check for ',' or ']'
 		r = parser_peek_token(parser, &token, &count);
@@ -130,9 +130,9 @@ static Result parse_json_array(Parser *parser, JSONValue *out_value, size_t dept
 
 error:
 	for (size_t i = 0; i < out_value->list.length; i++) {
-		json_value_free_split(&out_value->list.data[i], parser->allocator, parser->string_allocator);
+		json_value_free_split(&out_value->list.data[i], parser->document->value_allocator, parser->document->string_allocator);
 	}
-	json_value_list_free(&out_value->list, parser->allocator);
+	json_value_list_free(&out_value->list, parser->document->value_allocator);
 	return r;
 }
 
@@ -140,7 +140,7 @@ static Result parse_json_object(Parser *parser, JSONValue *out_value, size_t dep
 	JSONToken token;
 	Result r;
 	out_value->type = JSON_OBJECT;
-	json_value_hashmap_init(&out_value->hashmap, parser->allocator);
+	json_value_hashmap_init(&out_value->hashmap, parser->document->value_allocator);
 
 	size_t count;
 	r = parser_peek_token(parser, &token, &count);
@@ -166,7 +166,7 @@ static Result parse_json_object(Parser *parser, JSONValue *out_value, size_t dep
 		if (!r.success)
 			goto error;
 
-		json_value_hashmap_set_split(&out_value->hashmap, key.value, value, parser->allocator, parser->string_allocator);
+		json_value_hashmap_set_split(&out_value->hashmap, key.value, value, parser->document->value_allocator, parser->document->string_allocator);
 
 		// Check for ',' or '}'
 		r = parser_peek_token(parser, &token, &count);
@@ -188,7 +188,7 @@ static Result parse_json_object(Parser *parser, JSONValue *out_value, size_t dep
 	return new_success();
 
 error:
-	json_value_hashmap_free_split(&out_value->hashmap, parser->allocator, parser->string_allocator);
+	json_value_hashmap_free_split(&out_value->hashmap, parser->document->value_allocator, parser->document->string_allocator);
 	return r;
 }
 
@@ -259,93 +259,42 @@ static Result parse_json_value_top_level(Parser *parser, JSONValue *out_value) {
 	JSONToken token;
 	r = parser_expect_token(parser, JSONTok_EOF, &token);
 	if (!r.success) {
-		json_value_free_split(out_value, parser->allocator, parser->string_allocator);
+		json_value_free_split(out_value, parser->document->value_allocator, parser->document->string_allocator);
 		return r;
 	}
 	return new_success();
 }
 
 Parser json_parser_new(ParserConfig config) {
-	Parser parser = {0};
-	parser.config = config;
-	parser.arena = NULL;
-	parser.allocator = (Allocator){0};
-	return parser;
+    Parser parser = {0};
+    parser.config = config;
+    return parser;
 }
 
-Result json_parser_deserialize(Parser *parser, string *json, ParserResult *result) {
-	// Initialize parser arena and allocator for this run
-	parser->arena = malloc(sizeof(Arena));
-	if (parser->arena == NULL) {
-		panic("Failed to allocate memory for parser arena");
-	}
-	*parser->arena = new_arena();
-	parser->allocator = ga;//arena_as_allocator(parser->arena);
+Result json_parser_deserialize(Parser *parser, string *json, JSONDocument *doc) {
+    json_document_reset(doc);
+    parser->document = doc;
+    parser->position = 0;
+    Allocator token_allocator = doc->value_allocator;
+    Lexer lexer;
+    lexer_init(&lexer, json, parser->config, doc->string_allocator);
+    json_token_list tokens;
+    json_token_list_init(&tokens, 0, token_allocator);
 
-	Allocator token_list_allocator = parser->allocator;
-	Arena *lexer_arena = malloc(sizeof(Arena));
-	if (lexer_arena == NULL) {
-		panic("Failed to allocate memory for lexer arena");
-	}
-	*lexer_arena = new_arena();
-	Allocator lexer_allocator = arena_as_allocator(lexer_arena);
-	parser->string_allocator = lexer_allocator;
-	
-	Lexer lexer;
-	lexer_init(&lexer, json, parser->config, lexer_allocator);
-	json_token_list tokens;
-	json_token_list_init(&tokens, 0, token_list_allocator);
-	
-	Result r = get_tokens(&lexer, &tokens, token_list_allocator);
-	if (!r.success) {
-		goto error;
-	}
-
-	parser->tokens = &tokens;
-	parser->position = 0;
-	
-	// Parse into result->value using parser's current allocator
-	r = parse_json_value_top_level(parser, &result->value);
-
-	// Clear parser tokens to avoid double free
-	free_lexer_tokens(&lexer, &tokens, token_list_allocator);
-
-	if (!r.success) {
-		goto error;
-	}
-
-	// Transfer ownership of the allocators to the result
-	result->parser_allocator = parser->allocator;
-	result->parser_arena = parser->arena;
-	result->lexer_allocator = lexer_allocator;
-	result->lexer_arena = lexer_arena;
-	
-	// Reset parser state
-	parser->arena = NULL;
-	parser->allocator = (Allocator){0};
-	parser->string_allocator = (Allocator){0};
-
-	return r;
-
-error:
-	arena_free(lexer_arena);
-	free(lexer_arena);
-	arena_free(parser->arena);
-	free(parser->arena);
-
-	parser->arena = NULL;
-	parser->allocator = (Allocator){0};
-	parser->string_allocator = (Allocator){0};
-
-	return r;
-}
-
-void parser_result_free(ParserResult *result) {
-	json_value_free_split(&result->value, result->parser_allocator, result->lexer_allocator);
-	arena_free(result->parser_arena);
-	free(result->parser_arena);
-	arena_free(result->lexer_arena);
-	free(result->lexer_arena);
+    Result r = get_tokens(&lexer, &tokens, token_allocator);
+    if (r.success) {
+        parser->tokens = &tokens;
+        r = parse_json_value_top_level(parser, &doc->value);
+        free_lexer_tokens(&lexer, &tokens, token_allocator);
+    }
+    parser->tokens = NULL;
+    parser->document = NULL;
+    if (!r.success) {
+        // Parsing routines already release any partially built containers.
+        doc->value = json_value_new_null();
+        json_document_reset(doc);
+    }
+    return r;
 }
 
 #define TYPE JSONToken

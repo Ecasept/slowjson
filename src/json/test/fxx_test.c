@@ -84,7 +84,7 @@ static Result get_fxx_test_data(string *line, double *expected, string *json_inp
 }
 
 static Result run_single_fxx_test(double expected, string *json_input) {
-	ParserResult result;
+	JSONDocument result;
 	Result r = run_string(json_input, &result);
 	if (!r.success) {
 		return r;
@@ -93,7 +93,7 @@ static Result run_single_fxx_test(double expected, string *json_input) {
 	JSONValue val = result.value;
 
 	if (val.type != JSON_NUMBER) {
-		parser_result_free(&result);
+		json_document_free(&result);
 		return new_errorf("Expected JSON number, got %s", EParserSyntaxError, jtostr(val.type));
 	}
 
@@ -108,11 +108,11 @@ static Result run_single_fxx_test(double expected, string *json_input) {
 	memcpy(&expected_bits, &expected, sizeof(double));
 	
 	if (actual_bits != expected_bits) {
-		parser_result_free(&result);
+		json_document_free(&result);
 		return new_errorf("Mismatch: expected %" PRIx64 ", got %" PRIx64, EParserSyntaxError, expected_bits, actual_bits);
 	}
 
-	parser_result_free(&result);
+	json_document_free(&result);
 	return new_success();
 }
 

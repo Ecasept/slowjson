@@ -52,8 +52,24 @@ endif
 
 OBJS = $(SRCS:%.c=$(BUILD_DIR)/%.o)
 
+LIB_SRCS := $(sort $(wildcard src/json/internal/*.c src/json/internal/lexer/*.c src/json/utils/*.c src/json/utils/*/*.c))
+LIB_OBJS := $(LIB_SRCS:%.c=$(BUILD_DIR)/lib/%.o)
+LIB_TARGET := $(BUILD_DIR)/libslowjson.a
+
 # Builds normally
 all: $(CLEAN_DEPENDENCY) $(BUILD_DIR)/$(TARGET)
+
+lib: $(CLEAN_DEPENDENCY) $(LIB_TARGET)
+
+$(LIB_TARGET): $(LIB_OBJS)
+	$(call MKDIR,$(dir $@))
+	$(AR) rcs $@ $(LIB_OBJS)
+
+$(BUILD_DIR)/lib/%.o: %.c
+	$(call MKDIR,$(dir $@))
+	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
+
+-include $(LIB_OBJS:.o=.d)
 
 run: all
 ifeq ($(OS),Windows_NT)
@@ -85,4 +101,4 @@ else
 	$(RMDIR) $(BUILD_DIR)
 endif
 
-.PHONY: all clean build run valgrind
+.PHONY: all lib clean build run valgrind

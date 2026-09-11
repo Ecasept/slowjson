@@ -4,9 +4,9 @@
 #include "../utils/alloc/default.h"
 
 
-static Result json_serialize_rec(JSONValue *val, string *str, Allocator a);
+static Result json_serialize_rec(const JSONValue *val, string *str, Allocator a);
 
-static Result json_serialize_rec(JSONValue *val, string *str, Allocator a) {
+static Result json_serialize_rec(const JSONValue *val, string *str, Allocator a) {
 	switch (val->type) {
 	case JSON_NULL:
 		string_append_cstr(str, "null", a);
@@ -104,7 +104,7 @@ static Result json_serialize_rec(JSONValue *val, string *str, Allocator a) {
 	return new_success();
 }
 
-Result json_serialize(struct JSONValue *val, string *str, Allocator allocator) {
+Result json_serialize(const struct JSONValue *val, string *str, Allocator allocator) {
 	string_new(str, "", allocator);
 	Result r = json_serialize_rec(val, str, allocator);
 	if (!r.success) {

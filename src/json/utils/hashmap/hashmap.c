@@ -136,3 +136,16 @@ void json_value_hashmap_free_split(json_value_hashmap *map, Allocator a, Allocat
 #undef LIST_IMPLEMENTATION
 #undef TYPE
 #undef TYPED_NAME
+
+Result json_value_hashmap_get_ref(json_value_hashmap *map, string_view key, JSONValue **out) {
+    size_t index = string_hash(key, map->buckets.length);
+    json_value_hashmap_node *node = &map->buckets.data[index];
+    while (node && node->key.arr.data) {
+        if (string_eq_sv(&node->key, key)) {
+            *out = &node->value;
+            return new_success();
+        }
+        node = node->next;
+    }
+    return new_error("JSON key not found", EHashmapKeyNotFound);
+}

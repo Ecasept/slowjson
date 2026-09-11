@@ -63,24 +63,26 @@ Result run_once(const char *filename) {
 	if (!r.success) return r;
 
 	Parser parser = json_parser_new(config_default_parser_config());
-	ParserResult result;
+	JSONDocument result = json_document_new();
 	r = json_parser_deserialize(&parser, &json, &result);
 	string_free(&json, ga);
 	
 	if (!r.success) {
+		json_document_free(&result);
 		return r;
 	}
 
 	// Successfully deserialized
-	parser_result_free(&result);
+	json_document_free(&result);
 	return new_success();
 }
 
-Result run_string(string *json, ParserResult *out_result) {
+Result run_string(string *json, JSONDocument *out_result) {
 	Parser parser = json_parser_new(config_default_parser_config());
-	ParserResult result;
+	JSONDocument result = json_document_new();
 	Result r = json_parser_deserialize(&parser, json, &result);
 	if (!r.success) {
+		json_document_free(&result);
 		return r;
 	}
 
@@ -89,6 +91,6 @@ Result run_string(string *json, ParserResult *out_result) {
 		return new_success();
 	}
 
-	parser_result_free(&result);
+	json_document_free(&result);
 	return new_success();
 }

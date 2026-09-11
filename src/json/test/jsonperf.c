@@ -39,11 +39,9 @@ static int run_perf_on_test(Test test, double *time_taken, double *gb_per_sec) {
 
 	clock_t start = clock();
 	Parser parser = json_parser_new(config_default_parser_config());
-	ParserResult result;
+	JSONDocument result = json_document_new();
 	r = json_parser_deserialize(&parser, &json, &result);
-	if (r.success) {
-		parser_result_free(&result);
-	}
+	json_document_free(&result);
 	clock_t end = clock();
 
 	if (!r.success) {
