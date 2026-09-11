@@ -89,9 +89,9 @@ static Result json_serialize_rec(JSONValue *val, string *str, Allocator a) {
 			json_value_hashmap_node *node = &val->hashmap.buckets.data[i];
 			while (node && node->key.arr.data != NULL) {
 				if (!first) string_append_uchar(str, ',', a);
-				string_append_uchar(str, '"', a);
-				string_append(str, &node->key, a);
-				string_append_cstr(str, "\":", a);
+				JSONValue key = json_value_new_string(&node->key);
+				check(json_serialize_rec(&key, str, a));
+				string_append_uchar(str, ':', a);
 				Result r = json_serialize_rec(&node->value, str, a);
 				if (!r.success) return r;
 				first = false;
