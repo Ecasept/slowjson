@@ -58,6 +58,7 @@ static void rehash(json_value_hashmap *map, size_t new_bucket_count, Allocator a
 	memset(map->buckets.data, 0, 
 		   sizeof(json_value_hashmap_node) * new_bucket_count);
 	map->buckets.length = new_bucket_count;
+	map->size = 0;
 	for (size_t bucket = 0; bucket < old_bucket_count; bucket++) {
 		json_value_hashmap_node node;
 		node = json_value_hashmap_node_list_get_unchecked(&old_buckets, bucket);
@@ -136,3 +137,16 @@ void json_value_hashmap_free_split(json_value_hashmap *map, Allocator a, Allocat
 #undef LIST_IMPLEMENTATION
 #undef TYPE
 #undef TYPED_NAME
+
+Result json_value_hashmap_get_ref(json_value_hashmap *map, string_view key, JSONValue **out) {
+    size_t index = string_hash(key, map->buckets.length);
+    json_value_hashmap_node *node = &map->buckets.data[index];
+    while (node && node->key.arr.data) {
+        if (string_eq_sv(&node->key, key)) {
+            *out = &node->value;
+            return new_success();
+        }
+        node = node->next;
+    }
+    return new_error("JSON key not found", EHashmapKeyNotFound);
+}

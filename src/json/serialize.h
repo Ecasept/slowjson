@@ -7,5 +7,5 @@
  * @param str Pointer to the string to store the result. Will be allocated.
  * @param allocator The allocator to use for the string
  */
-Result json_serialize(struct JSONValue *val, string *str, Allocator allocator);
+Result json_serialize(const struct JSONValue *val, string *str, Allocator allocator);
 

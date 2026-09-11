@@ -2,23 +2,14 @@
 #include "jsonvalue.h"
 #include "lexer.h"
 #include "../config.h"
-#include "../utils/alloc/arena.h"
+#include "../document.h"
 
-
-#define TYPE JSONToken
-#define TYPED_NAME(name) json_token_##name
-#define LIST_DECLARATION
-#include "../utils/list.h"
-#undef LIST_DECLARATION
-#undef TYPE
-#undef TYPED_NAME
 
 struct Parser {
-	json_token_list *tokens;
-	size_t position;
+	Lexer *lexer;
+	JSONToken lookahead;
+	bool has_lookahead;
 	ParserConfig config;
-	Arena *arena;
-	Allocator allocator;
-	Allocator string_allocator;
+	JSONDocument *document;
 };
 typedef struct Parser Parser;

@@ -1,0 +1,163 @@
+#!/usr/bin/env python3
+"""Configure/build with Meson + Ninja, then optionally run with argument passthrough."""
+
+import argparse
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+
+
+def require_programs(parser, *programs):
+    for program in programs:
+        if shutil.which(program) is None:
+            parser.error(f'{program} is required but was not found on PATH')
+
+
+def build_directory(root, profile):
+    return root / 'build' / profile
+
+
+def configure(root, build, profile, reconfigure=False):
+    configured = (build / 'meson-private' / 'coredata.dat').exists()
+    if configured and not reconfigure:
+        return
+
+    setup_args = ['meson', 'setup']
+    if configured:
+        setup_args.append('--reconfigure')
+    setup_args.extend([
+        str(build), str(root), '--backend=ninja', '--native-file',
+        str(root / 'build-support' / (profile + '.ini')),
+    ])
+    subprocess.run(setup_args, cwd=root, check=True)
+
+
+def compile_target(root, profile, target, reconfigure=False):
+    build = build_directory(root, profile)
+    configure(root, build, profile, reconfigure)
+    subprocess.run(
+        ['meson', 'compile', '-C', str(build), target], cwd=root, check=True)
+    return build
+
+
+def run_target(root, profile, target, args, prefix=(), reconfigure=False):
+    build = compile_target(root, profile, target, reconfigure)
+    executable = build / (target + ('.exe' if os.name == 'nt' else ''))
+    subprocess.run(
+        [*prefix, str(executable), *args], cwd=root, check=True)
+    return 0
+
+
+def reject_arguments(parser, command, args):
+    if args:
+        parser.error(f'{command} only builds and does not accept program arguments')
+
+
+def command_build(parser, root, profile, args):
+    reject_arguments(parser, 'build', args)
+    compile_target(root, profile, 'gradeviewer')
+    return 0
+
+
+def command_run(parser, root, profile, args):
+    return run_target(root, profile, 'gradeviewer', args)
+
+
+def command_test(parser, root, profile, args):
+    return run_target(root, profile, 'gradeviewer_tests', args)
+
+
+def command_bench(parser, root, profile, args):
+    return run_target(root, 'Release', 'jsonperf', args, reconfigure=True)
+
+
+def command_lib(parser, root, profile, args):
+    reject_arguments(parser, 'lib', args)
+    compile_target(root, profile, 'slowjson')
+    return 0
+
+
+def command_fuzz(parser, root, profile, args):
+    return run_target(root, profile, 'slowjson-fuzz', args)
+
+
+def wrapped_target(parser, profile, args):
+    if not args or args[0] not in ('bench', 'test'):
+        parser.error(
+            'valgrind/callgrind require either "bench" or "test"')
+
+    command, passthrough_args = args[0], args[1:]
+    if command == 'bench':
+        return 'Release', 'jsonperf', passthrough_args, True
+    if profile == 'DebugExtra':
+        parser.error(
+            'Valgrind/Callgrind require Debug or Release; ASan is incompatible with Valgrind')
+    return profile, 'gradeviewer_tests', passthrough_args, False
+
+
+def command_valgrind(parser, root, profile, args):
+    profile, target, args, reconfigure = wrapped_target(parser, profile, args)
+    require_programs(parser, 'valgrind')
+    prefix = [
+        'valgrind', '--leak-check=full', '--show-leak-kinds=all',
+        '--error-exitcode=1',
+    ]
+    return run_target(
+        root, profile, target, args, prefix, reconfigure=reconfigure)
+
+
+def command_callgrind(parser, root, profile, args):
+    profile, target, args, reconfigure = wrapped_target(parser, profile, args)
+    require_programs(parser, 'valgrind')
+    build = build_directory(root, profile)
+    prefix = [
+        'valgrind', '--tool=callgrind', '--dump-instr=yes',
+        '--callgrind-out-file=' + str(build / 'callgrind.out.%p'),
+    ]
+    return run_target(
+        root, profile, target, args, prefix, reconfigure=reconfigure)
+
+
+COMMANDS = {
+    'build': command_build,
+    'run': command_run,
+    'test': command_test,
+    'bench': command_bench,
+    'valgrind': command_valgrind,
+    'callgrind': command_callgrind,
+    'lib': command_lib,
+    'fuzz': command_fuzz,
+}
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        '--profile', choices=['Debug', 'DebugExtra', 'Release'], default='Debug')
+    parser.add_argument('command', choices=COMMANDS)
+    parser.add_argument('args', nargs=argparse.REMAINDER,
+                        help='arguments passed to the program')
+    options = parser.parse_args()
+    if options.args[:1] == ['--']:
+        options.args = options.args[1:]
+    return parser, options
+
+
+def main():
+    parser, options = parse_arguments()
+    require_programs(parser, 'meson', 'ninja')
+
+    root = Path(__file__).resolve().parent
+    return COMMANDS[options.command](
+        parser, root, options.profile, options.args)
+
+
+if __name__ == '__main__':
+    try:
+        sys.exit(main())
+    except subprocess.CalledProcessError as error:
+        sys.exit(error.returncode)
+    except KeyboardInterrupt:
+        sys.exit(130)

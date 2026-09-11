@@ -1,14 +1,14 @@
-#include "../utils/string/dstring.h"
-#include "../utils/string/file.h"
-#include "../utils/string/string_view.h"
-#include "../deserialize.h"
-#include "../internal/jsonvalue.h"
-#include "../config.h"
+#include "json/utils/string/dstring.h"
+#include "json/utils/string/file.h"
+#include "json/utils/string/string_view.h"
+#include "json/deserialize.h"
+#include "json/internal/jsonvalue.h"
+#include "json/config.h"
 #include <inttypes.h>
 #include <stdlib.h>
 #include <time.h>
 #include "test.h"
-#include "../utils/alloc/default.h"
+#include "json/utils/alloc/default.h"
 
 struct Test {
 	const char *filename;
@@ -16,7 +16,7 @@ struct Test {
 };
 typedef struct Test Test;
 
-#define TEST_DIR "src/json/test/files/parse-number-fxx-test-data/data/"
+#define TEST_DIR "tools/test/files/parse-number-fxx-test-data/data/"
 #define TEST(test_name) { .filename = TEST_DIR test_name ".txt", .name = test_name }
 
 #define ANSI_CLEAR_LINE "\033[2K\r"
@@ -84,7 +84,7 @@ static Result get_fxx_test_data(string *line, double *expected, string *json_inp
 }
 
 static Result run_single_fxx_test(double expected, string *json_input) {
-	ParserResult result;
+	JSONDocument result;
 	Result r = run_string(json_input, &result);
 	if (!r.success) {
 		return r;
@@ -93,7 +93,7 @@ static Result run_single_fxx_test(double expected, string *json_input) {
 	JSONValue val = result.value;
 
 	if (val.type != JSON_NUMBER) {
-		parser_result_free(&result);
+		json_document_free(&result);
 		return new_errorf("Expected JSON number, got %s", EParserSyntaxError, jtostr(val.type));
 	}
 
@@ -108,11 +108,11 @@ static Result run_single_fxx_test(double expected, string *json_input) {
 	memcpy(&expected_bits, &expected, sizeof(double));
 	
 	if (actual_bits != expected_bits) {
-		parser_result_free(&result);
+		json_document_free(&result);
 		return new_errorf("Mismatch: expected %" PRIx64 ", got %" PRIx64, EParserSyntaxError, expected_bits, actual_bits);
 	}
 
-	parser_result_free(&result);
+	json_document_free(&result);
 	return new_success();
 }
 

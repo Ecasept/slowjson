@@ -1,0 +1,41 @@
+name: Check and benchmark
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Main job
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install build and analysis tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes meson ninja-build valgrind
+      - name: Build library
+        run: ./dev lib
+      - name: Build application
+        run: ./dev build
+      - name: Run test suite
+        run: ./dev test
+      - name: Run deterministic fuzz smoke test
+        run: ./dev --profile DebugExtra fuzz 10000 67 1
+      - name: Check JSON test suite for memory errors
+        run: ./dev valgrind test jsontestsuite
+      - name: Run benchmarks
+        run: ./dev bench all 50 10
+      - name: Generate Callgrind profile
+        run: ./dev callgrind bench all 10 5
+      - name: Upload Callgrind profile
+        uses: actions/upload-artifact@v7
+        with:
+          name: callgrind-profile
+          path: build/Release/callgrind.out.*
+          if-no-files-found: error
+          retention-days: 14

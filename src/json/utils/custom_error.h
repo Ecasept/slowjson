@@ -51,7 +51,7 @@ struct RealResult {
 };
 typedef struct RealResult RealResult;
 
-extern cerrno_t cerrno;
+extern _Thread_local cerrno_t cerrno;
 
 RealResult cerrno_store(Result r);
 void real_result_free(RealResult rr);
