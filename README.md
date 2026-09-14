@@ -195,6 +195,10 @@ The `dev` helper configures Meson with the Ninja backend automatically. Run it a
 | `Debug` (default) | No optimization, debug symbols, `-DDEBUG`, assertions enabled      |
 | `DebugExtra`      | Debug plus ASan, UBSan, frame pointers, and fatal sanitizer errors |
 | `Release`         | `-O3`, LTO, `-march=native` when supported, assertions disabled    |
+| `PortableRelease` | `-O3` and LTO without host-specific CPU instructions               |
+
+Valgrind and Callgrind automatically use `PortableRelease` instead of `Release`
+to avoid instructions unsupported by the instrumentation environment.
 
 > **Note**
 > Although the requirement was that the project should compile without warnings, some warnings may appear across different compilers and operating systems.  

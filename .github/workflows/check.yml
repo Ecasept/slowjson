@@ -36,6 +36,6 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: callgrind-profile
-          path: build/Release/callgrind.out.*
+          path: build/PortableRelease/callgrind.out.*
           if-no-files-found: error
           retention-days: 14

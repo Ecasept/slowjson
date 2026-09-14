@@ -6,7 +6,7 @@ cc = meson.get_compiler('c')
 if get_option('debug')
   add_project_arguments('-DDEBUG', language: 'c')
 endif
-if get_option('buildtype') == 'release'
+if get_option('buildtype') == 'release' and get_option('native_optimization')
   add_project_arguments(cc.get_supported_arguments('-march=native'), language: 'c')
 endif
 if get_option('b_sanitize') != 'none'

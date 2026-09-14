@@ -1,0 +1,6 @@
+option(
+  'native_optimization',
+  type: 'boolean',
+  value: false,
+  description: 'Optimize release builds for the build host with -march=native',
+)

@@ -90,10 +90,12 @@ def wrapped_target(parser, profile, args):
 
     command, passthrough_args = args[0], args[1:]
     if command == 'bench':
-        return 'Release', 'jsonperf', passthrough_args, True
+        return 'PortableRelease', 'jsonperf', passthrough_args, True
     if profile == 'DebugExtra':
         parser.error(
-            'Valgrind/Callgrind require Debug or Release; ASan is incompatible with Valgrind')
+            'ASan is incompatible with Valgrind/Callgrind; choose Debug or a release profile')
+    if profile == 'Release':
+        profile = 'PortableRelease'
     return profile, 'gradeviewer_tests', passthrough_args, False
 
 
@@ -135,7 +137,9 @@ COMMANDS = {
 def parse_arguments():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        '--profile', choices=['Debug', 'DebugExtra', 'Release'], default='Debug')
+        '--profile',
+        choices=['Debug', 'DebugExtra', 'Release', 'PortableRelease'],
+        default='Debug')
     parser.add_argument('command', choices=COMMANDS)
     parser.add_argument('args', nargs=argparse.REMAINDER,
                         help='arguments passed to the program')
