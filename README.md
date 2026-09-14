@@ -199,3 +199,7 @@ The `dev` helper configures Meson with the Ninja backend automatically. Run it a
 > **Note**
 > Although the requirement was that the project should compile without warnings, some warnings may appear across different compilers and operating systems.  
 > In particular, certain Windows/MinGW toolchains may warn about `%zu` (`size_t`) even when runtime behavior is correct.
+
+## License
+
+This project is licensed under the GNU General Public License v3.0 or later.
